@@ -24,6 +24,7 @@ type Exchange struct {
 }
 
 type Queue struct {
+	ex    *Exchange
 	ops   QueueOptions
 	Error error
 }
@@ -75,12 +76,14 @@ func (ch *Channel) Exchange(options ...func(*ExchangeOptions)) *Exchange {
 	if ex.Error != nil {
 		return ex
 	}
-	err := ex.declare(ch.c)
-	if err != nil {
-		ex.Error = err
-		return ex
+	// the exchange will be declared
+	if ex.ops.Declare {
+		err := ex.declare()
+		if err != nil {
+			ex.Error = err
+			return ex
+		}
 	}
-	ex.c = ch.c
 	return ex
 }
 
@@ -108,7 +111,13 @@ func (ch *Channel) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 		ex.Error = fmt.Errorf("invaild exchange kind: %s", ops.Kind)
 		return &ex
 	}
+	prefix := ""
+	if ops.NamePrefix != "" {
+		prefix = ops.NamePrefix
+	}
+	ops.Name = prefix + ops.Name
 	ex.ops = *ops
+	ex.c = ch.c
 	return &ex
 }
 
@@ -118,27 +127,17 @@ func (ex *Exchange) Queue(options ...func(*QueueOptions)) *Queue {
 	if qu.Error != nil {
 		return qu
 	}
-	if _, err := ex.c.QueueDeclare(
-		qu.ops.Name,
-		qu.ops.Durable,
-		qu.ops.AutoDelete,
-		qu.ops.Exclusive,
-		qu.ops.NoWait,
-		qu.ops.Args,
-	); err != nil {
-		qu.Error = fmt.Errorf("failed to declare %s: %v", qu.ops.Name, err)
-		return qu
+	if qu.ops.Declare {
+		err := qu.declare()
+		if err != nil {
+			qu.Error = err
+			return qu
+		}
 	}
-
-	for _, key := range qu.ops.RouteKeys {
-		if err := ex.c.QueueBind(
-			qu.ops.Name,
-			key,
-			ex.ops.Name,
-			qu.ops.NoWait,
-			qu.ops.Args,
-		); err != nil {
-			qu.Error = fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.Name, key, ex.ops.Name, err)
+	if qu.ops.Bind {
+		err := qu.bind()
+		if err != nil {
+			qu.Error = err
 			return qu
 		}
 	}
@@ -194,18 +193,19 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 		qu.Error = fmt.Errorf("queue name is empty")
 		return &qu
 	}
+	prefix := ""
+	if ops.NamePrefix != "" {
+		prefix = ops.NamePrefix
+	}
+	ops.Name = prefix + ops.Name
 	qu.ops = *ops
+	qu.ex = ex
 	return &qu
 }
 
 // declare exchange
-func (ex *Exchange) declare(c *amqp.Channel) error {
-	prefix := ""
-	if ex.ops.NamePrefix != "" {
-		prefix = ex.ops.NamePrefix
-	}
-	ex.ops.Name = prefix + ex.ops.Name
-	if err := c.ExchangeDeclare(
+func (ex *Exchange) declare() error {
+	if err := ex.c.ExchangeDeclare(
 		ex.ops.Name,
 		ex.ops.Kind,
 		ex.ops.Durable,
@@ -215,6 +215,37 @@ func (ex *Exchange) declare(c *amqp.Channel) error {
 		ex.ops.Args,
 	); err != nil {
 		return fmt.Errorf("failed declare exchange %s(%s): %v", ex.ops.Name, ex.ops.Kind, err)
+	}
+	return nil
+}
+
+// declare queue
+func (qu *Queue) declare() error {
+	if _, err := qu.ex.c.QueueDeclare(
+		qu.ops.Name,
+		qu.ops.Durable,
+		qu.ops.AutoDelete,
+		qu.ops.Exclusive,
+		qu.ops.NoWait,
+		qu.ops.Args,
+	); err != nil {
+		return fmt.Errorf("failed to declare %s: %v", qu.ops.Name, err)
+	}
+	return nil
+}
+
+// bind queue
+func (qu *Queue) bind() error {
+	for _, key := range qu.ops.RouteKeys {
+		if err := qu.ex.c.QueueBind(
+			qu.ops.Name,
+			key,
+			qu.ex.ops.Name,
+			qu.ops.NoWait,
+			qu.ops.Args,
+		); err != nil {
+			return fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.Name, key, qu.ex.ops.Name, err)
+		}
 	}
 	return nil
 }

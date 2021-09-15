@@ -113,9 +113,11 @@ type QueueOptions struct {
 	Args           amqp.Table
 	BindArgs       amqp.Table
 	Declare        bool
+	Bind           bool
 	DeadLetterName string
 	DeadLetterKey  string
 	MessageTTL     int32
+	NamePrefix     string
 }
 
 func WithQueueName(name string) func(*QueueOptions) {
@@ -132,6 +134,14 @@ func WithQueueRouteKey(key string) func(*QueueOptions) {
 			d.RouteKeys = append(keys, key)
 		}
 	}
+}
+
+func WithQueueSkipDeclare(options *QueueOptions) {
+	getQueueOptionsOrSetDefault(options).Declare = false
+}
+
+func WithQueueSkipBind(options *QueueOptions) {
+	getQueueOptionsOrSetDefault(options).Bind = false
 }
 
 func WithQueueDeadLetterName(name string) func(*QueueOptions) {
@@ -157,6 +167,7 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 		return &QueueOptions{
 			Durable: true,
 			Declare: true,
+			Bind:    true,
 		}
 	}
 	return options

@@ -14,6 +14,7 @@ func TestExchange_PublishProto(t *testing.T) {
 	} 
 	ex := ch.Exchange(
 		WithExchangeName("ex1"),
+		WithExchangeSkipDeclare,
 	)
 	if ex.Error != nil {
 		panic(ex.Error)
