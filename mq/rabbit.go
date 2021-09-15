@@ -3,6 +3,9 @@ package mq
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -41,6 +44,21 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		rb.Error = err
 		return &rb
 	}
+	go func() {
+		quit := make(chan os.Signal)
+		// kill (no param) default send syscall.SIGTERM
+		// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
+		// kill -2 is syscall.SIGINT
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		<-quit
+		if rb.ch != nil {
+			rb.ch.Close()
+		}
+		if rb.conn != nil {
+			rb.conn.Close()
+		}
+	}()
+
 	return &rb
 }
 
