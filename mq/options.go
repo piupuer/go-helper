@@ -161,3 +161,44 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 	}
 	return options
 }
+
+type PublishOptions struct {
+	RouteKeys    []string
+	ContentType  string
+	Headers      amqp.Table
+	DeliveryMode uint8
+	Mandatory    bool
+	Immediate    bool
+	Expiration   string
+}
+
+func WithPublishOptionsContentType(contentType string) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		getPublishOptionsOrSetDefault(options).ContentType = contentType
+	}
+}
+
+func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		getPublishOptionsOrSetDefault(options).Headers = headers
+	}
+}
+
+func WithPublishRouteKey(key string) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		d := getPublishOptionsOrSetDefault(options)
+		keys := d.RouteKeys
+		if !funk.ContainsString(keys, key) {
+			d.RouteKeys = append(keys, key)
+		}
+	}
+}
+
+func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
+	if options == nil {
+		return &PublishOptions{
+			ContentType: "text/plain",
+		}
+	}
+	return options
+}
