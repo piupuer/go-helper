@@ -6,31 +6,61 @@ import (
 )
 
 type RabbitOptions struct {
-	QosPrefetchCount int
-	QosPrefetchSize  int
-	QosGlobal        bool
+	QosPrefetchCount       int
+	QosPrefetchSize        int
+	QosGlobal              bool
+	ReconnectInterval      int
+	ReconnectMaxRetryCount int
+	Timeout                int
 }
 
 func WithChannelQosPrefetchCount(prefetchCount int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
-		getChannelOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
+		getRabbitOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
 	}
 }
 
 func WithChannelQosPrefetchSize(prefetchSize int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
-		getChannelOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
+		getRabbitOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
 	}
 }
 
 func WithChannelQosGlobal(options *RabbitOptions) {
-	getChannelOptionsOrSetDefault(options).QosGlobal = true
+	getRabbitOptionsOrSetDefault(options).QosGlobal = true
 }
 
-func getChannelOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
+func WithReconnectInterval(second int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if second > 0 {
+			getRabbitOptionsOrSetDefault(options).ReconnectInterval = second
+		}
+	}
+}
+
+func WithReconnectMaxRetryCount(count int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if count > 0 {
+			getRabbitOptionsOrSetDefault(options).ReconnectMaxRetryCount = count
+		}
+	}
+}
+
+func WithTimeout(second int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if second > 0 {
+			getRabbitOptionsOrSetDefault(options).Timeout = second
+		}
+	}
+}
+
+func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
-			QosPrefetchCount: 2,
+			QosPrefetchCount:       2,
+			Timeout:                10,
+			ReconnectMaxRetryCount: 1,
+			ReconnectInterval:      5,
 		}
 	}
 	return options

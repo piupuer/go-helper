@@ -5,17 +5,18 @@ import (
 	"github.com/streadway/amqp"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
 
 type Rabbit struct {
-	dsn   string           // connection url
-	conn  *amqp.Connection // connection instance
-	ch    *amqp.Channel    // channel instance
-	lost  chan error       // connection/channel lost channel
-	ops   RabbitOptions
-	Error error
+	dsn      string           // connection url
+	connLock int32            // lock when create connect
+	conn     *amqp.Connection // connection instance
+	lost     bool             // connection is lost
+	ops      RabbitOptions
+	Error    error
 }
 
 type Exchange struct {
@@ -33,8 +34,8 @@ type Queue struct {
 func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 	var rb Rabbit
 	rb.dsn = dsn
-	rb.lost = make(chan error)
-	ops := &RabbitOptions{}
+	rb.lost = true
+	ops := getRabbitOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
@@ -51,9 +52,6 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		// kill -2 is syscall.SIGINT
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		if rb.ch != nil {
-			rb.ch.Close()
-		}
 		if rb.conn != nil {
 			rb.conn.Close()
 		}
@@ -64,48 +62,58 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 
 // connect mq
 func (rb *Rabbit) connect() error {
-	conn, ch, err := dialWithTimeout(rb.dsn, 5)
+	v := atomic.LoadInt32(&rb.connLock)
+	if v == 1 || !rb.lost {
+		return fmt.Errorf("the connection is creating, please wait")
+	}
+	if !atomic.CompareAndSwapInt32(&rb.connLock, 0, 1) {
+		return fmt.Errorf("the connection is creating, please wait")
+	}
+	defer atomic.AddInt32(&rb.connLock, -1)
+	conn, err := dialWithTimeout(rb.dsn, 5)
 	if err != nil {
 		return err
 	}
-
-	// set qos
-	err = ch.Qos(rb.ops.QosPrefetchCount, rb.ops.QosPrefetchSize, rb.ops.QosGlobal)
-	if err != nil {
-		return err
-	}
-
 	rb.conn = conn
-	rb.ch = ch
+	rb.lost = false
 
 	go func() {
 		connLost := rb.conn.NotifyClose(make(chan *amqp.Error))
-		chClose := rb.ch.NotifyClose(make(chan *amqp.Error))
-		chCancel := rb.ch.NotifyCancel(make(chan string, 1))
 		select {
 		case err := <-connLost:
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
-				rb.lost <- fmt.Errorf("connection closed: %v", err.Reason)
+				rb.lost = true
 			}
-		case err := <-chClose:
-			// If the connection close is triggered by the Server, a reconnection takes place
-			if err != nil && err.Server {
-				rb.lost <- fmt.Errorf("channel closed: %v", err.Reason)
-			}
-		case err := <-chCancel:
-			rb.lost <- fmt.Errorf("channel cancel: %v", err)
 		}
 	}()
 	return nil
 }
 
+// get a channel
+func (rb *Rabbit) getChannel() (*amqp.Channel, error) {
+	if rb.lost == true {
+		err := rb.reconnect()
+		if err != nil {
+			return nil, err
+		}
+	}
+	channel, err := rb.conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+	return channel, nil
+}
+
 // reconnect mq
 func (rb *Rabbit) reconnect() error {
-	interval := time.Second
+	interval := time.Duration(rb.ops.ReconnectInterval) * time.Second
 	retryCount := 0
 	var err error
 	for {
+		if atomic.LoadInt32(&rb.connLock) == 1 || !rb.lost {
+			return fmt.Errorf("the connection is creating, please wait")
+		}
 		time.Sleep(interval)
 		err = rb.connect()
 		if err == nil {
@@ -113,7 +121,7 @@ func (rb *Rabbit) reconnect() error {
 		} else {
 			retryCount++
 		}
-		if retryCount >= 5 {
+		if retryCount >= rb.ops.ReconnectMaxRetryCount {
 			break
 		}
 	}
@@ -255,7 +263,12 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 
 // declare exchange
 func (ex *Exchange) declare() error {
-	if err := ex.rb.ch.ExchangeDeclare(
+	ch, err := ex.rb.getChannel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+	if err := ch.ExchangeDeclare(
 		ex.ops.Name,
 		ex.ops.Kind,
 		ex.ops.Durable,
@@ -271,7 +284,12 @@ func (ex *Exchange) declare() error {
 
 // declare queue
 func (qu *Queue) declare() error {
-	if _, err := qu.ex.rb.ch.QueueDeclare(
+	ch, err := qu.ex.rb.getChannel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+	if _, err := ch.QueueDeclare(
 		qu.ops.Name,
 		qu.ops.Durable,
 		qu.ops.AutoDelete,
@@ -286,8 +304,13 @@ func (qu *Queue) declare() error {
 
 // bind queue
 func (qu *Queue) bind() error {
+	ch, err := qu.ex.rb.getChannel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
 	for _, key := range qu.ops.RouteKeys {
-		if err := qu.ex.rb.ch.QueueBind(
+		if err := ch.QueueBind(
 			qu.ops.Name,
 			key,
 			qu.ex.ops.Name,
@@ -301,16 +324,12 @@ func (qu *Queue) bind() error {
 }
 
 // dial rabbitmq with timeout(seconds)
-func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, *amqp.Channel, error) {
+func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, error) {
 	conn, err := amqp.DialConfig(dsn, amqp.Config{
 		Dial: amqp.DefaultDial(time.Duration(timeout) * time.Second),
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, nil, err
-	}
-	return conn, ch, err
+	return conn, err
 }

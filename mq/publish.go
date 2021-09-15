@@ -15,48 +15,41 @@ type Publish struct {
 }
 
 // publish grpc proto msg
-func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) *Exchange {
+func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) error {
 	if m == nil {
-		ex.Error = fmt.Errorf("msg is nil")
-		return ex
+		return fmt.Errorf("msg is nil")
 	}
 	b, err := proto.Marshal(m)
 	if err != nil {
-		ex.Error = err
-		return ex
+		return err
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
-		ex.Error = pu.Error
-		return ex
+		return pu.Error
 	}
 	pu.msg.Body = b
 	err = pu.publish()
 	if err != nil {
-		ex.Error = err
-		return ex
+		return err
 	}
-	return ex
+	return nil
 }
 
 // publish str msg
-func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) *Exchange {
+func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) error {
 	if m == "" {
-		ex.Error = fmt.Errorf("msg is empty")
-		return ex
+		return fmt.Errorf("msg is empty")
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
-		ex.Error = pu.Error
-		return ex
+		return pu.Error
 	}
 	pu.msg.Body = []byte(m)
 	err := pu.publish()
 	if err != nil {
-		ex.Error = err
-		return ex
+		return err
 	}
-	return ex
+	return nil
 }
 
 func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
@@ -76,11 +69,6 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 	if ops.DeliveryMode <= 0 || ops.DeliveryMode > amqp.Persistent {
 		ops.DeliveryMode = amqp.Persistent
 	}
-	// enable publisher confirm
-	if err := ex.rb.ch.Confirm(false); err != nil {
-		pu.Error = err
-		return &pu
-	}
 	pu.ops = *ops
 	msg := amqp.Publishing{
 		DeliveryMode: ops.DeliveryMode,
@@ -94,38 +82,49 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 }
 
 func (pu *Publish) publish() error {
-	// if the connection is lost before publishing, try reconnecting
-	select {
-	// non blocking channel - if there is no error will go to default where we do nothing
-	case err := <-pu.ex.rb.lost:
-		if err != nil {
-			err = pu.ex.rb.reconnect()
-			if err != nil {
-				return err
-			}
-		}
-	default:
+	ch, err := pu.ex.rb.getChannel()
+	if err != nil {
+		return err
 	}
-	for _, key := range pu.ops.RouteKeys {
-		err := pu.ex.rb.ch.Publish(
+	defer ch.Close()
+	count := len(pu.ops.RouteKeys)
+
+	// set publisher confirm
+	if err := ch.Confirm(false); err != nil {
+		return err
+	}
+	confirmCh := ch.NotifyPublish(make(chan amqp.Confirmation, count))
+	returnCh := ch.NotifyReturn(make(chan amqp.Return, count))
+
+	for i := 0; i < count; i++ {
+		err := ch.Publish(
 			pu.ex.ops.Name,
-			key,
+			pu.ops.RouteKeys[i],
 			pu.ops.Mandatory,
 			pu.ops.Immediate,
 			pu.msg,
 		)
-		select {
-		case ntf := <-pu.ex.rb.ch.NotifyPublish(make(chan amqp.Confirmation, 1)):
-			if !ntf.Ack {
-				return fmt.Errorf("delivery tag: %d", ntf.DeliveryTag)
-			}
-		case ch := <-pu.ex.rb.ch.NotifyReturn(make(chan amqp.Return)):
-			return fmt.Errorf("reply code: %d, reply text: %s", ch.ReplyCode, ch.ReplyText)
-		case <-time.After(10 * time.Second):
-			return fmt.Errorf("connect timeout")
-		}
 		if err != nil {
 			return err
+		}
+	}
+	timeout := time.Duration(pu.ex.rb.ops.Timeout) * time.Second
+	timer := time.NewTimer(timeout)
+	index := 0
+	for {
+		select {
+		case c := <-confirmCh:
+			if !c.Ack {
+				return fmt.Errorf("delivery tag: %d", c.DeliveryTag)
+			}
+			index++
+		case r := <-returnCh:
+			return fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
+		case <-timer.C:
+			return fmt.Errorf("publish timeout: %ds", pu.ex.rb.ops.Timeout)
+		}
+		if index == count {
+			break
 		}
 	}
 	return nil
