@@ -7,18 +7,15 @@ import (
 const uri = "amqp://admin:admin@127.0.0.1:5672/gsgc"
 
 func TestNewRabbitMq(t *testing.T) {
-	rb := NewRabbit(uri)
+	rb := NewRabbit(
+		uri,
+		WithChannelQosPrefetchCount(5),
+		)
 	if rb.Error != nil {
 		panic(rb.Error)
 	}
-	ch := rb.Channel(
-		WithChannelQosPrefetchCount(5),
-	)
-	if ch.Error != nil {
-		panic(ch.Error)
-	}
 
-	ex := ch.Exchange(
+	ex := rb.Exchange(
 		WithExchangeName("ex1"),
 	)
 	if ex.Error != nil {
@@ -46,7 +43,7 @@ func TestNewRabbitMq(t *testing.T) {
 		panic(err)
 	}
 
-	err = ch.Exchange(
+	err = rb.Exchange(
 		WithExchangeName("ex2"),
 	).Queue(
 		WithQueueName("q3"),
@@ -56,7 +53,7 @@ func TestNewRabbitMq(t *testing.T) {
 		panic(err)
 	}
 
-	err = ch.Exchange(
+	err = rb.Exchange(
 		WithExchangeName("dl-ex"),
 	).Queue(
 		WithQueueName("dlq"),

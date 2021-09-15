@@ -77,7 +77,7 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 		ops.DeliveryMode = amqp.Persistent
 	}
 	// enable publisher confirm
-	if err := ex.c.Confirm(false); err != nil {
+	if err := ex.rb.ch.Confirm(false); err != nil {
 		pu.Error = err
 		return &pu
 	}
@@ -94,8 +94,20 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 }
 
 func (pu *Publish) publish() error {
+	// if the connection is lost before publishing, try reconnecting
+	select {
+	// non blocking channel - if there is no error will go to default where we do nothing
+	case err := <-pu.ex.rb.lost:
+		if err != nil {
+			err = pu.ex.rb.reconnect()
+			if err != nil {
+				return err
+			}
+		}
+	default:
+	}
 	for _, key := range pu.ops.RouteKeys {
-		err := pu.ex.c.Publish(
+		err := pu.ex.rb.ch.Publish(
 			pu.ex.ops.Name,
 			key,
 			pu.ops.Mandatory,
@@ -103,11 +115,11 @@ func (pu *Publish) publish() error {
 			pu.msg,
 		)
 		select {
-		case ntf := <-pu.ex.c.NotifyPublish(make(chan amqp.Confirmation, 1)):
+		case ntf := <-pu.ex.rb.ch.NotifyPublish(make(chan amqp.Confirmation, 1)):
 			if !ntf.Ack {
 				return fmt.Errorf("delivery tag: %d", ntf.DeliveryTag)
 			}
-		case ch := <-pu.ex.c.NotifyReturn(make(chan amqp.Return)):
+		case ch := <-pu.ex.rb.ch.NotifyReturn(make(chan amqp.Return)):
 			return fmt.Errorf("reply code: %d, reply text: %s", ch.ReplyCode, ch.ReplyText)
 		case <-time.After(10 * time.Second):
 			return fmt.Errorf("connect timeout")

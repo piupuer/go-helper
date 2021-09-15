@@ -6,13 +6,14 @@ import (
 )
 
 func TestExchange_PublishProto(t *testing.T) {
-	ch := NewRabbit(uri).Channel(
+	rb := NewRabbit(
+		uri,
 		WithChannelQosPrefetchCount(5),
 	)
-	if ch.Error != nil {
-		panic(ch.Error)
-	} 
-	ex := ch.Exchange(
+	if rb.Error != nil {
+		panic(rb.Error)
+	}
+	ex := rb.Exchange(
 		WithExchangeName("ex1"),
 		WithExchangeSkipDeclare,
 	)

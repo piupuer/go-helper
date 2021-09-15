@@ -7,18 +7,16 @@ import (
 )
 
 type Rabbit struct {
-	dsn   string
-	conn  *amqp.Connection
-	Error error
-}
-
-type Channel struct {
-	c     *amqp.Channel
+	dsn   string           // connection url
+	conn  *amqp.Connection // connection instance
+	ch    *amqp.Channel    // channel instance
+	lost  chan error       // connection/channel lost channel
+	ops   RabbitOptions
 	Error error
 }
 
 type Exchange struct {
-	c     *amqp.Channel
+	rb    *Rabbit
 	ops   ExchangeOptions
 	Error error
 }
@@ -29,50 +27,84 @@ type Queue struct {
 	Error error
 }
 
-func NewRabbit(dsn string) *Rabbit {
+func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 	var rb Rabbit
-	conn, err := dialWithTimeout(dsn, 5)
+	rb.dsn = dsn
+	rb.lost = make(chan error)
+	ops := &RabbitOptions{}
+	for _, f := range options {
+		f(ops)
+	}
+	rb.ops = *ops
+	err := rb.connect()
 	if err != nil {
 		rb.Error = err
 		return &rb
 	}
-	rb.conn = conn
 	return &rb
 }
 
-// get a channel from the connection
-func (rb *Rabbit) Channel(options ...func(*ChannelOptions)) *Channel {
-	var ch Channel
-	if rb.Error != nil {
-		ch.Error = rb.Error
-		return &ch
-	}
-	if rb.conn == nil {
-		ch.Error = fmt.Errorf("invaild connection")
-		return &ch
-	}
-	c, err := rb.conn.Channel()
+// connect mq
+func (rb *Rabbit) connect() error {
+	conn, ch, err := dialWithTimeout(rb.dsn, 5)
 	if err != nil {
-		ch.Error = err
-		return &ch
+		return err
 	}
-	ops := &ChannelOptions{}
-	for _, f := range options {
-		f(ops)
-	}
+
 	// set qos
-	err = c.Qos(ops.QosPrefetchCount, ops.QosPrefetchSize, ops.QosGlobal)
+	err = ch.Qos(rb.ops.QosPrefetchCount, rb.ops.QosPrefetchSize, rb.ops.QosGlobal)
 	if err != nil {
-		ch.Error = err
-		return &ch
+		return err
 	}
-	ch.c = c
-	return &ch
+
+	rb.conn = conn
+	rb.ch = ch
+
+	go func() {
+		connLost := rb.conn.NotifyClose(make(chan *amqp.Error))
+		chClose := rb.ch.NotifyClose(make(chan *amqp.Error))
+		chCancel := rb.ch.NotifyCancel(make(chan string, 1))
+		select {
+		case err := <-connLost:
+			// If the connection close is triggered by the Server, a reconnection takes place
+			if err != nil && err.Server {
+				rb.lost <- fmt.Errorf("connection closed: %v", err.Reason)
+			}
+		case err := <-chClose:
+			// If the connection close is triggered by the Server, a reconnection takes place
+			if err != nil && err.Server {
+				rb.lost <- fmt.Errorf("channel closed: %v", err.Reason)
+			}
+		case err := <-chCancel:
+			rb.lost <- fmt.Errorf("channel cancel: %v", err)
+		}
+	}()
+	return nil
+}
+
+// reconnect mq
+func (rb *Rabbit) reconnect() error {
+	interval := time.Second
+	retryCount := 0
+	var err error
+	for {
+		time.Sleep(interval)
+		err = rb.connect()
+		if err == nil {
+			return nil
+		} else {
+			retryCount++
+		}
+		if retryCount >= 5 {
+			break
+		}
+	}
+	return fmt.Errorf("unable to connect after %d retries, last err: %v", retryCount, err)
 }
 
 // bind a exchange
-func (ch *Channel) Exchange(options ...func(*ExchangeOptions)) *Exchange {
-	ex := ch.beforeExchange(options...)
+func (rb *Rabbit) Exchange(options ...func(*ExchangeOptions)) *Exchange {
+	ex := rb.beforeExchange(options...)
 	if ex.Error != nil {
 		return ex
 	}
@@ -88,10 +120,10 @@ func (ch *Channel) Exchange(options ...func(*ExchangeOptions)) *Exchange {
 }
 
 // before bind exchange
-func (ch *Channel) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
+func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	var ex Exchange
-	if ch.Error != nil {
-		ex.Error = ch.Error
+	if rb.Error != nil {
+		ex.Error = rb.Error
 		return &ex
 	}
 	ops := getExchangeOptionsOrSetDefault(nil)
@@ -117,7 +149,7 @@ func (ch *Channel) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	}
 	ops.Name = prefix + ops.Name
 	ex.ops = *ops
-	ex.c = ch.c
+	ex.rb = rb
 	return &ex
 }
 
@@ -205,7 +237,7 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 
 // declare exchange
 func (ex *Exchange) declare() error {
-	if err := ex.c.ExchangeDeclare(
+	if err := ex.rb.ch.ExchangeDeclare(
 		ex.ops.Name,
 		ex.ops.Kind,
 		ex.ops.Durable,
@@ -221,7 +253,7 @@ func (ex *Exchange) declare() error {
 
 // declare queue
 func (qu *Queue) declare() error {
-	if _, err := qu.ex.c.QueueDeclare(
+	if _, err := qu.ex.rb.ch.QueueDeclare(
 		qu.ops.Name,
 		qu.ops.Durable,
 		qu.ops.AutoDelete,
@@ -237,7 +269,7 @@ func (qu *Queue) declare() error {
 // bind queue
 func (qu *Queue) bind() error {
 	for _, key := range qu.ops.RouteKeys {
-		if err := qu.ex.c.QueueBind(
+		if err := qu.ex.rb.ch.QueueBind(
 			qu.ops.Name,
 			key,
 			qu.ex.ops.Name,
@@ -251,12 +283,16 @@ func (qu *Queue) bind() error {
 }
 
 // dial rabbitmq with timeout(seconds)
-func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, error) {
+func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.DialConfig(dsn, amqp.Config{
 		Dial: amqp.DefaultDial(time.Duration(timeout) * time.Second),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return conn, nil
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, nil, err
+	}
+	return conn, ch, err
 }

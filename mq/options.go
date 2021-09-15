@@ -5,31 +5,31 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-type ChannelOptions struct {
+type RabbitOptions struct {
 	QosPrefetchCount int
 	QosPrefetchSize  int
 	QosGlobal        bool
 }
 
-func WithChannelQosPrefetchCount(prefetchCount int) func(*ChannelOptions) {
-	return func(options *ChannelOptions) {
+func WithChannelQosPrefetchCount(prefetchCount int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
 		getChannelOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
 	}
 }
 
-func WithChannelQosPrefetchSize(prefetchSize int) func(*ChannelOptions) {
-	return func(options *ChannelOptions) {
+func WithChannelQosPrefetchSize(prefetchSize int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
 		getChannelOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
 	}
 }
 
-func WithChannelQosGlobal(options *ChannelOptions) {
+func WithChannelQosGlobal(options *RabbitOptions) {
 	getChannelOptionsOrSetDefault(options).QosGlobal = true
 }
 
-func getChannelOptionsOrSetDefault(options *ChannelOptions) *ChannelOptions {
+func getChannelOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
-		return &ChannelOptions{
+		return &RabbitOptions{
 			QosPrefetchCount: 2,
 		}
 	}
