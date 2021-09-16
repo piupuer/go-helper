@@ -1,4 +1,4 @@
-module go-helper
+module github.com/piupuer/go-helper
 
 go 1.16
 
