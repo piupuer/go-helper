@@ -3,8 +3,8 @@ package mq
 import (
 	"context"
 	"fmt"
-	"go-helper/examples"
-	"go-helper/logger"
+	"github.com/piupuer/go-helper/examples"
+	"github.com/piupuer/go-helper/logger"
 	"testing"
 	"time"
 )

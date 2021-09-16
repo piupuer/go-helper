@@ -2,9 +2,9 @@ package mq
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/logger"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
-	"go-helper/logger"
 	"log"
 	"os"
 )

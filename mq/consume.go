@@ -3,9 +3,9 @@ package mq
 import (
 	"context"
 	"fmt"
+	"github.com/piupuer/go-helper/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
-	"go-helper/logger"
 )
 
 type Consume struct {
