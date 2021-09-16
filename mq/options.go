@@ -1,14 +1,21 @@
 package mq
 
 import (
+	"context"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
+	"go-helper/logger"
+	"log"
+	"os"
 )
 
 type RabbitOptions struct {
 	ReconnectInterval      int
 	ReconnectMaxRetryCount int
 	Timeout                int
+	logger                 logger.Logger
+	loggerLevel            logger.LogLevel
+	ctx                    context.Context
 }
 
 func WithReconnectInterval(second int) func(*RabbitOptions) {
@@ -35,12 +42,40 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
+func WithLogger(l logger.Logger) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if l != nil {
+			getRabbitOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithLoggerLevel(level logger.LogLevel) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		getRabbitOptionsOrSetDefault(options).logger = logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				Level: level,
+			},
+		)
+	}
+}
+
+func WithContext(ctx context.Context) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		getRabbitOptionsOrSetDefault(options).ctx = ctx
+	}
+}
+
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
 			Timeout:                10,
 			ReconnectMaxRetryCount: 1,
 			ReconnectInterval:      5,
+			logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+				Level: logger.Debug,
+			}),
 		}
 	}
 	return options
@@ -191,6 +226,7 @@ type PublishOptions struct {
 	Mandatory    bool
 	Immediate    bool
 	Expiration   string
+	ctx          context.Context
 }
 
 func WithPublishOptionsContentType(contentType string) func(*PublishOptions) {
@@ -215,26 +251,35 @@ func WithPublishRouteKey(key string) func(*PublishOptions) {
 	}
 }
 
+func WithPublishContext(ctx context.Context) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		getPublishOptionsOrSetDefault(options).ctx = ctx
+	}
+}
+
 func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 	if options == nil {
 		return &PublishOptions{
 			ContentType: "text/plain",
+			ctx:         context.Background(),
 		}
 	}
 	return options
 }
 
 type ConsumeOptions struct {
-	QosPrefetchCount int
-	QosPrefetchSize  int
-	QosGlobal        bool
-	Consumer         string
-	AutoAck          bool
-	Exclusive        bool
-	NoLocal          bool
-	NoWait           bool
-	Args             amqp.Table
-	NackRequeue      bool
+	QosPrefetchCount               int
+	QosPrefetchSize                int
+	QosGlobal                      bool
+	Consumer                       string
+	AutoAck                        bool
+	Exclusive                      bool
+	NoLocal                        bool
+	NoWait                         bool
+	Args                           amqp.Table
+	NackRequeue                    bool
+	AutoRequestId                  bool
+	NewRequestIdWhenConnectionLost bool
 }
 
 func WithConsumeQosPrefetchCount(prefetchCount int) func(*ConsumeOptions) {
@@ -283,6 +328,14 @@ func WithConsumeArgs(args amqp.Table) func(*ConsumeOptions) {
 
 func WithConsumeNackRequeue(options *ConsumeOptions) {
 	getConsumeOptionsOrSetDefault(options).NackRequeue = true
+}
+
+func WithConsumeAutoRequestId(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).AutoRequestId = true
+}
+
+func WithConsumeNewRequestIdWhenConnectionLost(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).NewRequestIdWhenConnectionLost = true
 }
 
 func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {

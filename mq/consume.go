@@ -1,8 +1,11 @@
 package mq
 
 import (
+	"context"
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
+	"go-helper/logger"
 )
 
 type Consume struct {
@@ -11,7 +14,7 @@ type Consume struct {
 	Error error
 }
 
-func (qu *Queue) Consume(handler func(string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
+func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
 	if handler == nil {
 		return fmt.Errorf("handler is nil")
 	}
@@ -19,7 +22,8 @@ func (qu *Queue) Consume(handler func(string, amqp.Delivery) bool, options ...fu
 	if co.Error != nil {
 		return co.Error
 	}
-	delivery, err := co.consume()
+	ctx := co.newContext()
+	delivery, err := co.consume(ctx)
 	if err != nil {
 		return err
 	}
@@ -28,30 +32,36 @@ func (qu *Queue) Consume(handler func(string, amqp.Delivery) bool, options ...fu
 			go func() {
 				for msg := range delivery {
 					if co.ops.AutoAck {
-						handler(qu.ops.Name, msg)
+						handler(ctx, co.qu.ops.Name, msg)
 						continue
 					}
-					if handler(qu.ops.Name, msg) {
+					if handler(ctx, co.qu.ops.Name, msg) {
 						err := msg.Ack(false)
 						if err != nil {
+							co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
 						}
 					} else {
-						err := msg.Nack(false, true)
+						err := msg.Nack(false, co.ops.NackRequeue)
 						if err != nil {
+							co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
 						}
 					}
 				}
 			}()
 			// wait connection lost
-			if err = <-qu.ex.rb.lostCh; err != nil {
+			if err = <-co.qu.ex.rb.lostCh; err != nil {
 				for {
-					err = qu.ex.rb.reconnect()
+					err = co.qu.ex.rb.reconnect(ctx)
 					if err == nil {
 						break
 					}
 				}
-				d, err := co.consume()
+				if co.ops.NewRequestIdWhenConnectionLost {
+					ctx = co.newContext()
+				}
+				d, err := co.consume(ctx)
 				if err != nil {
+					co.qu.ex.rb.ops.logger.Error(ctx, "reconsume err: %v", err)
 					return
 				}
 				delivery = d
@@ -76,8 +86,8 @@ func (qu *Queue) beforeConsume(options ...func(*ConsumeOptions)) *Consume {
 	return &co
 }
 
-func (co *Consume) consume() (<-chan amqp.Delivery, error) {
-	channel, err := co.qu.ex.rb.getChannel()
+func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
+	channel, err := co.qu.ex.rb.getChannel(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -104,4 +114,12 @@ func (co *Consume) consume() (<-chan amqp.Delivery, error) {
 		co.ops.NoWait,
 		co.ops.Args,
 	)
+}
+
+func (co *Consume) newContext() context.Context {
+	ctx := context.Background()
+	if co.ops.AutoRequestId {
+		ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
+	}
+	return ctx
 }

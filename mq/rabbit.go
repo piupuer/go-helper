@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"context"
 	"fmt"
 	"github.com/streadway/amqp"
 	"os"
@@ -42,7 +43,8 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		f(ops)
 	}
 	rb.ops = *ops
-	err := rb.connect()
+	ctx := rb.ops.ctx
+	err := rb.connect(ctx)
 	if err != nil {
 		rb.Error = err
 		return &rb
@@ -54,6 +56,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		// kill -2 is syscall.SIGINT
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
+		rb.ops.logger.Warn(ctx, "process is exiting")
 		if rb.conn != nil {
 			rb.conn.Close()
 		}
@@ -63,17 +66,20 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 }
 
 // connect mq
-func (rb *Rabbit) connect() error {
+func (rb *Rabbit) connect(ctx context.Context) error {
 	v := atomic.LoadInt32(&rb.connLock)
 	if v == 1 || !rb.lost {
-		return fmt.Errorf("the connection is creating, please wait")
+		rb.ops.logger.Warn(ctx, "the connection is creating")
+		return fmt.Errorf("the connection is creating")
 	}
 	if !atomic.CompareAndSwapInt32(&rb.connLock, 0, 1) {
-		return fmt.Errorf("the connection is creating, please wait")
+		rb.ops.logger.Warn(ctx, "the connection is creating")
+		return fmt.Errorf("the connection is creating")
 	}
 	defer atomic.AddInt32(&rb.connLock, -1)
 	conn, err := dialWithTimeout(rb.dsn, 5)
 	if err != nil {
+		rb.ops.logger.Error(ctx, "dial err: %v", err)
 		return err
 	}
 	rb.conn = conn
@@ -85,6 +91,7 @@ func (rb *Rabbit) connect() error {
 		case err := <-connLost:
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
+				rb.ops.logger.Warn(ctx, "connection is lost")
 				rb.lost = true
 				rb.lostCh <- err
 			}
@@ -94,9 +101,9 @@ func (rb *Rabbit) connect() error {
 }
 
 // get a channel
-func (rb *Rabbit) getChannel() (*amqp.Channel, error) {
+func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
 	if rb.lost == true {
-		err := rb.reconnect()
+		err := rb.reconnect(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -109,16 +116,17 @@ func (rb *Rabbit) getChannel() (*amqp.Channel, error) {
 }
 
 // reconnect mq
-func (rb *Rabbit) reconnect() error {
+func (rb *Rabbit) reconnect(ctx context.Context) error {
 	interval := time.Duration(rb.ops.ReconnectInterval) * time.Second
 	retryCount := 0
 	var err error
 	for {
 		if atomic.LoadInt32(&rb.connLock) == 1 || !rb.lost {
-			return fmt.Errorf("the connection is creating, please wait")
+			rb.ops.logger.Warn(ctx, "the connection is creating, please wait")
+			return fmt.Errorf("the connection is creating")
 		}
 		time.Sleep(interval)
-		err = rb.connect()
+		err = rb.connect(ctx)
 		if err == nil {
 			return nil
 		} else {
@@ -128,7 +136,8 @@ func (rb *Rabbit) reconnect() error {
 			break
 		}
 	}
-	return fmt.Errorf("unable to connect after %d retries, last err: %v", retryCount, err)
+	rb.ops.logger.Warn(ctx, "unable to connect after %d retries, last err: %v", retryCount, err)
+	return fmt.Errorf("unable to reconnect")
 }
 
 // bind a exchange
@@ -150,6 +159,7 @@ func (rb *Rabbit) Exchange(options ...func(*ExchangeOptions)) *Exchange {
 
 // before bind exchange
 func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
+	ctx := rb.ops.ctx
 	var ex Exchange
 	if rb.Error != nil {
 		ex.Error = rb.Error
@@ -161,6 +171,7 @@ func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	}
 	if ops.Name == "" {
 		ex.Error = fmt.Errorf("exchange name is empty")
+		rb.ops.logger.Error(ctx, "exchange name is empty")
 		return &ex
 	}
 	switch ops.Kind {
@@ -169,7 +180,8 @@ func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	case amqp.ExchangeTopic:
 	case amqp.ExchangeHeaders:
 	default:
-		ex.Error = fmt.Errorf("invaild exchange kind: %s", ops.Kind)
+		ex.Error = fmt.Errorf("invalid exchange kind: %s", ops.Kind)
+		rb.ops.logger.Error(ctx, "invalid exchange kind: %s", ops.Kind)
 		return &ex
 	}
 	prefix := ""
@@ -207,6 +219,7 @@ func (ex *Exchange) Queue(options ...func(*QueueOptions)) *Queue {
 
 // bind a dead letter queue
 func (ex *Exchange) QueueWithDeadLetter(options ...func(*QueueOptions)) *Queue {
+	ctx := ex.rb.ops.ctx
 	ops := getQueueOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -218,6 +231,7 @@ func (ex *Exchange) QueueWithDeadLetter(options ...func(*QueueOptions)) *Queue {
 
 	if ops.DeadLetterName == "" {
 		var qu Queue
+		ex.rb.ops.logger.Error(ctx, "dead letter name is empty")
 		qu.Error = fmt.Errorf("dead letter name is empty")
 		return &qu
 	}
@@ -233,6 +247,7 @@ func (ex *Exchange) QueueWithDeadLetter(options ...func(*QueueOptions)) *Queue {
 
 // before bind queue
 func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
+	ctx := ex.rb.ops.ctx
 	var qu Queue
 	if ex.Error != nil {
 		qu.Error = ex.Error
@@ -251,6 +266,7 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 		ops.Args = args
 	}
 	if ops.Name == "" {
+		ex.rb.ops.logger.Error(ctx, "queue name is empty")
 		qu.Error = fmt.Errorf("queue name is empty")
 		return &qu
 	}
@@ -266,7 +282,8 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 
 // declare exchange
 func (ex *Exchange) declare() error {
-	ch, err := ex.rb.getChannel()
+	ctx := ex.rb.ops.ctx
+	ch, err := ex.rb.getChannel(ctx)
 	if err != nil {
 		return err
 	}
@@ -280,14 +297,16 @@ func (ex *Exchange) declare() error {
 		ex.ops.NoWait,
 		ex.ops.Args,
 	); err != nil {
-		return fmt.Errorf("failed declare exchange %s(%s): %v", ex.ops.Name, ex.ops.Kind, err)
+		ex.rb.ops.logger.Error(ctx, "failed declare exchange %s(%s): %v", ex.ops.Name, ex.ops.Kind, err)
+		return fmt.Errorf("failed declare exchange %s(%s)", ex.ops.Name, ex.ops.Kind)
 	}
 	return nil
 }
 
 // declare queue
 func (qu *Queue) declare() error {
-	ch, err := qu.ex.rb.getChannel()
+	ctx := qu.ex.rb.ops.ctx
+	ch, err := qu.ex.rb.getChannel(ctx)
 	if err != nil {
 		return err
 	}
@@ -300,14 +319,16 @@ func (qu *Queue) declare() error {
 		qu.ops.NoWait,
 		qu.ops.Args,
 	); err != nil {
-		return fmt.Errorf("failed to declare %s: %v", qu.ops.Name, err)
+		qu.ex.rb.ops.logger.Error(ctx, "failed to declare %s: %v", qu.ops.Name, err)
+		return fmt.Errorf("failed to declare %s", qu.ops.Name)
 	}
 	return nil
 }
 
 // bind queue
 func (qu *Queue) bind() error {
-	ch, err := qu.ex.rb.getChannel()
+	ctx := qu.ex.rb.ops.ctx
+	ch, err := qu.ex.rb.getChannel(ctx)
 	if err != nil {
 		return err
 	}
@@ -320,7 +341,8 @@ func (qu *Queue) bind() error {
 			qu.ops.NoWait,
 			qu.ops.Args,
 		); err != nil {
-			return fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.Name, key, qu.ex.ops.Name, err)
+			qu.ex.rb.ops.logger.Error(ctx, "failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.Name, key, qu.ex.ops.Name, err)
+			return fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s", qu.ops.Name, key, qu.ex.ops.Name)
 		}
 	}
 	return nil
@@ -334,5 +356,5 @@ func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	return conn, err
+	return conn, nil
 }

@@ -62,7 +62,9 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 	for _, f := range options {
 		f(ops)
 	}
+	ctx := pu.ops.ctx
 	if len(ops.RouteKeys) == 0 {
+		ex.rb.ops.logger.Error(ctx, "route key is empty")
 		pu.Error = fmt.Errorf("route key is empty")
 		return &pu
 	}
@@ -82,7 +84,8 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 }
 
 func (pu *Publish) publish() error {
-	ch, err := pu.ex.rb.getChannel()
+	ctx := pu.ops.ctx
+	ch, err := pu.ex.rb.getChannel(ctx)
 	if err != nil {
 		return err
 	}
@@ -91,6 +94,7 @@ func (pu *Publish) publish() error {
 
 	// set publisher confirm
 	if err := ch.Confirm(false); err != nil {
+		pu.ex.rb.ops.logger.Error(ctx, "set publisher confirm err: %v", err)
 		return err
 	}
 	confirmCh := ch.NotifyPublish(make(chan amqp.Confirmation, count))
@@ -105,6 +109,7 @@ func (pu *Publish) publish() error {
 			pu.msg,
 		)
 		if err != nil {
+			pu.ex.rb.ops.logger.Error(ctx, "publish err: %v", err)
 			return err
 		}
 	}
@@ -115,12 +120,15 @@ func (pu *Publish) publish() error {
 		select {
 		case c := <-confirmCh:
 			if !c.Ack {
+				pu.ex.rb.ops.logger.Error(ctx, "publish confirm err: %v", err)
 				return fmt.Errorf("delivery tag: %d", c.DeliveryTag)
 			}
 			index++
 		case r := <-returnCh:
+			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s", err)
 			return fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 		case <-timer.C:
+			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.Timeout)
 			return fmt.Errorf("publish timeout: %ds", pu.ex.rb.ops.Timeout)
 		}
 		if index == count {

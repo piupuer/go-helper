@@ -1,10 +1,10 @@
 package mq
 
 import (
+	"context"
 	"fmt"
 	"github.com/streadway/amqp"
 	"testing"
-	"time"
 )
 
 func TestQueue_Consume(t *testing.T) {
@@ -24,7 +24,10 @@ func TestQueue_Consume(t *testing.T) {
 		panic(qu.Error)
 	}
 
-	err := qu.Consume(handler)
+	err := qu.Consume(
+		handler,
+		WithConsumeAutoRequestId,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +36,7 @@ func TestQueue_Consume(t *testing.T) {
 	<-ch
 }
 
-func handler(q string, delivery amqp.Delivery) bool {
-	fmt.Println(time.Now(), q, delivery.Exchange)
+func handler(ctx context.Context,q string, delivery amqp.Delivery) bool {
+	fmt.Println(ctx, q, delivery.Exchange)
 	return true
 }
