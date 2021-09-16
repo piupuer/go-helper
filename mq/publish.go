@@ -125,7 +125,7 @@ func (pu *Publish) publish() error {
 			}
 			index++
 		case r := <-returnCh:
-			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s", err)
+			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 			return fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 		case <-timer.C:
 			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.Timeout)

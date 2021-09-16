@@ -85,7 +85,7 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("can not get msg")
+		return fmt.Errorf("queue is empty, can't get one msg")
 	}
 	if co.ops.AutoAck {
 		handler(ctx, co.qu.ops.Name, msg)
