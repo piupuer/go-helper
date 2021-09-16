@@ -2,10 +2,15 @@ package mq
 
 import (
 	"context"
+	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/logger"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
-	"log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	glogger "gorm.io/gorm/logger"
+	"time"
+
 	"os"
 )
 
@@ -13,8 +18,7 @@ type RabbitOptions struct {
 	ReconnectInterval      int
 	ReconnectMaxRetryCount int
 	Timeout                int
-	logger                 logger.Logger
-	loggerLevel            logger.LogLevel
+	logger                 glogger.Interface
 	ctx                    context.Context
 }
 
@@ -42,7 +46,7 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
-func WithLogger(l logger.Logger) func(*RabbitOptions) {
+func WithLogger(l glogger.Interface) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if l != nil {
 			getRabbitOptionsOrSetDefault(options).logger = l
@@ -50,14 +54,13 @@ func WithLogger(l logger.Logger) func(*RabbitOptions) {
 	}
 }
 
-func WithLoggerLevel(level logger.LogLevel) func(*RabbitOptions) {
+func WithLoggerLevel(level glogger.LogLevel) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
-		getRabbitOptionsOrSetDefault(options).logger = logger.New(
-			log.New(os.Stdout, "\r\n", log.LstdFlags),
-			logger.Config{
-				Level: level,
-			},
-		)
+		l := options.logger
+		if options.logger == nil {
+			l = getRabbitOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogMode(level)
 	}
 }
 
@@ -69,13 +72,27 @@ func WithContext(ctx context.Context) func(*RabbitOptions) {
 
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
+		enConfig := zap.NewProductionEncoderConfig() 
+		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
+		}
+		core := zapcore.NewCore(
+			zapcore.NewConsoleEncoder(enConfig),
+			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
+			zapcore.DebugLevel,
+		)
+		l := zap.New(core)
 		return &RabbitOptions{
 			Timeout:                10,
 			ReconnectMaxRetryCount: 1,
 			ReconnectInterval:      5,
-			logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
-				Level: logger.Debug,
-			}),
+			logger: logger.New(
+				l,
+				glogger.Config{
+					Colorful: true,
+				},
+			),
 		}
 	}
 	return options
