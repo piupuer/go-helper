@@ -7,10 +7,7 @@ import (
 const uri = "amqp://admin:admin@127.0.0.1:5672/gsgc"
 
 func TestNewRabbitMq(t *testing.T) {
-	rb := NewRabbit(
-		uri,
-		WithChannelQosPrefetchCount(5),
-		)
+	rb := NewRabbit(uri)
 	if rb.Error != nil {
 		panic(rb.Error)
 	}

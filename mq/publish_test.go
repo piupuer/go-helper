@@ -10,7 +10,6 @@ import (
 func TestExchange_PublishProto(t *testing.T) {
 	rb := NewRabbit(
 		uri,
-		WithChannelQosPrefetchCount(5),
 		WithReconnectMaxRetryCount(3),
 	)
 	if rb.Error != nil {
@@ -57,4 +56,32 @@ func TestExchange_PublishProto(t *testing.T) {
 		fmt.Println()
 	}
 
+}
+
+func TestExchange_PublishProto2(t *testing.T) {
+	rb := NewRabbit(
+		uri,
+		WithReconnectMaxRetryCount(3),
+	)
+	if rb.Error != nil {
+		panic(rb.Error)
+	}
+	ex := rb.Exchange(
+		WithExchangeName("ex1"),
+		WithExchangeSkipDeclare,
+	)
+	if ex.Error != nil {
+		panic(ex.Error)
+	}
+
+	for {
+		time.Sleep(time.Second)
+		var mqPb examples.Msg
+		mqPb.Name = "hello1"
+		err := ex.PublishProto(
+			&mqPb,
+			WithPublishRouteKey("rt1"),
+		)
+		fmt.Println(time.Now(), "send end", err)
+	}
 }

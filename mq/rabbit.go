@@ -15,6 +15,7 @@ type Rabbit struct {
 	connLock int32            // lock when create connect
 	conn     *amqp.Connection // connection instance
 	lost     bool             // connection is lost
+	lostCh   chan error       // When the connection is lost, an error is sent to this channel
 	ops      RabbitOptions
 	Error    error
 }
@@ -35,6 +36,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 	var rb Rabbit
 	rb.dsn = dsn
 	rb.lost = true
+	rb.lostCh = make(chan error)
 	ops := getRabbitOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -84,6 +86,7 @@ func (rb *Rabbit) connect() error {
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
 				rb.lost = true
+				rb.lostCh <- err
 			}
 		}
 	}()

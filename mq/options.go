@@ -6,28 +6,9 @@ import (
 )
 
 type RabbitOptions struct {
-	QosPrefetchCount       int
-	QosPrefetchSize        int
-	QosGlobal              bool
 	ReconnectInterval      int
 	ReconnectMaxRetryCount int
 	Timeout                int
-}
-
-func WithChannelQosPrefetchCount(prefetchCount int) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		getRabbitOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
-	}
-}
-
-func WithChannelQosPrefetchSize(prefetchSize int) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		getRabbitOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
-	}
-}
-
-func WithChannelQosGlobal(options *RabbitOptions) {
-	getRabbitOptionsOrSetDefault(options).QosGlobal = true
 }
 
 func WithReconnectInterval(second int) func(*RabbitOptions) {
@@ -57,7 +38,6 @@ func WithTimeout(second int) func(*RabbitOptions) {
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
-			QosPrefetchCount:       2,
 			Timeout:                10,
 			ReconnectMaxRetryCount: 1,
 			ReconnectInterval:      5,
@@ -239,6 +219,77 @@ func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 	if options == nil {
 		return &PublishOptions{
 			ContentType: "text/plain",
+		}
+	}
+	return options
+}
+
+type ConsumeOptions struct {
+	QosPrefetchCount int
+	QosPrefetchSize  int
+	QosGlobal        bool
+	Consumer         string
+	AutoAck          bool
+	Exclusive        bool
+	NoLocal          bool
+	NoWait           bool
+	Args             amqp.Table
+	NackRequeue      bool
+}
+
+func WithConsumeQosPrefetchCount(prefetchCount int) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
+	}
+}
+
+func WithConsumeQosPrefetchSize(prefetchSize int) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
+	}
+}
+
+func WithConsumeQosGlobal(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).QosGlobal = true
+}
+
+func WithConsumeConsumer(consumer string) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).Consumer = consumer
+	}
+}
+
+func WithConsumeAutoAck(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).AutoAck = true
+}
+
+func WithConsumeExclusive(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).Exclusive = true
+}
+
+func WithConsumeNoLocal(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).NoLocal = true
+}
+
+func WithConsumeNoWait(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).NoWait = true
+}
+
+func WithConsumeArgs(args amqp.Table) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).Args = args
+	}
+}
+
+func WithConsumeNackRequeue(options *ConsumeOptions) {
+	getConsumeOptionsOrSetDefault(options).NackRequeue = true
+}
+
+func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {
+	if options == nil {
+		return &ConsumeOptions{
+			QosPrefetchCount: 2,
+			Consumer:         "any",
 		}
 	}
 	return options
