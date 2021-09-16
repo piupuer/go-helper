@@ -71,6 +71,40 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 	return nil
 }
 
+func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
+	if handler == nil {
+		return fmt.Errorf("handler is nil")
+	}
+	co := qu.beforeConsume(options...)
+	if co.Error != nil {
+		return co.Error
+	}
+	ctx := co.newContext()
+	msg, ok, err := co.consumeOne(ctx)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("can not get msg")
+	}
+	if co.ops.AutoAck {
+		handler(ctx, co.qu.ops.Name, msg)
+		return nil
+	}
+	if handler(ctx, co.qu.ops.Name, msg) {
+		err := msg.Ack(false)
+		if err != nil {
+			co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
+		}
+	} else {
+		err := msg.Nack(false, co.ops.NackRequeue)
+		if err != nil {
+			co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
+		}
+	}
+	return nil
+}
+
 func (qu *Queue) beforeConsume(options ...func(*ConsumeOptions)) *Consume {
 	var co Consume
 	if qu.Error != nil {
@@ -113,6 +147,19 @@ func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 		co.ops.NoLocal,
 		co.ops.NoWait,
 		co.ops.Args,
+	)
+}
+
+func (co *Consume) consumeOne(ctx context.Context) (amqp.Delivery, bool, error) {
+	channel, err := co.qu.ex.rb.getChannel(ctx)
+	var msg amqp.Delivery
+	if err != nil {
+		return msg, false, err
+	}
+
+	return channel.Get(
+		co.qu.ops.Name,
+		co.ops.AutoAck,
 	)
 }
 
