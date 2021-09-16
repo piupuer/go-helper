@@ -72,7 +72,7 @@ func WithContext(ctx context.Context) func(*RabbitOptions) {
 
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
-		enConfig := zap.NewProductionEncoderConfig() 
+		enConfig := zap.NewProductionEncoderConfig()
 		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 			enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
@@ -89,8 +89,10 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 			ReconnectInterval:      5,
 			logger: logger.New(
 				l,
-				glogger.Config{
-					Colorful: true,
+				logger.Config{
+					Config: glogger.Config{
+						Colorful: true,
+					},
 				},
 			),
 		}

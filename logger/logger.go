@@ -15,26 +15,34 @@ import (
 	"time"
 )
 
-var (
-	runtimeRoot         = ""
+const (
 	RequestIdContextKey = "RequestId"
+)
+
+var (
+	runtimeRoot = ""
 )
 
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	runtimeRoot = strings.TrimSuffix(file, "logger.go")
+	runtimeRoot = strings.TrimSuffix(file, "logger/logger.go")
 }
 
 // zap logger for gorm
 type Logger struct {
-	log *zap.Logger
-	logger.Config
+	Config
+	log                                            *zap.Logger
 	normalStr, traceStr, traceErrStr, traceWarnStr string
 }
 
+type Config struct {
+	logger.Config
+	LineNumPrefix string
+}
+
 // New logger like gorm2
-func New(zapLogger *zap.Logger, config logger.Config) *Logger {
+func New(zapLogger *zap.Logger, config Config) *Logger {
 	var (
 		normalStr    = "%v%s "
 		traceStr     = "%v%s\n[%.3fms] [rows:%v] %s"
@@ -144,5 +152,6 @@ func (l Logger) getRequestId(ctx context.Context) string {
 
 func (l Logger) removePrefix(s string) string {
 	s = strings.TrimPrefix(s, runtimeRoot)
+	s = strings.TrimPrefix(s, l.LineNumPrefix)
 	return s
 }
