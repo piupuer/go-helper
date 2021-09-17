@@ -13,9 +13,10 @@ import (
 )
 
 type Options struct {
-	logger glogger.Interface
-	ctx    context.Context
-	prefix string
+	logger        glogger.Interface
+	ctx           context.Context
+	prefix        string
+	AutoRequestId bool
 }
 
 func WithLogger(l glogger.Interface) func(*Options) {
@@ -46,6 +47,10 @@ func WithPrefix(prefix string) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).prefix = prefix
 	}
+}
+
+func WithAutoRequestId(options *Options) {
+	getOptionsOrSetDefault(options).AutoRequestId = true
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {

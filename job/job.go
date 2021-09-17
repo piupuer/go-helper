@@ -6,6 +6,8 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
+	"github.com/piupuer/go-helper/logger"
+	uuid "github.com/satori/go.uuid"
 	"sync"
 )
 
@@ -93,6 +95,9 @@ func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
 	fun := (func(task GoodTask) func() {
 		return func() {
 			ctx := context.Background()
+			if g.ops.AutoRequestId {
+				ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
+			}
 			err := task.Func(ctx)
 			if err != nil {
 				if task.ErrHandler != nil {
