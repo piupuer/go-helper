@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v7"
 	uuid "github.com/satori/go.uuid"
-	"log"
 	"time"
 )
 
@@ -15,11 +14,17 @@ type RedisClientDriver struct {
 	client  redis.UniversalClient
 	timeout time.Duration
 	Key     string
+	ops     DriverOptions
 }
 
-func NewDriver(client redis.UniversalClient) (*RedisClientDriver, error) {
+func NewDriver(client redis.UniversalClient, options ...func(*DriverOptions)) (*RedisClientDriver, error) {
+	ops := getDriverOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
 	return &RedisClientDriver{
 		client: client,
+		ops:    *ops,
 	}, nil
 }
 
@@ -31,7 +36,11 @@ func (rd *RedisClientDriver) Ping() error {
 }
 
 func (rd *RedisClientDriver) getKeyPre(serviceName string) string {
-	return fmt.Sprintf("%s%s:", prefix, serviceName)
+	p := prefix
+	if rd.ops.prefix != "" {
+		p = rd.ops.prefix
+	}
+	return fmt.Sprintf("%s%s:", p, serviceName)
 }
 
 func (rd *RedisClientDriver) SetTimeout(timeout time.Duration) {
@@ -48,12 +57,12 @@ func (rd *RedisClientDriver) heartBeat(nodeID string) {
 	for range tickers.C {
 		keyExist, err := rd.do("EXPIRE", key, int(rd.timeout/time.Second))
 		if err != nil {
-			log.Printf("redis expire error %+v", err)
+			rd.ops.logger.Warn(rd.ops.ctx, "redis expire err: %v", err)
 			continue
 		}
 		if keyExist == int64(0) {
 			if err := rd.registerServiceNode(nodeID); err != nil {
-				log.Printf("register service node error %+v", err)
+				rd.ops.logger.Warn(rd.ops.ctx, "register service node err: %v", err)
 			}
 		}
 	}
@@ -97,10 +106,10 @@ func (rd *RedisClientDriver) scan(matchStr string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		if Reply, ok := reply.([]interface{}); ok && len(Reply) == 2 {
-			cursor = Reply[0].(string)
+		if r, ok := reply.([]interface{}); ok && len(r) == 2 {
+			cursor = r[0].(string)
 
-			list := Reply[1].([]interface{})
+			list := r[1].([]interface{})
 			for _, item := range list {
 				ret = append(ret, item.(string))
 			}

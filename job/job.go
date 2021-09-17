@@ -19,6 +19,7 @@ type GoodJob struct {
 	redis  redis.UniversalClient
 	driver *RedisClientDriver
 	tasks  map[string]GoodTask
+	ops    Options
 	Error  error
 }
 
@@ -32,7 +33,7 @@ type GoodTask struct {
 	ErrHandler func(err error)
 }
 
-func New(cfg Config) (*GoodJob, error) {
+func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	// init fields
 	job := GoodJob{}
 	if cfg.RedisClient != nil {
@@ -48,10 +49,20 @@ func New(cfg Config) (*GoodJob, error) {
 		job.redis = r
 	}
 
-	drv, err := NewDriver(job.redis)
+	drv, err := NewDriver(
+		job.redis,
+		WithDriverLogger(job.ops.logger),
+		WithDriverContext(job.ops.ctx),
+		WithDriverPrefix(job.ops.prefix),
+	)
 	if err != nil {
 		return nil, err
 	}
+	ops := getOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	job.ops = *ops
 	job.driver = drv
 	job.tasks = make(map[string]GoodTask, 0)
 	return &job, nil
@@ -74,7 +85,7 @@ func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
-		fmt.Printf("task %s already exists, skip\n", task.Name)
+		g.ops.logger.Warn(g.ops.ctx, "task %s already exists, skip", task.Name)
 		return g
 	}
 	task.cron = dcron.NewDcron(task.Name, g.driver)
@@ -131,7 +142,7 @@ func (g *GoodJob) Stop(taskName string) {
 			delete(g.tasks, taskName)
 			break
 		} else {
-			fmt.Printf("task %s is not running, skip\n", task.Name)
+			g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
 		}
 	}
 }
