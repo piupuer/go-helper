@@ -8,9 +8,10 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"gorm.io/gorm/utils"
+	"os"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -26,7 +27,7 @@ var (
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	runtimeRoot = strings.TrimSuffix(file, "logger/logger.go")
+	runtimeRoot = strings.TrimSuffix(file, fmt.Sprintf("logger%slogger.go", string(os.PathSeparator)))
 }
 
 // zap logger for gorm
@@ -80,7 +81,7 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 func (l Logger) Debug(ctx context.Context, format string, args ...interface{}) {
 	if l.log.Core().Enabled(zapcore.DebugLevel) {
 		requestId := l.getRequestId(ctx)
-		l.log.Sugar().Debugf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(utils.FileWithLineNum())}, args...)...)
+		l.log.Sugar().Debugf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(fileWithLineNum())}, args...)...)
 	}
 }
 
@@ -88,7 +89,7 @@ func (l Logger) Debug(ctx context.Context, format string, args ...interface{}) {
 func (l Logger) Info(ctx context.Context, format string, args ...interface{}) {
 	if l.log.Core().Enabled(zapcore.InfoLevel) {
 		requestId := l.getRequestId(ctx)
-		l.log.Sugar().Infof(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(utils.FileWithLineNum())}, args...)...)
+		l.log.Sugar().Infof(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(fileWithLineNum())}, args...)...)
 	}
 }
 
@@ -96,7 +97,7 @@ func (l Logger) Info(ctx context.Context, format string, args ...interface{}) {
 func (l Logger) Warn(ctx context.Context, format string, args ...interface{}) {
 	if l.log.Core().Enabled(zapcore.WarnLevel) {
 		requestId := l.getRequestId(ctx)
-		l.log.Sugar().Warnf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(utils.FileWithLineNum())}, args...)...)
+		l.log.Sugar().Warnf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(fileWithLineNum())}, args...)...)
 	}
 }
 
@@ -104,7 +105,7 @@ func (l Logger) Warn(ctx context.Context, format string, args ...interface{}) {
 func (l Logger) Error(ctx context.Context, format string, args ...interface{}) {
 	if l.log.Core().Enabled(zapcore.ErrorLevel) {
 		requestId := l.getRequestId(ctx)
-		l.log.Sugar().Errorf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(utils.FileWithLineNum())}, args...)...)
+		l.log.Sugar().Errorf(l.normalStr+format, append([]interface{}{requestId, l.removePrefix(fileWithLineNum())}, args...)...)
 	}
 }
 
@@ -113,7 +114,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 	if !l.log.Core().Enabled(zapcore.DPanicLevel) || l.LogLevel <= logger.Silent {
 		return
 	}
-	lineNum := l.removePrefix(utils.FileWithLineNum())
+	lineNum := l.removePrefix(fileWithLineNum())
 	elapsed := time.Since(begin)
 	elapsedF := float64(elapsed.Nanoseconds()) / 1e6
 	sql, rows := fc()
@@ -152,6 +153,18 @@ func (l Logger) getRequestId(ctx context.Context) string {
 		requestId = fmt.Sprintf("%v ", v)
 	}
 	return requestId
+}
+
+func fileWithLineNum() string {
+	// the second caller usually from gorm internal, so set i start from 2
+	for i := 2; i < 15; i++ {
+		_, file, line, ok := runtime.Caller(i)
+		if ok || strings.HasSuffix(file, "_test.go") {
+			return file + ":" + strconv.FormatInt(int64(line), 10)
+		}
+	}
+
+	return ""
 }
 
 func (l Logger) removePrefix(s string) string {

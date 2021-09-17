@@ -8,7 +8,14 @@ import (
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/logger"
 	uuid "github.com/satori/go.uuid"
+	glogger "gorm.io/gorm/logger"
+	"strings"
 	"sync"
+)
+
+const (
+	dcronInfoPrefix  = "INFO: "
+	dcronErrorPrefix = "ERR: "
 )
 
 type Config struct {
@@ -84,13 +91,23 @@ func ParseRedisURI(uri string) (redis.UniversalClient, error) {
 }
 
 func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
+	if g.Error != nil {
+		return g
+	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
 		g.ops.logger.Warn(g.ops.ctx, "task %s already exists, skip", task.Name)
 		return g
 	}
-	task.cron = dcron.NewDcron(task.Name, g.driver)
+
+	task.cron = dcron.NewDcronWithOption(
+		task.Name,
+		g.driver,
+		dcron.WithLogger(&cronLogger{
+			g.ops.logger,
+		}),
+	)
 	g.tasks[task.Name] = task
 	fun := (func(task GoodTask) func() {
 		return func() {
@@ -111,6 +128,9 @@ func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
 }
 
 func (g *GoodJob) Start() {
+	if g.Error != nil {
+		return
+	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	for _, task := range g.tasks {
@@ -124,6 +144,9 @@ func (g *GoodJob) Start() {
 
 // stop all task in current node(task still running in other node)
 func (g *GoodJob) StopAll() {
+	if g.Error != nil {
+		return
+	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	for _, task := range g.tasks {
@@ -137,6 +160,9 @@ func (g *GoodJob) StopAll() {
 
 // stop task in current node(task still running in other node)
 func (g *GoodJob) Stop(taskName string) {
+	if g.Error != nil {
+		return
+	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	for _, task := range g.tasks {
@@ -149,5 +175,18 @@ func (g *GoodJob) Stop(taskName string) {
 		} else {
 			g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
 		}
+	}
+}
+
+type cronLogger struct {
+	l glogger.Interface
+}
+
+func (c cronLogger) Printf(format string, args ...interface{}) {
+	ctx := context.Background()
+	if strings.HasPrefix(format, dcronInfoPrefix) {
+		c.l.Info(ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
+	} else if strings.HasPrefix(format, dcronErrorPrefix) {
+		c.l.Error(ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
 	}
 }

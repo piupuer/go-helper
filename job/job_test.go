@@ -10,7 +10,7 @@ import (
 )
 
 func Run(ctx context.Context) error {
-	fmt.Println(ctx)
+	fmt.Println("running context: ", ctx)
 	http.Get(fmt.Sprintf("http://127.0.0.1/api/ping?key=%d&pid=%d", time.Now().Unix(), os.Getpid()))
 	return nil
 }
