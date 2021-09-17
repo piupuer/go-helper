@@ -22,13 +22,13 @@ const (
 )
 
 var (
-	runtimeRoot = ""
+	sourceDir = ""
 )
 
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	runtimeRoot = strings.TrimSuffix(file, fmt.Sprintf("logger%slogger.go", string(os.PathSeparator)))
+	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("logger%slogger.go", string(os.PathSeparator)))
 }
 
 // zap logger for gorm
@@ -160,7 +160,7 @@ func fileWithLineNum() string {
 	// the second caller usually from gorm internal, so set i start from 2
 	for i := 2; i < 15; i++ {
 		_, file, line, ok := runtime.Caller(i)
-		if ok || strings.HasSuffix(file, "_test.go") {
+		if ok && (!strings.HasPrefix(file, sourceDir) || strings.HasSuffix(file, "_test.go")) {
 			return file + ":" + strconv.FormatInt(int64(line), 10)
 		}
 	}
@@ -169,14 +169,8 @@ func fileWithLineNum() string {
 }
 
 func (l Logger) removePrefix(s1 string, s2 string) string {
-	if strings.HasPrefix(s1, runtimeRoot) {
-		s1 = strings.TrimPrefix(s1, runtimeRoot)
-	}
 	if strings.HasPrefix(s1, l.LineNumPrefix) {
 		s1 = strings.TrimPrefix(s1, l.LineNumPrefix)
-	}
-	if strings.HasPrefix(s2, runtimeRoot) {
-		s2 = strings.TrimPrefix(s2, runtimeRoot)
 	}
 	if strings.HasPrefix(s2, l.LineNumPrefix) {
 		s2 = strings.TrimPrefix(s2, l.LineNumPrefix)
