@@ -3,8 +3,11 @@ module github.com/piupuer/go-helper
 go 1.16
 
 require (
+	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
+	github.com/hibiken/asynq v0.18.5
+	github.com/libi/dcron v0.2.2
 	github.com/satori/go.uuid v1.2.0
 	github.com/streadway/amqp v1.0.0
 	github.com/thoas/go-funk v0.9.1
