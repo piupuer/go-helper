@@ -135,6 +135,10 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 	}
 }
 
+func (l Logger) GetZapLog() *zap.Logger {
+	return l.log
+}
+
 func (l Logger) getRequestId(ctx context.Context) string {
 	var v interface{}
 	vi := reflect.ValueOf(ctx)
