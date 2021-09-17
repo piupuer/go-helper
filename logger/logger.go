@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 	"os"
+	"path"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -175,8 +176,13 @@ func (l Logger) removePrefix(s1 string, s2 string) string {
 	if strings.HasPrefix(s2, l.LineNumPrefix) {
 		s2 = strings.TrimPrefix(s2, l.LineNumPrefix)
 	}
+	res := s2
 	if len(s1) < len(s2) {
-		return s1
+		res = s1
 	}
-	return s2
+	arr := strings.Split(res, "@")
+	if len(arr) == 2 {
+		res = fmt.Sprintf("%s@%s", path.Base(arr[0]), arr[1])
+	}
+	return res
 }
