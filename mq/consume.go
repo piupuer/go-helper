@@ -22,7 +22,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 	if co.Error != nil {
 		return co.Error
 	}
-	ctx := co.newContext()
+	ctx := co.newContext(nil)
 	delivery, err := co.consume(ctx)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					}
 				}
 				if co.ops.NewRequestIdWhenConnectionLost {
-					ctx = co.newContext()
+					ctx = co.newContext(nil)
 				}
 				d, err := co.consume(ctx)
 				if err != nil {
@@ -79,7 +79,7 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 	if co.Error != nil {
 		return co.Error
 	}
-	ctx := co.newContext()
+	ctx := co.newContext(co.ops.oneCtx)
 	msg, ok, err := co.consumeOne(ctx)
 	if err != nil {
 		return err
@@ -163,8 +163,10 @@ func (co *Consume) consumeOne(ctx context.Context) (amqp.Delivery, bool, error) 
 	)
 }
 
-func (co *Consume) newContext() context.Context {
-	ctx := context.Background()
+func (co *Consume) newContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if co.ops.AutoRequestId {
 		ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
 	}

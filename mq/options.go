@@ -299,6 +299,7 @@ type ConsumeOptions struct {
 	NackRequeue                    bool
 	AutoRequestId                  bool
 	NewRequestIdWhenConnectionLost bool
+	oneCtx                         context.Context
 }
 
 func WithConsumeQosPrefetchCount(prefetchCount int) func(*ConsumeOptions) {
@@ -355,6 +356,12 @@ func WithConsumeAutoRequestId(options *ConsumeOptions) {
 
 func WithConsumeNewRequestIdWhenConnectionLost(options *ConsumeOptions) {
 	getConsumeOptionsOrSetDefault(options).NewRequestIdWhenConnectionLost = true
+}
+
+func WithConsumeOneContext(ctx context.Context) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).oneCtx = ctx
+	}
 }
 
 func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {
