@@ -17,6 +17,7 @@ import (
 type RabbitOptions struct {
 	ReconnectInterval      int
 	ReconnectMaxRetryCount int
+	ChannelMaxLostCount    int
 	Timeout                int
 	logger                 glogger.Interface
 	ctx                    context.Context
@@ -34,6 +35,14 @@ func WithReconnectMaxRetryCount(count int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if count > 0 {
 			getRabbitOptionsOrSetDefault(options).ReconnectMaxRetryCount = count
+		}
+	}
+}
+
+func WithChannelMaxLostCount(count int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if count > 0 {
+			getRabbitOptionsOrSetDefault(options).ChannelMaxLostCount = count
 		}
 	}
 }
@@ -85,7 +94,8 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 		l := zap.New(core)
 		return &RabbitOptions{
 			Timeout:                10,
-			ReconnectMaxRetryCount: 1,
+			ReconnectMaxRetryCount: 3,
+			ChannelMaxLostCount:    5,
 			ReconnectInterval:      5,
 			logger: logger.New(
 				l,

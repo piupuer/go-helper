@@ -12,13 +12,14 @@ import (
 )
 
 type Rabbit struct {
-	dsn      string           // connection url
-	connLock int32            // lock when create connect
-	conn     *amqp.Connection // connection instance
-	lost     bool             // connection is lost
-	lostCh   chan error       // When the connection is lost, an error is sent to this channel
-	ops      RabbitOptions
-	Error    error
+	dsn              string           // connection url
+	connLock         int32            // lock when create connect
+	conn             *amqp.Connection // connection instance
+	lost             bool             // connection is lost
+	channelLostCount int              // can't get channel count
+	lostCh           chan error       // When the connection is lost, an error is sent to this channel
+	ops              RabbitOptions
+	Error            error
 }
 
 type Exchange struct {
@@ -102,6 +103,10 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 
 // get a channel
 func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
+	if rb.channelLostCount > rb.ops.ChannelMaxLostCount {
+		rb.ops.logger.Warn(ctx, "get channel failed %d retries, connection maybe lost", rb.channelLostCount)
+		rb.lost = true
+	}
 	if rb.lost == true {
 		err := rb.reconnect(ctx)
 		if err != nil {
@@ -110,8 +115,10 @@ func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
 	}
 	channel, err := rb.conn.Channel()
 	if err != nil {
+		rb.channelLostCount++
 		return nil, err
 	}
+	rb.channelLostCount = 0
 	return channel, nil
 }
 
