@@ -43,6 +43,7 @@ type Logger struct {
 type Config struct {
 	logger.Config
 	LineNumPrefix string
+	LineNumLevel  int
 }
 
 // New logger like gorm2
@@ -59,6 +60,10 @@ func New(zapLogger *zap.Logger, config Config) *Logger {
 		traceStr = logger.Cyan + "%v" + logger.Blue + "%s\n" + logger.Reset + logger.Yellow + "[%.3fms] " + logger.BlueBold + "[rows:%v]" + logger.Reset + " %s"
 		traceWarnStr = logger.Cyan + "%v" + logger.Blue + "%s " + logger.Yellow + "%s\n" + logger.Reset + logger.RedBold + "[%.3fms] " + logger.Yellow + "[rows:%v]" + logger.Magenta + " %s" + logger.Reset
 		traceErrStr = logger.Cyan + "%v" + logger.RedBold + "%s " + logger.MagentaBold + "%s\n" + logger.Reset + logger.Yellow + "[%.3fms] " + logger.BlueBold + "[rows:%v]" + logger.Reset + " %s"
+	}
+
+	if config.LineNumLevel <= 0 {
+		config.LineNumLevel = 3
 	}
 
 	l := &Logger{
@@ -188,7 +193,7 @@ func (l Logger) removeBaseDir(s string) string {
 	}
 	arr := strings.Split(s, "@")
 	if len(arr) == 2 {
-		s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], 2), arr[1])
+		s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], l.LineNumLevel), arr[1])
 	}
 	return s
 }
