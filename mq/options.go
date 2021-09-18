@@ -90,6 +90,7 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 			logger: logger.New(
 				l,
 				logger.Config{
+					LineNumLevel: 2,
 					Config: glogger.Config{
 						Colorful: true,
 					},
