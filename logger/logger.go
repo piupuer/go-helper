@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm/utils"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -29,7 +30,7 @@ var (
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("logger%slogger.go", string(os.PathSeparator)))
+	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("%slogger%slogger.go", string(os.PathSeparator), string(os.PathSeparator)))
 }
 
 // zap logger for gorm
@@ -170,19 +171,36 @@ func fileWithLineNum() string {
 }
 
 func (l Logger) removePrefix(s1 string, s2 string) string {
-	if strings.HasPrefix(s1, l.LineNumPrefix) {
-		s1 = strings.TrimPrefix(s1, l.LineNumPrefix)
+	res1 := l.removeBaseDir(s1)
+	res2 := l.removeBaseDir(s2)
+	if len(res1) < len(res2) && !strings.HasPrefix(s1, sourceDir) {
+		return res1
 	}
-	if strings.HasPrefix(s2, l.LineNumPrefix) {
-		s2 = strings.TrimPrefix(s2, l.LineNumPrefix)
+	return res2
+}
+
+func (l Logger) removeBaseDir(s string) string {
+	if strings.HasPrefix(s, sourceDir) {
+		s = strings.TrimPrefix(s, path.Dir(sourceDir)+"/")
 	}
-	res := s2
-	if len(s1) < len(s2) {
-		res = s1
+	if strings.HasPrefix(s, l.LineNumPrefix) {
+		s = strings.TrimPrefix(s, l.LineNumPrefix)
 	}
-	arr := strings.Split(res, "@")
+	arr := strings.Split(s, "@")
 	if len(arr) == 2 {
-		res = fmt.Sprintf("%s@%s", path.Base(arr[0]), arr[1])
+		s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], 2), arr[1])
 	}
-	return res
+	return s
+}
+
+func (l Logger) getParentDir(dir string, index int) string {
+	d, b := filepath.Split(filepath.Clean(dir))
+	parentDir := ""
+	if index > 0 {
+		parentDir = l.getParentDir(d, index-1)
+	}
+	if parentDir != "" {
+		return fmt.Sprintf("%s%s%s", parentDir, string(os.PathSeparator), b)
+	}
+	return b
 }
