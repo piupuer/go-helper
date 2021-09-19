@@ -7,6 +7,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/logger"
+	"github.com/robfig/cron/v3"
 	uuid "github.com/satori/go.uuid"
 	glogger "gorm.io/gorm/logger"
 	"strings"
@@ -24,27 +25,41 @@ type Config struct {
 }
 
 type GoodJob struct {
-	lock   sync.Mutex
-	redis  redis.UniversalClient
-	driver *RedisClientDriver
-	tasks  map[string]GoodTask
-	ops    Options
-	Error  error
+	lock        sync.Mutex
+	redis       redis.UniversalClient
+	driver      *RedisClientDriver
+	tasks       map[string]GoodDistributeTask
+	single      bool
+	singleTasks map[string]GoodSingleTask
+	ops         Options
+	Error       error
 }
 
 type GoodTask struct {
-	cron       *dcron.Dcron
-	running    bool
-	Name       string
-	Expr       string
-	Payload    string
-	Func       func(ctx context.Context) error
-	ErrHandler func(err error)
+	running bool
+	Name    string
+	Expr    string
+	Func    func(ctx context.Context) error
+}
+
+type GoodSingleTask struct {
+	GoodTask
+	c *cron.Cron
+}
+
+type GoodDistributeTask struct {
+	GoodTask
+	c *dcron.Dcron
 }
 
 func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	// init fields
 	job := GoodJob{}
+	ops := getOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	job.ops = *ops
 	if cfg.RedisClient != nil {
 		job.redis = cfg.RedisClient
 	} else {
@@ -58,6 +73,14 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 		job.redis = r
 	}
 
+	_, err := job.redis.Ping().Result()
+	if err != nil {
+		job.single = true
+		job.singleTasks = make(map[string]GoodSingleTask, 0)
+		job.ops.logger.Warn(job.ops.ctx, "initialize redis failed, switch singe mode, err: %v", err)
+		return &job, nil
+	}
+
 	drv, err := NewDriver(
 		job.redis,
 		WithDriverLogger(job.ops.logger),
@@ -67,13 +90,8 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		return nil, err
 	}
-	ops := getOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
-	}
-	job.ops = *ops
 	job.driver = drv
-	job.tasks = make(map[string]GoodTask, 0)
+	job.tasks = make(map[string]GoodDistributeTask, 0)
 	return &job, nil
 }
 
@@ -94,6 +112,42 @@ func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
 	if g.Error != nil {
 		return g
 	}
+	if g.single {
+		return g.addSingleTask(task)
+	}
+	return g.addDistributeTask(task)
+}
+
+func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
+	if g.Error != nil {
+		return g
+	}
+	g.lock.Lock()
+	defer g.lock.Unlock()
+	if _, ok := g.singleTasks[task.Name]; ok {
+		g.ops.logger.Warn(g.ops.ctx, "task %s already exists, skip", task.Name)
+		return g
+	}
+
+	c := cron.New()
+	j := job{
+		AutoRequestId: g.ops.AutoRequestId,
+		Func:          task.Func,
+	}
+	c.AddJob(task.Expr, j)
+
+	t := GoodSingleTask{
+		GoodTask: task,
+		c:        c,
+	}
+	g.singleTasks[task.Name] = t
+	return g
+}
+
+func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
+	if g.Error != nil {
+		return g
+	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
@@ -101,29 +155,28 @@ func (g *GoodJob) AddTask(task GoodTask) *GoodJob {
 		return g
 	}
 
-	task.cron = dcron.NewDcronWithOption(
+	c := dcron.NewDcronWithOption(
 		task.Name,
 		g.driver,
 		dcron.WithLogger(&cronLogger{
 			g.ops.logger,
 		}),
 	)
-	g.tasks[task.Name] = task
 	fun := (func(task GoodTask) func() {
 		return func() {
 			ctx := context.Background()
 			if g.ops.AutoRequestId {
 				ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
 			}
-			err := task.Func(ctx)
-			if err != nil {
-				if task.ErrHandler != nil {
-					task.ErrHandler(err)
-				}
-			}
+			task.Func(ctx)
 		}
 	})(task)
-	task.cron.AddFunc(task.Name, task.Expr, fun)
+	c.AddFunc(task.Name, task.Expr, fun)
+	t := GoodDistributeTask{
+		GoodTask: task,
+		c:        c,
+	}
+	g.tasks[task.Name] = t
 	return g
 }
 
@@ -133,11 +186,21 @@ func (g *GoodJob) Start() {
 	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
-	for _, task := range g.tasks {
-		if !task.running {
-			task.cron.Start()
-			task.running = true
-			g.tasks[task.Name] = task
+	if g.single {
+		for _, task := range g.singleTasks {
+			if !task.running {
+				task.c.Start()
+				task.running = true
+				g.singleTasks[task.Name] = task
+			}
+		}
+	} else {
+		for _, task := range g.tasks {
+			if !task.running {
+				task.c.Start()
+				task.running = true
+				g.tasks[task.Name] = task
+			}
 		}
 	}
 }
@@ -149,11 +212,21 @@ func (g *GoodJob) StopAll() {
 	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
-	for _, task := range g.tasks {
-		if task.running {
-			task.cron.Stop()
-			task.running = false
-			g.tasks[task.Name] = task
+	if g.single {
+		for _, task := range g.singleTasks {
+			if task.running {
+				task.c.Stop()
+				task.running = false
+				g.singleTasks[task.Name] = task
+			}
+		}
+	} else {
+		for _, task := range g.tasks {
+			if task.running {
+				task.c.Stop()
+				task.running = false
+				g.tasks[task.Name] = task
+			}
 		}
 	}
 }
@@ -165,15 +238,33 @@ func (g *GoodJob) Stop(taskName string) {
 	}
 	g.lock.Lock()
 	defer g.lock.Unlock()
-	for _, task := range g.tasks {
-		if task.running && task.Name == taskName {
-			task.cron.Stop()
-			task.running = false
-			g.tasks[task.Name] = task
-			delete(g.tasks, taskName)
-			break
-		} else {
-			g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
+	if g.single {
+		for _, task := range g.singleTasks {
+			if task.Name == taskName {
+				if task.running {
+					task.c.Stop()
+					task.running = false
+					g.singleTasks[task.Name] = task
+					delete(g.singleTasks, taskName)
+					break
+				} else {
+					g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
+				}
+			}
+		}
+	} else {
+		for _, task := range g.tasks {
+			if task.Name == taskName {
+				if task.running {
+					task.c.Stop()
+					task.running = false
+					g.tasks[task.Name] = task
+					delete(g.tasks, taskName)
+					break
+				} else {
+					g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
+				}
+			}
 		}
 	}
 }
@@ -188,5 +279,20 @@ func (c cronLogger) Printf(format string, args ...interface{}) {
 		c.l.Info(ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
 	} else if strings.HasPrefix(format, dcronErrorPrefix) {
 		c.l.Error(ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
+	}
+}
+
+type job struct {
+	AutoRequestId bool
+	Func          func(ctx context.Context) error
+}
+
+func (j job) Run() {
+	if j.Func != nil {
+		ctx := context.Background()
+		if j.AutoRequestId {
+			ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
+		}
+		j.Func(ctx)
 	}
 }

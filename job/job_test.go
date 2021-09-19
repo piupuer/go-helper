@@ -10,7 +10,7 @@ import (
 )
 
 func Run(ctx context.Context) error {
-	fmt.Println("running context: ", ctx)
+	fmt.Println(time.Now(), "running context: ", ctx)
 	http.Get(fmt.Sprintf("http://127.0.0.1/api/ping?key=%d&pid=%d", time.Now().Unix(), os.Getpid()))
 	return nil
 }
@@ -28,7 +28,6 @@ func TestNew(t *testing.T) {
 	job.AddTask(GoodTask{
 		Name:    "work",
 		Expr:    "@every 10s",
-		Payload: "{}",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},
@@ -38,7 +37,6 @@ func TestNew(t *testing.T) {
 	job.AddTask(GoodTask{
 		Name:    "work2",
 		Expr:    "@every 5s",
-		Payload: "{}",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},
