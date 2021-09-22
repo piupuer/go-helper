@@ -70,7 +70,8 @@ func getOptionsOrSetDefault(options *Options) *Options {
 			logger: logger.New(
 				l,
 				logger.Config{
-					LineNumLevel: 2,
+					LineNumLevel:  2,
+					KeepSourceDir: true,
 					Config: glogger.Config{
 						Colorful: true,
 					},
@@ -134,7 +135,8 @@ func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 			logger: logger.New(
 				l,
 				logger.Config{
-					LineNumLevel: 2,
+					LineNumLevel:  2,
+					KeepSourceDir: true,
 					Config: glogger.Config{
 						Colorful: true,
 					},

@@ -44,6 +44,7 @@ type Config struct {
 	logger.Config
 	LineNumPrefix string
 	LineNumLevel  int
+	KeepSourceDir bool
 }
 
 // New logger like gorm2
@@ -181,7 +182,7 @@ func (l Logger) removePrefix(s1 string, s2 string) string {
 }
 
 func (l Logger) removeBaseDir(s string) string {
-	if strings.HasPrefix(s, sourceDir) {
+	if !l.KeepSourceDir && strings.HasPrefix(s, sourceDir) {
 		s = strings.TrimPrefix(s, path.Dir(sourceDir)+"/")
 	}
 	if strings.HasPrefix(s, l.LineNumPrefix) {

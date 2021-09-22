@@ -100,7 +100,8 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 			logger: logger.New(
 				l,
 				logger.Config{
-					LineNumLevel: 2,
+					LineNumLevel:  2,
+					KeepSourceDir: true,
 					Config: glogger.Config{
 						Colorful: true,
 					},
