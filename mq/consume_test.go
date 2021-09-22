@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"testing"
+	"time"
 )
 
 func TestQueue_Consume(t *testing.T) {
@@ -36,7 +37,30 @@ func TestQueue_Consume(t *testing.T) {
 	<-ch
 }
 
-func handler(ctx context.Context,q string, delivery amqp.Delivery) bool {
+func handler(ctx context.Context, q string, delivery amqp.Delivery) bool {
 	fmt.Println(ctx, q, delivery.Exchange)
 	return true
+}
+
+func TestQueue_ConsumeOne(t *testing.T) {
+	rb := NewRabbit(uri)
+	if rb.Error != nil {
+		panic(rb.Error)
+	}
+	for {
+		time.Sleep(10 * time.Second)
+		err := rb.
+			Exchange(
+				WithExchangeName("ex1"),
+			).Queue(
+			WithQueueName("q1"),
+			WithQueueSkipDeclare,
+			WithQueueSkipBind,
+		).ConsumeOne(
+			handler,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }

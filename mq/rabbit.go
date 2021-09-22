@@ -68,8 +68,11 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 
 // connect mq
 func (rb *Rabbit) connect(ctx context.Context) error {
+	if !rb.lost {
+		return nil
+	}
 	v := atomic.LoadInt32(&rb.connLock)
-	if v == 1 || !rb.lost {
+	if v == 1 {
 		rb.ops.logger.Warn(ctx, "the connection is creating")
 		return fmt.Errorf("the connection is creating")
 	}
@@ -124,11 +127,14 @@ func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
 
 // reconnect mq
 func (rb *Rabbit) reconnect(ctx context.Context) error {
+	if !rb.lost {
+		return nil
+	}
 	interval := time.Duration(rb.ops.ReconnectInterval) * time.Second
 	retryCount := 0
 	var err error
 	for {
-		if atomic.LoadInt32(&rb.connLock) == 1 || !rb.lost {
+		if atomic.LoadInt32(&rb.connLock) == 1 {
 			rb.ops.logger.Warn(ctx, "the connection is creating, please wait")
 			return fmt.Errorf("the connection is creating")
 		}

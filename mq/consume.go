@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
+	"time"
 )
 
 type Consume struct {
@@ -54,6 +55,8 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					err = co.qu.ex.rb.reconnect(ctx)
 					if err == nil {
 						break
+					} else {
+						time.Sleep(time.Duration(co.qu.ex.rb.ops.ReconnectInterval) * time.Second)
 					}
 				}
 				if co.ops.NewRequestIdWhenConnectionLost {
