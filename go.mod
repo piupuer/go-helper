@@ -13,6 +13,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/thoas/go-funk v0.9.1
 	go.uber.org/zap v1.18.1
+	google.golang.org/grpc v1.27.0
 	google.golang.org/protobuf v1.26.0
 	gorm.io/gorm v1.21.11
 )
