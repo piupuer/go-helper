@@ -8,14 +8,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"io/ioutil"
 	"time"
 )
 
 type Grpc struct {
-	uri      string
-	insecure bool
-	ops      GrpcOptions
+	uri   string
+	ctl   credentials.TransportCredentials
+	ops   GrpcOptions
+	Error error
 }
 
 func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
@@ -25,37 +25,31 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 	for _, f := range options {
 		f(ops)
 	}
-	if ops.ClientKey == "" || ops.ClientPem == "" || ops.CaPem == "" {
-		gr.insecure = true
-	}
 	gr.ops = *ops
-	return &gr
-}
-
-func (gr *Grpc) Conn() (*grpc.ClientConn, error) {
-	var ctl credentials.TransportCredentials
-	if !gr.insecure {
-		cert, err := tls.LoadX509KeyPair(gr.ops.ClientPem, gr.ops.ClientKey)
+	if len(ops.ClientKey) > 0 || len(ops.ClientPem) > 0 || len(ops.CaPem) > 0 {
+		cert, err := tls.X509KeyPair(gr.ops.ClientPem, gr.ops.ClientKey)
 		if err != nil {
-			return nil, fmt.Errorf("[grpc]load x509 key pair err: %v", err)
+			gr.Error = fmt.Errorf("[grpc]load x509 key pair err: %v", err)
+			return &gr
 		}
 		certPool := x509.NewCertPool()
-		ca, err := ioutil.ReadFile(gr.ops.CaPem)
-		if err != nil {
-			return nil, fmt.Errorf("[grpc]read ca.pem err: %v", err)
+		if ok := certPool.AppendCertsFromPEM(gr.ops.CaPem); !ok {
+			gr.Error = fmt.Errorf("[grpc]append certs from pem err: %v", err)
+			return &gr
 		}
-		if ok := certPool.AppendCertsFromPEM(ca); !ok {
-			return nil, fmt.Errorf("[grpc]append certs from pem err: %v", err)
-		}
-		ctl = credentials.NewTLS(&tls.Config{
+		gr.ctl = credentials.NewTLS(&tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ServerName:   gr.ops.ServerName,
 			RootCAs:      certPool,
 		})
 	}
+	return &gr
+}
+
+func (gr Grpc) Conn() (*grpc.ClientConn, error) {
 	var option grpc.DialOption
-	if ctl != nil {
-		option = grpc.WithTransportCredentials(ctl)
+	if gr.ctl != nil {
+		option = grpc.WithTransportCredentials(gr.ctl)
 	} else {
 		option = grpc.WithInsecure()
 	}
