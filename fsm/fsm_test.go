@@ -116,22 +116,24 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// 拒绝
 	_, err = f.ApproveLog(request.ApproveLogReq{
-		MId:            1,   // CreateMachine创建后生成的数据库id
-		Category:       1,   // 自定义分类
-		Uuid:           uid, // 唯一编号
-		ApprovalRoleId: 4,
-		Approved:       2,
+		MId:             1,   // CreateMachine创建后生成的数据库id
+		Category:        1,   // 自定义分类
+		Uuid:            uid, // 唯一编号
+		ApprovalRoleId:  4,
+		Approved:        2,
+		ApprovalOpinion: "信息填错1",
 	})
 	if err != nil {
 		fmt.Println(err)
 	}
 	// 拒绝
 	_, err = f.ApproveLog(request.ApproveLogReq{
-		MId:            1,   // CreateMachine创建后生成的数据库id
-		Category:       1,   // 自定义分类
-		Uuid:           uid, // 唯一编号
-		ApprovalUserId: 4,
-		Approved:       2,
+		MId:             1,   // CreateMachine创建后生成的数据库id
+		Category:        1,   // 自定义分类
+		Uuid:            uid, // 唯一编号
+		ApprovalUserId:  4,
+		Approved:        2,
+		ApprovalOpinion: "信息填错2",
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -295,5 +297,37 @@ func TestFsm_CancelLogs(t *testing.T) {
 	}
 
 	f.CancelLogs(1)
+	tx.Commit()
+}
+
+func TestFsm_FindPendingLogsByApprover(t *testing.T) {
+	tx := db.Begin()
+	f := New(tx)
+	fmt.Println(f.FindPendingLogsByApprover(request.PendingLogReq{
+		ApprovalRoleId: 1,
+		ApprovalUserId: 2,
+		Category:       1,
+	}))
+	tx.Commit()
+}
+
+func TestFsm_FindLogs(t *testing.T) {
+	tx := db.Begin()
+	f := New(tx)
+	fmt.Println(f.FindLogs(request.LogReq{
+		Category: 1,
+		Uuid:     "log1",
+	}))
+	tx.Commit()
+}
+
+func TestFsm_GetLogTrack(t *testing.T) {
+	tx := db.Begin()
+	f := New(tx)
+	logs, _ := f.FindLogs(request.LogReq{
+		Category: 1,
+		Uuid:     "log2",
+	})
+	fmt.Println(f.GetLogTrack(logs))
 	tx.Commit()
 }

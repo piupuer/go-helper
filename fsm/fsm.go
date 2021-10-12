@@ -152,17 +152,19 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	}
 
 	if req.Approved == LogStatusCancelled {
-		oldLog.Approved = LogStatusCancelled
-		oldLog.ApprovalRoleId = req.ApprovalRoleId
-		oldLog.ApprovalUserId = req.ApprovalUserId
-		oldLog.ApprovalOpinion = req.ApprovalOpinion
-		oldLog.Detail = MsgSubmitterCancel
+		m := make(map[string]interface{}, 0)
+		m["approved"] = LogStatusCancelled
+		m["approval_role_id"] = req.ApprovalRoleId
+		m["approval_user_id"] = req.ApprovalUserId
+		m["approval_opinion"] = req.ApprovalOpinion
+		m["next_event_id"] = models.Zero
+		m["detail"] = MsgSubmitterCancel
 		resp.Cancel = true
 		// 更新为已取消
 		err = fs.session.
 			Model(&Log{}).
 			Where("id = ?", oldLog.Id).
-			Updates(&oldLog).Error
+			Updates(&m).Error
 		if err != nil {
 			return nil, err
 		}
@@ -269,19 +271,19 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	if err != nil {
 		return nil, err
 	}
+	m := make(map[string]interface{}, 0)
+	m["approved"] = LogStatusApproved
 	if req.Approved == LogStatusRefused {
-		oldLog.Approved = LogStatusRefused
-	} else {
-		oldLog.Approved = LogStatusApproved
+		m["approved"] = LogStatusRefused
 	}
-	oldLog.ApprovalRoleId = req.ApprovalRoleId
-	oldLog.ApprovalUserId = req.ApprovalUserId
-	oldLog.ApprovalOpinion = req.ApprovalOpinion
+	m["approval_role_id"] = req.ApprovalRoleId
+	m["approval_user_id"] = req.ApprovalUserId
+	m["approval_opinion"] = req.ApprovalOpinion
 	// 更新为已审批
 	err = fs.session.
 		Model(&Log{}).
 		Where("id = ?", oldLog.Id).
-		Updates(&oldLog).Error
+		Updates(&m).Error
 	if err != nil {
 		return nil, err
 	}
@@ -293,13 +295,15 @@ func (fs Fsm) CancelLogs(category uint) error {
 	if fs.Error != nil {
 		return fs.Error
 	}
+	m := make(map[string]interface{}, 0)
+	m["approved"] = LogStatusCancelled
+	m["next_event_id"] = models.Zero
+	m["detail"] = MsgConfigChanged
 	return fs.session.
+		Model(&Log{}).
 		Where("category = ?", category).
 		Where("approved = ?", LogStatusWaiting).
-		Updates(Log{
-			Approved: LogStatusCancelled,
-			Detail:   MsgConfigChanged,
-		}).Error
+		Updates(&m).Error
 }
 
 // =======================================================
@@ -367,6 +371,56 @@ func (fs Fsm) FindLogs(req request.LogReq) ([]Log, error) {
 		return nil, err
 	}
 	return logs, nil
+}
+
+// 获取审批轨迹
+func (fs Fsm) GetLogTrack(logs []Log) ([]response.LogTrackResp, error) {
+	if fs.Error != nil {
+		return nil, fs.Error
+	}
+	track := make([]response.LogTrackResp, 0)
+	if len(logs) == 0 {
+		return track, nil
+	}
+	l := len(logs)
+	for i, log := range logs {
+		prevCancel := false
+		prevOpinion := ""
+		end := false
+		cancel := log.Approved == LogStatusCancelled
+		if i > 0 {
+			prevCancel = logs[i-1].Approved == LogStatusCancelled
+			prevOpinion = logs[i-1].ApprovalOpinion
+		}
+		if i == l-1 && log.NextEventId == models.Zero {
+			end = true
+		}
+		if end || cancel {
+			track = append(track, response.LogTrackResp{
+				Name:    log.PrevDetail,
+				Opinion: prevOpinion,
+				Cancel:  prevCancel,
+			}, response.LogTrackResp{
+				Name:    log.Detail,
+				Opinion: log.ApprovalOpinion,
+				End:     end,
+				Cancel:  cancel,
+			})
+		} else {
+			track = append(track, response.LogTrackResp{
+				Name:    log.PrevDetail,
+				Opinion: prevOpinion,
+				End:     end,
+				Cancel:  cancel,
+			})
+		}
+		if i == l-1 && log.Approved == LogStatusWaiting {
+			track = append(track, response.LogTrackResp{
+				Name: logs[i].Detail,
+			})
+		}
+	}
+	return track, nil
 }
 
 // 获取某个用户的待审批列表

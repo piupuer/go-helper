@@ -17,3 +17,10 @@ type EventResp struct {
 	RoleId     uint   `json:"roleId"`
 	Users      []uint `json:"users"`
 }
+
+type LogTrackResp struct {
+	Name    string `json:"name"`
+	Opinion string `json:"opinion"`
+	End     bool   `json:"end"`
+	Cancel  bool   `json:"cancel"`
+}
