@@ -58,3 +58,9 @@ type LogReq struct {
 	Category models.ReqUint `json:"category" form:"category"`
 	Uuid     string         `json:"uuid" form:"uuid"`
 }
+
+type MachineReq struct {
+	Name             string          `json:"name" form:"name"`
+	SubmitterName    string          `json:"submitterName" form:"submitterName"`
+	SubmitterConfirm *models.ReqUint `json:"submitterConfirm" form:"submitterConfirm"`
+}

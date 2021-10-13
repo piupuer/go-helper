@@ -350,6 +350,28 @@ func (fs Fsm) CheckLogPermission(req request.PermissionLogReq) (*Log, error) {
 	return log, nil
 }
 
+// 获取全部状态机
+func (fs Fsm) FindMachine(req request.MachineReq) ([]Machine, error) {
+	if fs.Error != nil {
+		return nil, fs.Error
+	}
+	var machines []Machine
+	query := fs.session
+	name := strings.TrimSpace(req.Name)
+	if name != "" {
+		query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
+	}
+	submitterName := strings.TrimSpace(req.SubmitterName)
+	if submitterName != "" {
+		query.Where("submitter_name LIKE ?", fmt.Sprintf("%%%s%%", submitterName))
+	}
+	if req.SubmitterConfirm != nil {
+		query.Where("submitter_confirm = ?", *req.SubmitterConfirm)
+	}
+	err := query.Find(&machines).Error
+	return machines, err
+}
+
 // 获取全部审批日志
 func (fs Fsm) FindLog(req request.LogReq) ([]Log, error) {
 	if fs.Error != nil {
