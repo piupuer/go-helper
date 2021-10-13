@@ -292,7 +292,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 }
 
 // 取消某个类别下的审批日志(适用于审批配置发生变化, 待审批的记录自动取消)
-func (fs Fsm) CancelLogs(category uint) error {
+func (fs Fsm) CancelLog(category uint) error {
 	if fs.Error != nil {
 		return fs.Error
 	}
@@ -351,12 +351,13 @@ func (fs Fsm) CheckLogPermission(req request.PermissionLogReq) (*Log, error) {
 }
 
 // 获取全部状态机
-func (fs Fsm) FindMachine(req request.MachineReq) ([]Machine, error) {
+func (fs Fsm) FindMachine(req request.MachineReq) ([]response.MachineResp, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	var machines []Machine
-	query := fs.session
+	machines := make([]Machine, 0)
+	query := fs.session.
+		Preload("Events")
 	name := strings.TrimSpace(req.Name)
 	if name != "" {
 		query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
@@ -369,7 +370,9 @@ func (fs Fsm) FindMachine(req request.MachineReq) ([]Machine, error) {
 		query.Where("submitter_confirm = ?", *req.SubmitterConfirm)
 	}
 	err := query.Find(&machines).Error
-	return machines, err
+	resp := make([]response.MachineResp, 0)
+	utils.Struct2StructByJson(machines, &resp)
+	return resp, err
 }
 
 // 获取全部审批日志
@@ -397,7 +400,7 @@ func (fs Fsm) FindLog(req request.LogReq) ([]Log, error) {
 }
 
 // 获取审批轨迹
-func (fs Fsm) GetLogTrack(logs []Log) ([]response.LogTrackResp, error) {
+func (fs Fsm) FindLogTrack(logs []Log) ([]response.LogTrackResp, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -447,7 +450,7 @@ func (fs Fsm) GetLogTrack(logs []Log) ([]response.LogTrackResp, error) {
 }
 
 // 获取某个用户的待审批列表
-func (fs Fsm) FindPendingLogsByApprover(req request.PendingLogReq) ([]Log, error) {
+func (fs Fsm) FindPendingLogByApprover(req request.PendingLogReq) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}

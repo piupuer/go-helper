@@ -296,14 +296,14 @@ func TestFsm_CancelLogs(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	f.CancelLogs(1)
+	f.CancelLog(1)
 	tx.Commit()
 }
 
 func TestFsm_FindPendingLogsByApprover(t *testing.T) {
 	tx := db.Begin()
 	f := New(tx)
-	fmt.Println(f.FindPendingLogsByApprover(request.PendingLogReq{
+	fmt.Println(f.FindPendingLogByApprover(request.PendingLogReq{
 		ApprovalRoleId: 1,
 		ApprovalUserId: 2,
 		Category:       1,
@@ -328,6 +328,6 @@ func TestFsm_GetLogTrack(t *testing.T) {
 		Category: 1,
 		Uuid:     "log2",
 	})
-	fmt.Println(f.GetLogTrack(logs))
+	fmt.Println(f.FindLogTrack(logs))
 	tx.Commit()
 }

@@ -23,8 +23,6 @@ type CreateEventReq struct {
 type CreateLogReq struct {
 	Category        models.ReqUint `json:"category" form:"category"`
 	Uuid            string         `json:"uuid" form:"uuid"`
-	ApprovalRoleId  uint           `json:"approvalRoleId" form:"approvalRoleId"`
-	ApprovalUserId  uint           `json:"approvalUserId" form:"approvalUserId"`
 	MId             uint           `json:"MId" form:"mId"`
 	SubmitterRoleId uint           `json:"submitterRoleId" form:"submitterRoleId"`
 	SubmitterUserId uint           `json:"submitterUserId" form:"submitterUserId"`

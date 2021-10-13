@@ -14,7 +14,7 @@ type EventResp struct {
 	Edit       uint   `json:"edit"`
 	EditFields string `json:"editFields"`
 	Refuse     uint   `json:"refuse"`
-	RoleId     uint   `json:"roleId"`
+	Roles      []uint `json:"roles"`
 	Users      []uint `json:"users"`
 }
 
@@ -23,4 +23,14 @@ type LogTrackResp struct {
 	Opinion string `json:"opinion"`
 	End     bool   `json:"end"`
 	Cancel  bool   `json:"cancel"`
+}
+
+type MachineResp struct {
+	Name                       string      `json:"name"`
+	SubmitterName              string      `json:"submitterName"`
+	SubmitterEditFields        string      `json:"submitterEditFields"`
+	SubmitterConfirm           uint        `json:"submitterConfirm"`
+	SubmitterConfirmEditFields string      `json:"submitterConfirmEditFields"`
+	EventsJson                 string      `json:"eventsJson"`
+	Events                     []EventResp `json:"events"`
 }
