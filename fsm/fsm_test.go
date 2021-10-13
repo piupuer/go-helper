@@ -314,7 +314,7 @@ func TestFsm_FindPendingLogsByApprover(t *testing.T) {
 func TestFsm_FindLogs(t *testing.T) {
 	tx := db.Begin()
 	f := New(tx)
-	fmt.Println(f.FindLogs(request.LogReq{
+	fmt.Println(f.FindLog(request.LogReq{
 		Category: 1,
 		Uuid:     "log1",
 	}))
@@ -324,7 +324,7 @@ func TestFsm_FindLogs(t *testing.T) {
 func TestFsm_GetLogTrack(t *testing.T) {
 	tx := db.Begin()
 	f := New(tx)
-	logs, _ := f.FindLogs(request.LogReq{
+	logs, _ := f.FindLog(request.LogReq{
 		Category: 1,
 		Uuid:     "log2",
 	})

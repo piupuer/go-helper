@@ -104,7 +104,7 @@ func (fs Fsm) SubmitLog(req request.CreateLogReq) ([]EventItem, error) {
 
 	// 绑定下一级审批人
 	var log Log
-	log.Category = req.Category
+	log.Category = uint(req.Category)
 	log.Uuid = req.Uuid
 	// 获取下一事件
 	nextEvent, err := fs.getNextEvent(req.MId, startEvent.Level)
@@ -138,6 +138,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
+	approved := uint(req.Approved)
 	var resp response.ApprovalLogResp
 	// 验证权限
 	oldLog, err := fs.CheckLogPermission(request.PermissionLogReq{
@@ -145,13 +146,13 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		Uuid:           req.Uuid,
 		ApprovalRoleId: req.ApprovalRoleId,
 		ApprovalUserId: req.ApprovalUserId,
-		Approved:       req.Approved,
+		Approved:       approved,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if req.Approved == LogStatusCancelled {
+	if approved == LogStatusCancelled {
 		m := make(map[string]interface{}, 0)
 		m["approved"] = LogStatusCancelled
 		m["approval_role_id"] = req.ApprovalRoleId
@@ -183,7 +184,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	eventName := ""
 	for _, transition := range transitions {
 		match := false
-		switch req.Approved {
+		switch approved {
 		case LogStatusApproved:
 			if strings.HasSuffix(transition, SuffixWaiting) || strings.HasSuffix(transition, SuffixResubmit) || strings.HasSuffix(transition, SuffixConfirm) {
 				match = true
@@ -202,7 +203,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	if eventName == "" {
 		return nil, ErrStatus
 	}
-	nextName := getNextItemName(req.Approved, eventName)
+	nextName := getNextItemName(approved, eventName)
 	if f.Can(nextName) {
 		fmt.Println("ok")
 	}
@@ -216,7 +217,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		return nil, err
 	}
 	var newLog Log
-	newLog.Category = req.Category
+	newLog.Category = uint(req.Category)
 	newLog.Uuid = req.Uuid
 	newLog.SubmitterRoleId = oldLog.SubmitterRoleId
 	newLog.SubmitterUserId = oldLog.SubmitterUserId
@@ -226,7 +227,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		// 绑定下一级审批人
 		// 获取下一事件
 		var nextEvent *Event
-		if req.Approved == LogStatusApproved {
+		if approved == LogStatusApproved {
 			nextEvent, err = fs.getNextEvent(req.MId, event.Level)
 		} else {
 			nextEvent, err = fs.getPrevEvent(req.MId, event.Level)
@@ -273,7 +274,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = LogStatusApproved
-	if req.Approved == LogStatusRefused {
+	if approved == LogStatusRefused {
 		m["approved"] = LogStatusRefused
 	}
 	m["approval_role_id"] = req.ApprovalRoleId
@@ -350,7 +351,7 @@ func (fs Fsm) CheckLogPermission(req request.PermissionLogReq) (*Log, error) {
 }
 
 // 获取全部审批日志
-func (fs Fsm) FindLogs(req request.LogReq) ([]Log, error) {
+func (fs Fsm) FindLog(req request.LogReq) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -449,8 +450,8 @@ func (fs Fsm) FindPendingLogsByApprover(req request.PendingLogReq) ([]Log, error
 	query := fs.session.
 		Where("approved = ?", LogStatusWaiting).
 		Where("id IN (?)", append(logIds1, logIds2...))
-	if req.Category > models.Zero {
-		query = query.Where("category = ?", req.Category)
+	if uint(req.Category) > models.Zero {
+		query.Where("category = ?", req.Category)
 	}
 	err = query.Find(&logs).Error
 	if err != nil {
