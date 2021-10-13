@@ -356,8 +356,7 @@ func (fs Fsm) FindMachine(req request.MachineReq) ([]response.MachineResp, error
 		return nil, fs.Error
 	}
 	machines := make([]Machine, 0)
-	query := fs.session.
-		Preload("Events")
+	query := fs.session
 	name := strings.TrimSpace(req.Name)
 	if name != "" {
 		query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
