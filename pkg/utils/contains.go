@@ -2,11 +2,11 @@ package utils
 
 import "github.com/thoas/go-funk"
 
-// 判断数组arr是否包含item元素
+// whether the array contains interface
 func Contains(arr interface{}, item interface{}) bool {
 	switch arr.(type) {
 	case []uint:
-		// funk没有强类型是uint数组的方式, 自行实现
+		// funk not implement ContainsUint
 		if val, ok := item.(uint); ok {
 			return ContainsUint(arr.([]uint), val)
 		}
@@ -42,11 +42,11 @@ func Contains(arr interface{}, item interface{}) bool {
 		}
 		break
 	}
-	// funk默认使用反射, 性能不如强类型
+	// funk use reflect as default, performance is not as good as type asserts
 	return funk.Contains(arr, item)
 }
 
-// 判断uint数组是否包含item元素
+// whether the array contains uint
 func ContainsUint(arr []uint, item uint) bool {
 	for _, v := range arr {
 		if v == item {

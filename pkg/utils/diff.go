@@ -6,9 +6,9 @@ import (
 	"reflect"
 )
 
-// 两结构体比对不同的字段, 不同时将取newStruct中的字段返回, json为中间桥梁
+// compare oldStruct/newStruct to update
 func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[string]interface{}) {
-	// 通过json先将其转为map集合
+	// json to map
 	m1 := make(map[string]interface{}, 0)
 	m2 := make(map[string]interface{}, 0)
 	m3 := make(map[string]interface{}, 0)
@@ -17,20 +17,19 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 	for k1, v1 := range m1 {
 		for k2, v2 := range m2 {
 			switch v1.(type) {
-			// 复杂结构不做对比
+			// skip complex structure
 			case map[string]interface{}:
 				continue
 			}
 			rv := reflect.ValueOf(v1)
-			// 值类型必须有效
 			if rv.Kind() != reflect.Invalid {
-				// key相同, 值不同
+				// different value
 				if k1 == k2 && v1 != v2 {
 					t := reflect.TypeOf(oldStruct)
 					key := CamelCase(k1)
 					var fieldType reflect.Type
 					oldStructV := reflect.ValueOf(oldStruct)
-					// map与结构体取值方式不同
+					// distinguish between map and structure
 					if oldStructV.Kind() == reflect.Map {
 						mapV := oldStructV.MapIndex(reflect.ValueOf(k1))
 						if !mapV.IsValid() {
@@ -44,30 +43,28 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 						}
 						fieldType = structField.Type
 					} else {
-						// oldStruct类型不对, 直接跳过不处理
+						// oldStruct not right skip
 						break
 					}
-					// 取到结构体对应字段
 					realT := fieldType
-					// 指针类型需要剥掉一层获取真实类型
+					// pointer need to get element
 					if fieldType.Kind() == reflect.Ptr {
 						realT = fieldType.Elem()
 					}
-					// 获得元素
 					e := reflect.New(realT).Elem()
-					// 不同类型不一定可以强制转换
+					// decimal.Decimal/carbon.ToDateTimeString can not use Convert
 					switch e.Interface().(type) {
 					case decimal.Decimal:
 						d, _ := decimal.NewFromString(rv.String())
 						m3[k1] = d
 					case carbon.ToDateTimeString:
 						t := carbon.Parse(rv.String())
-						// 时间过滤空值
+						// skip zero time
 						if !t.IsZero() {
 							m3[k1] = t
 						}
 					default:
-						// 强制转换rv赋值给e
+						// rv convert to e
 						e.Set(rv.Convert(realT))
 						m3[k1] = e.Interface()
 					}
@@ -79,7 +76,7 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 	*update = m3
 }
 
-// 两结构体比对不同的字段, 将key转为蛇形
+// compare oldStruct/newStruct to update, map key to snake
 func CompareDiff2SnakeKey(oldStruct interface{}, newStruct interface{}, update *map[string]interface{}) {
 	m1 := make(map[string]interface{}, 0)
 	m2 := make(map[string]interface{}, 0)

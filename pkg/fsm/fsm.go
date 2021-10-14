@@ -3,10 +3,10 @@ package fsm
 import (
 	"fmt"
 	"github.com/looplab/fsm"
-	"github.com/piupuer/go-helper/fsm/request"
-	"github.com/piupuer/go-helper/fsm/response"
 	"github.com/piupuer/go-helper/models"
-	"github.com/piupuer/go-helper/utils"
+	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"strings"
@@ -18,7 +18,7 @@ type Fsm struct {
 	Error   error
 }
 
-// mysql DDL不支持回滚操作, 因此这里单独migrate
+// mysql DDL migrate rollback is not supported, Migrate before New
 func Migrate(db *gorm.DB, options ...func(*Options)) error {
 	ops := getOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -53,26 +53,23 @@ func New(tx *gorm.DB, options ...func(*Options)) *Fsm {
 	return fs
 }
 
-// 创建状态机
-func (fs Fsm) CreateMachine(req request.CreateMachineReq) (*Machine, error) {
+func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
 	var machine Machine
-	utils.Struct2StructByJson(req, &machine)
-	// 将传入的事件转为json存储(主要是方便查询)
-	machine.EventsJson = utils.Struct2Json(req.Levels)
-	// 创建数据
+	utils.Struct2StructByJson(r, &machine)
+	// save json for query
+	machine.EventsJson = utils.Struct2Json(r.Levels)
 	err := fs.session.Create(&machine).Error
 	if err != nil {
 		return nil, err
 	}
-	// 绑定事件
-	err = fs.batchCreateEvents(machine.Id, req.Levels)
+	// batch fsm event
+	err = fs.batchCreateEvents(machine.Id, r.Levels)
 	if err != nil {
 		return nil, err
 	}
-	// 获取全部事件(内部自动校验合法性)
 	_, err = fs.findEventDesc(machine.Id)
 	if err != nil {
 		return nil, err
@@ -81,42 +78,39 @@ func (fs Fsm) CreateMachine(req request.CreateMachineReq) (*Machine, error) {
 }
 
 // =======================================================
-// 审批相关
+// approval log function
 // =======================================================
-// 首次提交日志记录
-func (fs Fsm) SubmitLog(req request.CreateLogReq) ([]EventItem, error) {
+// first submit log
+func (fs Fsm) SubmitLog(r req.FsmCreateLog) ([]EventItem, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	// 判断是否未结束
-	_, err := fs.getLastPendingLog(request.LogReq{
-		Category: req.Category,
-		Uuid:     req.Uuid,
+	// check whether approval is pending
+	_, err := fs.getLastPendingLog(req.FsmLog{
+		Category: r.Category,
+		Uuid:     r.Uuid,
 	})
 	if err != gorm.ErrRecordNotFound {
 		return nil, ErrRepeatSubmit
 	}
-	// 获取开始事件
-	startEvent, err := fs.getStartEvent(req.MId)
+	startEvent, err := fs.getStartEvent(r.MachineId)
 	if err != nil {
 		return nil, err
 	}
 
-	// 绑定下一级审批人
+	// first create log
 	var log Log
-	log.Category = uint(req.Category)
-	log.Uuid = req.Uuid
-	// 获取下一事件
-	nextEvent, err := fs.getNextEvent(req.MId, startEvent.Level)
+	log.Category = uint(r.Category)
+	log.Uuid = r.Uuid
+	nextEvent, err := fs.getNextEvent(r.MachineId, startEvent.Level)
 	if err != nil {
 		return nil, err
 	}
 	log.ProgressId = startEvent.DstId
 	log.CanApprovalRoles = nextEvent.Roles
 	log.CanApprovalUsers = nextEvent.Users
-	log.SubmitterRoleId = req.SubmitterRoleId
-	log.SubmitterUserId = req.SubmitterUserId
-	// 记录操作日志
+	log.SubmitterRoleId = r.SubmitterRoleId
+	log.SubmitterUserId = r.SubmitterUserId
 	log.PrevDetail = startEvent.Dst.Name
 	log.Detail = nextEvent.Name.Name
 	log.CurrentEventId = startEvent.Id
@@ -126,42 +120,41 @@ func (fs Fsm) SubmitLog(req request.CreateLogReq) ([]EventItem, error) {
 		return nil, err
 	}
 
-	// 返回开始事件的结束位置以及下一事件的开始位置
 	return []EventItem{
 		startEvent.Dst,
 		nextEvent.Name,
 	}, nil
 }
 
-// 审批某条日志记录
-func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, error) {
+// start approve log
+func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	approved := uint(req.Approved)
-	var resp response.ApprovalLogResp
-	// 验证权限
-	oldLog, err := fs.CheckLogPermission(request.PermissionLogReq{
-		Category:       req.Category,
-		Uuid:           req.Uuid,
-		ApprovalRoleId: req.ApprovalRoleId,
-		ApprovalUserId: req.ApprovalUserId,
+	approved := uint(r.Approved)
+	var rp resp.FsmApprovalLog
+	// check current user/role permission
+	oldLog, err := fs.CheckLogPermission(req.FsmPermissionLog{
+		Category:       r.Category,
+		Uuid:           r.Uuid,
+		ApprovalRoleId: r.ApprovalRoleId,
+		ApprovalUserId: r.ApprovalUserId,
 		Approved:       approved,
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	// submitter cancel
 	if approved == LogStatusCancelled {
 		m := make(map[string]interface{}, 0)
 		m["approved"] = LogStatusCancelled
-		m["approval_role_id"] = req.ApprovalRoleId
-		m["approval_user_id"] = req.ApprovalUserId
-		m["approval_opinion"] = req.ApprovalOpinion
+		m["approval_role_id"] = r.ApprovalRoleId
+		m["approval_user_id"] = r.ApprovalUserId
+		m["approval_opinion"] = r.ApprovalOpinion
 		m["next_event_id"] = models.Zero
 		m["detail"] = MsgSubmitterCancel
-		resp.Cancel = true
-		// 更新为已取消
+		rp.Cancel = true
 		err = fs.session.
 			Model(&Log{}).
 			Where("id = ?", oldLog.Id).
@@ -169,15 +162,14 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		if err != nil {
 			return nil, err
 		}
-		return &resp, nil
+		return &rp, nil
 	}
 
-	// 获取全部事件
-	desc, err := fs.findEventDesc(req.MId)
+	desc, err := fs.findEventDesc(r.MachineId)
 	if err != nil {
 		return nil, err
 	}
-	// 从当前进度开始, 创建状态机实例
+	// create fsm instance from current progress
 	f := fsm.NewFSM(oldLog.Progress.Name, desc, nil)
 
 	transitions := f.AvailableTransitions()
@@ -204,11 +196,8 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		return nil, ErrStatus
 	}
 	nextName := getNextItemName(approved, eventName)
-	if f.Can(nextName) {
-		fmt.Println("ok")
-	}
 	f.SetState(nextName)
-	event, err := fs.getEvent(req.MId, eventName)
+	event, err := fs.getEvent(r.MachineId, eventName)
 	if err != nil {
 		return nil, err
 	}
@@ -217,32 +206,31 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		return nil, err
 	}
 	var newLog Log
-	newLog.Category = uint(req.Category)
-	newLog.Uuid = req.Uuid
+	newLog.Category = uint(r.Category)
+	newLog.Uuid = r.Uuid
 	newLog.SubmitterRoleId = oldLog.SubmitterRoleId
 	newLog.SubmitterUserId = oldLog.SubmitterUserId
 	newLog.PrevDetail = nextName
 	newLog.CurrentEventId = event.Id
 	if len(f.AvailableTransitions()) != 0 {
-		// 绑定下一级审批人
-		// 获取下一事件
+		// bind next approver
 		var nextEvent *Event
 		if approved == LogStatusApproved {
-			nextEvent, err = fs.getNextEvent(req.MId, event.Level)
+			nextEvent, err = fs.getNextEvent(r.MachineId, event.Level)
 		} else {
-			nextEvent, err = fs.getPrevEvent(req.MId, event.Level)
+			nextEvent, err = fs.getPrevEvent(r.MachineId, event.Level)
 		}
 		if err != nil {
 			return nil, err
 		}
-		// 没有审批人, 可能是需要提交人确认/或提交人重新申请
+		// no users/roles, maybe submitter resubmit/confirm
 		noUser := false
 		if len(nextEvent.Roles) == 0 && len(nextEvent.Users) == 0 {
 			noUser = true
 			if strings.HasSuffix(nextEvent.Name.Name, SuffixConfirm) {
-				resp.WaitingConfirm = true
+				rp.WaitingConfirm = true
 			} else {
-				resp.WaitingResubmit = true
+				rp.WaitingResubmit = true
 			}
 		}
 		newLog.ProgressId = progressItem.Id
@@ -264,7 +252,7 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 		}
 		newLog.Detail = nextEvent.Name.Name
 	} else {
-		resp.End = true
+		rp.End = true
 		newLog.Approved = LogStatusApproved
 		newLog.Detail = MsgEnded
 	}
@@ -277,10 +265,10 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	if approved == LogStatusRefused {
 		m["approved"] = LogStatusRefused
 	}
-	m["approval_role_id"] = req.ApprovalRoleId
-	m["approval_user_id"] = req.ApprovalUserId
-	m["approval_opinion"] = req.ApprovalOpinion
-	// 更新为已审批
+	m["approval_role_id"] = r.ApprovalRoleId
+	m["approval_user_id"] = r.ApprovalUserId
+	m["approval_opinion"] = r.ApprovalOpinion
+	// update oldLog approved
 	err = fs.session.
 		Model(&Log{}).
 		Where("id = ?", oldLog.Id).
@@ -288,10 +276,10 @@ func (fs Fsm) ApproveLog(req request.ApproveLogReq) (*response.ApprovalLogResp, 
 	if err != nil {
 		return nil, err
 	}
-	return &resp, nil
+	return &rp, nil
 }
 
-// 取消某个类别下的审批日志(适用于审批配置发生变化, 待审批的记录自动取消)
+// cancel log by category(it is applicable to the automatic cancellation of records to be approved when the approval configuration changes)
 func (fs Fsm) CancelLog(category uint) error {
 	if fs.Error != nil {
 		return fs.Error
@@ -308,23 +296,23 @@ func (fs Fsm) CancelLog(category uint) error {
 }
 
 // =======================================================
-// 查询相关
+// query function
 // =======================================================
-// 校验是否有权限
-func (fs Fsm) CheckLogPermission(req request.PermissionLogReq) (*Log, error) {
+// check verify whether the current user/role has permission to approve
+func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	// 判断是否未结束
-	log, err := fs.getLastPendingLog(request.LogReq{
-		Category: req.Category,
-		Uuid:     req.Uuid,
+	// check whether approval is pending
+	log, err := fs.getLastPendingLog(req.FsmLog{
+		Category: r.Category,
+		Uuid:     r.Uuid,
 	})
 	if err != nil {
 		return nil, ErrNoPermissionOrEnded
 	}
-	if req.Approved == LogStatusCancelled {
-		if log.SubmitterRoleId != req.ApprovalRoleId && log.SubmitterUserId != req.ApprovalUserId {
+	if r.Approved == LogStatusCancelled {
+		if log.SubmitterRoleId != r.ApprovalRoleId && log.SubmitterUserId != r.ApprovalUserId {
 			return nil, ErrOnlySubmitterCancel
 		} else {
 			if log.CurrentEvent.Level > models.Zero {
@@ -341,17 +329,17 @@ func (fs Fsm) CheckLogPermission(req request.PermissionLogReq) (*Log, error) {
 	for _, user := range log.CanApprovalUsers {
 		users = append(users, user.Id)
 	}
-	if !utils.Contains(roles, req.ApprovalRoleId) && !utils.Contains(users, req.ApprovalUserId) {
+	if !utils.Contains(roles, r.ApprovalRoleId) && !utils.Contains(users, r.ApprovalUserId) {
 		return nil, ErrNoPermissionApprove
 	}
-	if req.Approved == LogStatusRefused && log.NextEvent.Refuse == models.Zero {
+	if r.Approved == LogStatusRefused && log.NextEvent.Refuse == models.Zero {
 		return nil, ErrNoPermissionRefuse
 	}
 	return log, nil
 }
 
-// 获取全部状态机
-func (fs Fsm) FindMachine(req request.MachineReq) ([]response.MachineResp, error) {
+// find machines
+func (fs Fsm) FindMachine(req req.FsmMachine) ([]resp.FsmMachine, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -369,13 +357,13 @@ func (fs Fsm) FindMachine(req request.MachineReq) ([]response.MachineResp, error
 		query.Where("submitter_confirm = ?", *req.SubmitterConfirm)
 	}
 	err := query.Find(&machines).Error
-	resp := make([]response.MachineResp, 0)
-	utils.Struct2StructByJson(machines, &resp)
-	return resp, err
+	list := make([]resp.FsmMachine, 0)
+	utils.Struct2StructByJson(machines, &list)
+	return list, err
 }
 
-// 获取全部审批日志
-func (fs Fsm) FindLog(req request.LogReq) ([]Log, error) {
+// find logs
+func (fs Fsm) FindLog(req req.FsmLog) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -398,12 +386,12 @@ func (fs Fsm) FindLog(req request.LogReq) ([]Log, error) {
 	return logs, nil
 }
 
-// 获取审批轨迹
-func (fs Fsm) FindLogTrack(logs []Log) ([]response.LogTrackResp, error) {
+// find log tracks
+func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	track := make([]response.LogTrackResp, 0)
+	track := make([]resp.FsmLogTrack, 0)
 	if len(logs) == 0 {
 		return track, nil
 	}
@@ -421,18 +409,18 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]response.LogTrackResp, error) {
 			end = true
 		}
 		if end || cancel {
-			track = append(track, response.LogTrackResp{
+			track = append(track, resp.FsmLogTrack{
 				Name:    log.PrevDetail,
 				Opinion: prevOpinion,
 				Cancel:  prevCancel,
-			}, response.LogTrackResp{
+			}, resp.FsmLogTrack{
 				Name:    log.Detail,
 				Opinion: log.ApprovalOpinion,
 				End:     end,
 				Cancel:  cancel,
 			})
 		} else {
-			track = append(track, response.LogTrackResp{
+			track = append(track, resp.FsmLogTrack{
 				Name:    log.PrevDetail,
 				Opinion: prevOpinion,
 				End:     end,
@@ -440,7 +428,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]response.LogTrackResp, error) {
 			})
 		}
 		if i == l-1 && log.Approved == LogStatusWaiting {
-			track = append(track, response.LogTrackResp{
+			track = append(track, resp.FsmLogTrack{
 				Name: logs[i].Detail,
 			})
 		}
@@ -448,13 +436,13 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]response.LogTrackResp, error) {
 	return track, nil
 }
 
-// 获取某个用户的待审批列表
-func (fs Fsm) FindPendingLogByApprover(req request.PendingLogReq) ([]Log, error) {
+// get the pending approval list of a approver
+func (fs Fsm) FindPendingLogByApprover(req req.FsmPendingLog) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	// 查询关联的日志编号
-	var logIds1 []uint
+	// get user relation
+	logIds1 := make([]uint, 0)
 	err := fs.session.
 		Model(&LogApprovalUserRelation{}).
 		Where("user_id = ?", req.ApprovalUserId).
@@ -462,7 +450,8 @@ func (fs Fsm) FindPendingLogByApprover(req request.PendingLogReq) ([]Log, error)
 	if err != nil {
 		return nil, err
 	}
-	var logIds2 []uint
+	// get role relation
+	logIds2 := make([]uint, 0)
 	err = fs.session.
 		Model(&LogApprovalRoleRelation{}).
 		Where("role_id = ?", req.ApprovalRoleId).
@@ -485,10 +474,11 @@ func (fs Fsm) FindPendingLogByApprover(req request.PendingLogReq) ([]Log, error)
 }
 
 // =======================================================
-// 私有方法
+// private function
 // =======================================================
+// get last pending log, err will be returned when it does not exist
 // 获取最后一条待审批日志
-func (fs Fsm) getLastPendingLog(req request.LogReq) (*Log, error) {
+func (fs Fsm) getLastPendingLog(req req.FsmLog) (*Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -508,8 +498,7 @@ func (fs Fsm) getLastPendingLog(req request.LogReq) (*Log, error) {
 	return &log, nil
 }
 
-// 根据事件名称获取事件
-func (fs Fsm) getEvent(mId uint, name string) (*Event, error) {
+func (fs Fsm) getEvent(machineId uint, name string) (*Event, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -517,7 +506,7 @@ func (fs Fsm) getEvent(mId uint, name string) (*Event, error) {
 	err := fs.session.
 		Preload("Name").
 		Preload("Dst").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Find(&events).Error
 	if err != nil {
 		return nil, err
@@ -530,7 +519,6 @@ func (fs Fsm) getEvent(mId uint, name string) (*Event, error) {
 	return nil, gorm.ErrRecordNotFound
 }
 
-// 根据事件item名称获取item
 func (fs Fsm) getEventItemByName(name string) (*EventItem, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
@@ -542,8 +530,7 @@ func (fs Fsm) getEventItemByName(name string) (*EventItem, error) {
 	return &item, err
 }
 
-// 获取状态机事件开始位置
-func (fs Fsm) getStartEvent(mId uint) (*Event, error) {
+func (fs Fsm) getStartEvent(machineId uint) (*Event, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -552,19 +539,17 @@ func (fs Fsm) getStartEvent(mId uint) (*Event, error) {
 		Preload("Name").
 		Preload("Src").
 		Preload("Dst").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Where("sort = ?", models.Zero).
 		First(&event).Error
 	return &event, err
 }
 
-// 获取状态机事件前一位置
-func (fs Fsm) getPrevEvent(mId uint, level uint) (*Event, error) {
+func (fs Fsm) getPrevEvent(machineId uint, level uint) (*Event, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
 
-	// 包含通过二字的第一条
 	var events []Event
 	err := fs.session.
 		Preload("Name").
@@ -572,7 +557,7 @@ func (fs Fsm) getPrevEvent(mId uint, level uint) (*Event, error) {
 		Preload("Dst").
 		Preload("Roles").
 		Preload("Users").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Where("level = ?", level-1).
 		Order("sort").
 		Find(&events).Error
@@ -587,12 +572,10 @@ func (fs Fsm) getPrevEvent(mId uint, level uint) (*Event, error) {
 	return nil, gorm.ErrRecordNotFound
 }
 
-// 获取状态机事件下一位置
-func (fs Fsm) getNextEvent(mId uint, level uint) (*Event, error) {
+func (fs Fsm) getNextEvent(machineId uint, level uint) (*Event, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	// 包含通过二字的第一条
 	var events []Event
 	err := fs.session.
 		Preload("Name").
@@ -600,7 +583,7 @@ func (fs Fsm) getNextEvent(mId uint, level uint) (*Event, error) {
 		Preload("Dst").
 		Preload("Roles").
 		Preload("Users").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Where("level = ?", level+1).
 		Order("sort").
 		Find(&events).Error
@@ -615,8 +598,7 @@ func (fs Fsm) getNextEvent(mId uint, level uint) (*Event, error) {
 	return nil, gorm.ErrRecordNotFound
 }
 
-// 获取状态机事件结束位置
-func (fs Fsm) getEndEvent(mId uint) (*Event, error) {
+func (fs Fsm) getEndEvent(machineId uint) (*Event, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -625,14 +607,13 @@ func (fs Fsm) getEndEvent(mId uint) (*Event, error) {
 		Preload("Name").
 		Preload("Src").
 		Preload("Dst").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Order("sort DESC").
 		First(&event).Error
 	return &event, err
 }
 
-// 获取状态机事件实例
-func (fs Fsm) findEventDesc(mId uint) ([]fsm.EventDesc, error) {
+func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -642,7 +623,7 @@ func (fs Fsm) findEventDesc(mId uint) ([]fsm.EventDesc, error) {
 		Preload("Name").
 		Preload("Src").
 		Preload("Dst").
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Order("sort").
 		Find(&events).Error
 	if err != nil {
@@ -666,31 +647,45 @@ func (fs Fsm) findEventDesc(mId uint) ([]fsm.EventDesc, error) {
 	return desc, nil
 }
 
-// 创建状态机事件
-// 逻辑大致如下(层级可扩展为N级):
-// 前端输入
-// 1.第一级审批(记为标识符L1)
-// 2.第二级审批(记为标识符L2)
-// 系统需要生成(按Event顺序)
-// 提交人记为L0(名称和可编辑字段在此确认SysFsm.SubmitterName/SubmitterEditFields)
-// L0申请/L1已拒绝/L0已提交
-// L1通过/L0已提交,L2已拒绝/L1已通过
-// L1拒绝/L0已提交/L1已拒绝
-// L2通过/L1已通过/L2已通过
-// L2拒绝/L1已通过/L2已拒绝
-// L2通过后需判断SysFsm.SubmitConfirm
-// SysFsm.SubmitConfirm=0, 流程结束
-// SysFsm.SubmitConfirm=1, 需加最后一个流程: L0确认/L2已通过/L0已确认
-func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err error) {
+// batch create events
+// example(two approval level):
+// []req.FsmCreateEvent{
+//   {
+//     Name: "L1",
+//   }
+//   {
+//     Name: "L2",
+//   }
+// }
+// automatic generation by event sort(it is assumed that the SubmitterName=L0) finite state machine table:
+// Machine.SubmitConfirm = false
+// Current            / Source                    / Destination
+// L0 waiting submit  / L1 refused                / L0 submitted
+// L1 waiting approve / L0 submitted , L2 refused / L1 approved
+// L1 waiting refuse  / L0 submitted              / L1 refused
+// L2 waiting approve / L1 approved               / L2 approved
+// L2 waiting refuse  / L1 approved               / L2 refused
+// end
+// 
+// Machine.SubmitConfirm = true
+// Current            / Source                    / Destination
+// L0 waiting submit  / L1 refused                / L0 submitted
+// L1 waiting approve / L0 submitted , L2 refused / L1 approved
+// L1 waiting refuse  / L0 submitted              / L1 refused
+// L2 waiting approve / L1 approved               / L2 approved
+// L2 waiting refuse  / L1 approved               / L2 refused
+// L0 waiting confirm / L2 approved               / L0 confirmed
+// end
+func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err error) {
 	if fs.Error != nil {
 		return fs.Error
 	}
-	if len(req) == 0 {
+	if len(r) == 0 {
 		return ErrEventsNil
 	}
-	// 清除旧数据
+	// clear old machine
 	err = fs.session.
-		Where("m_id = ?", mId).
+		Where("machine_id = ?", machineId).
 		Delete(&Event{}).Error
 	if err != nil {
 		return err
@@ -699,24 +694,24 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 	var machine Machine
 	err = fs.session.
 		Model(&Machine{}).
-		Where("id = ?", mId).
+		Where("id = ?", machineId).
 		First(&machine).Error
 	if err != nil {
 		return err
 	}
 
-	// 记录所有事件名以及构建为符合要求的事件
+	// save event names and event desc
 	names := make([]string, 0)
 	desc := make([]fsm.EventDesc, 0)
-	// 记录各个事件的层级
+	// save event level for sort setup
 	levels := make(map[string]uint, 0)
 
-	// L0申请/L1已拒绝/L0已提交
-	l0Name := fmt.Sprintf("%s%s", machine.SubmitterName, SuffixResubmit)
+	// L0 waiting submit / L1 refused / L0 submitted
+	l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, SuffixResubmit)
 	l0Srcs := []string{
-		fmt.Sprintf("%s%s", req[0].Name, SuffixRefused),
+		fmt.Sprintf("%s %s", r[0].Name, SuffixRefused),
 	}
-	l0Dst := fmt.Sprintf("%s%s", machine.SubmitterName, SuffixSubmitted)
+	l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, SuffixSubmitted)
 	names = append(names, l0Name)
 	names = append(names, l0Srcs...)
 	names = append(names, l0Dst)
@@ -729,21 +724,21 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 	levels[l0Srcs[0]] = 0
 	levels[l0Dst] = 0
 
-	l := len(req)
+	l := len(r)
 	for i := 0; i < l; i++ {
-		// 通过
-		// L1通过/L0已提交,L2已拒绝/L1已通过
-		// L2通过/L1已通过/L2已通过
-		li1Name := fmt.Sprintf("%s%s", req[i].Name, SuffixWaiting)
+		// approve
+		// L1 waiting approve / L0 submitted , L2 refused / L1 approved
+		// L2 waiting approve / L1 approved               / L2 approved
+		li1Name := fmt.Sprintf("%s %s", r[i].Name, SuffixWaiting)
 		li1Srcs := make([]string, 0)
 		if i > 0 {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s%s", req[i-1].Name, SuffixApproved))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i-1].Name, SuffixApproved))
 		} else {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s%s", machine.SubmitterName, SuffixSubmitted))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, SuffixSubmitted))
 		}
-		li1Dst := fmt.Sprintf("%s%s", req[i].Name, SuffixApproved)
+		li1Dst := fmt.Sprintf("%s %s", r[i].Name, SuffixApproved)
 		if i+1 < l {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s%s", req[i+1].Name, SuffixRefused))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i+1].Name, SuffixRefused))
 		}
 		names = append(names, li1Name)
 		names = append(names, li1Srcs...)
@@ -756,21 +751,20 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 		levels[li1Name] = uint(i + 1)
 		levels[li1Dst] = uint(i + 1)
 
-		// 拒绝
-		// L1拒绝/L0已提交,L2已拒绝/L1已拒绝
-		// L2拒绝/L1已通过/L2已拒绝
-		li2Name := fmt.Sprintf("%s%s", req[i].Name, SuffixWaiting)
+		// refuse
+		// L1 waiting refuse / L0 submitted / L1 refused
+		// L2 waiting refuse / L1 approved  / L2 refused
+		li2Name := fmt.Sprintf("%s %s", r[i].Name, SuffixWaiting)
 		li2Srcs := make([]string, 0)
 		if i == 0 {
-			li2Srcs = append(li2Srcs, fmt.Sprintf("%s%s", machine.SubmitterName, SuffixSubmitted))
+			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, SuffixSubmitted))
 		} else {
-			li2Srcs = append(li2Srcs, fmt.Sprintf("%s%s", req[i-1].Name, SuffixApproved))
+			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i-1].Name, SuffixApproved))
 			if i+1 < l {
-				// 这里的作用是, L1误通过后, L2拒绝, L1再拒绝
-				li2Srcs = append(li2Srcs, fmt.Sprintf("%s%s", req[i+1].Name, SuffixRefused))
+				li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i+1].Name, SuffixRefused))
 			}
 		}
-		li2Dst := fmt.Sprintf("%s%s", req[i].Name, SuffixRefused)
+		li2Dst := fmt.Sprintf("%s %s", r[i].Name, SuffixRefused)
 		names = append(names, li2Name)
 		names = append(names, li2Srcs...)
 		names = append(names, li2Dst)
@@ -783,12 +777,12 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 		levels[li2Dst] = uint(i + 1)
 	}
 	if machine.SubmitterConfirm == models.One {
-		// L0确认/L2已通过/L0已确认
-		l0Name := fmt.Sprintf("%s%s", machine.SubmitterName, SuffixConfirm)
+		// L0 waiting confirm / L2 approved / L0 confirmed
+		l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, SuffixConfirm)
 		l0Srcs := []string{
-			fmt.Sprintf("%s%s", req[l-1].Name, SuffixApproved),
+			fmt.Sprintf("%s %s", r[l-1].Name, SuffixApproved),
 		}
-		l0Dst := fmt.Sprintf("%s%s", machine.SubmitterName, SuffixConfirmed)
+		l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, SuffixConfirmed)
 		names = append(names, l0Name)
 		names = append(names, l0Srcs...)
 		names = append(names, l0Dst)
@@ -801,7 +795,7 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 		levels[l0Dst] = uint(l + 1)
 	}
 
-	// 去重
+	// remove repeat name
 	names = utils.RemoveRepeat(names)
 	oldItems := make([]EventItem, 0)
 	err = fs.session.
@@ -854,33 +848,33 @@ func (fs Fsm) batchCreateEvents(mId uint, req []request.CreateEventReq) (err err
 			}
 		}
 
-		// 默认没有编辑/拒绝权限
+		// default: no edit/refuse permission
 		edit := models.Zero
 		refuse := models.Zero
 		editFields := ""
 		roles := make([]Role, 0)
 		users := make([]User, 0)
 		if i == 0 {
-			// 提交人默认有编辑权限
+			// submitter has edit perssion
 			edit = models.One
 			editFields = machine.SubmitterEditFields
 		} else if i < len(desc)-1 || machine.SubmitterConfirm == models.Zero {
-			// 中间层级
+			// machineIddle levels
 			index := (i+1)/2 - 1
-			edit = uint(req[index].Edit)
-			editFields = req[index].EditFields
-			refuse = uint(req[index].Refuse)
-			// 获取全部用户
-			roles = fs.getRoles(req[index].Roles)
-			users = fs.getUsers(req[index].Users)
+			edit = uint(r[index].Edit)
+			editFields = r[index].EditFields
+			refuse = uint(r[index].Refuse)
+			// mock roles/users
+			roles = fs.getRoles(r[index].Roles)
+			users = fs.getUsers(r[index].Users)
 		} else if i == len(desc)-1 && machine.SubmitterConfirm == models.One {
-			// 提交人确认时编辑字段
+			// save submitter confirm edit fields
 			edit = models.One
 			editFields = machine.SubmitterConfirmEditFields
 		}
 
 		events = append(events, Event{
-			MId:        mId,
+			MachineId:  machineId,
 			Sort:       uint(i),
 			Level:      levels[d.Name],
 			NameId:     nameId,
@@ -948,7 +942,6 @@ func (fs Fsm) getRoles(ids []uint) []Role {
 	return roles
 }
 
-// 获取下一状态名称
 func getNextItemName(approved uint, eventName string) string {
 	name := eventName
 	if strings.HasSuffix(eventName, SuffixWaiting) {
@@ -977,24 +970,21 @@ func initSession(db *gorm.DB, prefix string) *gorm.DB {
 	return session
 }
 
-// 校验状态机是否OK(校验标准: 每个事件都执行过, 只有一个结束位置)
+// check that the state machine is valid(traverse each event, only one end position)
 func checkEvents(desc []fsm.EventDesc) error {
-	// 记录所有事件名称
 	names := make([]string, 0)
 	for _, item := range desc {
 		names = append(names, item.Dst)
 		names = append(names, item.Src...)
 	}
-	// 去重
 	names = utils.RemoveRepeat(names)
 	if len(names) == 0 {
 		return ErrEventNameNil
 	}
 
-	// 创建状态机实例(初始位置可任意设置, 这里为了方便从0开始)
 	f := fsm.NewFSM(names[0], desc, nil)
+	// save end count
 	endCount := 0
-	// 遍历设置事件, 看下结束位置有多少个
 	for _, item := range names {
 		f.SetState(item)
 		if len(f.AvailableTransitions()) == 0 {

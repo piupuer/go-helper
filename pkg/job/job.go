@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
-	"github.com/piupuer/go-helper/logger"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/robfig/cron/v3"
 	uuid "github.com/satori/go.uuid"
 	glogger "gorm.io/gorm/logger"

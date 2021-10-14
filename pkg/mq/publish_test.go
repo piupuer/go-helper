@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/piupuer/go-helper/examples"
-	"github.com/piupuer/go-helper/logger"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"testing"
 	"time"
 )

@@ -3,7 +3,7 @@ package mq
 import (
 	"context"
 	"github.com/golang-module/carbon"
-	"github.com/piupuer/go-helper/logger"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
 	"go.uber.org/zap"

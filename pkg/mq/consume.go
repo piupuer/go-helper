@@ -3,7 +3,7 @@ package mq
 import (
 	"context"
 	"fmt"
-	"github.com/piupuer/go-helper/logger"
+	"github.com/piupuer/go-helper/pkg/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
 	"time"

@@ -3,7 +3,7 @@ package job
 import (
 	"context"
 	"github.com/golang-module/carbon"
-	"github.com/piupuer/go-helper/logger"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	glogger "gorm.io/gorm/logger"
