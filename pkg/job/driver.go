@@ -1,9 +1,10 @@
 package job
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	uuid "github.com/satori/go.uuid"
 	"time"
 )
@@ -95,7 +96,7 @@ func (rd *RedisClientDriver) do(command string, params ...interface{}) (interfac
 	args := make([]interface{}, 0)
 	args = append(args, command)
 	args = append(args, params...)
-	return rd.client.Do(args...).Result()
+	return rd.client.Do(context.Background(), args...).Result()
 }
 
 func (rd *RedisClientDriver) scan(matchStr string) ([]string, error) {

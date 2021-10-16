@@ -3,7 +3,7 @@ package job
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/pkg/logger"
@@ -72,7 +72,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 		job.redis = r
 	}
 
-	_, err := job.redis.Ping().Result()
+	_, err := job.redis.Ping(context.Background()).Result()
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
