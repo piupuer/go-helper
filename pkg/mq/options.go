@@ -62,7 +62,7 @@ func WithLoggerLevel(level logger.Level) func(*RabbitOptions) {
 		if options.logger == nil {
 			l = getRabbitOptionsOrSetDefault(options).logger
 		}
-		options.logger = l.LogMode(level)
+		options.logger = l.LogLevel(level)
 	}
 }
 

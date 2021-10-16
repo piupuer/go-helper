@@ -26,7 +26,7 @@ func WithLoggerLevel(level logger.Level) func(*Options) {
 		if options.logger == nil {
 			l = getOptionsOrSetDefault(options).logger
 		}
-		options.logger = l.LogMode(level)
+		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -75,7 +75,7 @@ func WithDriverLoggerLevel(level logger.Level) func(*DriverOptions) {
 		if options.logger == nil {
 			l = getDriverOptionsOrSetDefault(options).logger
 		}
-		options.logger = l.LogMode(level)
+		options.logger = l.LogLevel(level)
 	}
 }
 
