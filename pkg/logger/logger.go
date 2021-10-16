@@ -36,7 +36,7 @@ func init() {
 
 // Interface logger interface
 type Interface interface {
-	LogMode(logger.LogLevel) Interface
+	LogMode(logger.LogLevel) logger.Interface
 	LogLevel(Level) Interface
 	Debug(context.Context, string, ...interface{})
 	Info(context.Context, string, ...interface{})
@@ -149,7 +149,7 @@ func DefaultLogger() *Logger {
 
 // LogMode gorm log mode
 // LogMode log mode
-func (l *Logger) LogMode(level logger.LogLevel) Interface {
+func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 	newLogger := *l
 	zapLevel := zapcore.InfoLevel
 	switch level {
