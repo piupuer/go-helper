@@ -18,7 +18,7 @@ type Resp struct {
 }
 
 // array data page info
-type PageInfo struct {
+type Page struct {
 	PageNum      uint   `json:"pageNum" form:"pageNum"`           // current page
 	PageSize     uint   `json:"pageSize" form:"pageSize"`         // page per count
 	Total        int64  `json:"total"`                            // all data count
@@ -30,12 +30,12 @@ type PageInfo struct {
 
 // array data page with list
 type PageData struct {
-	PageInfo
+	Page
 	List interface{} `json:"list"`
 }
 
 // calc limit/offset
-func (s *PageInfo) GetLimit() (int, int) {
+func (s *Page) GetLimit() (int, int) {
 	var pageSize int64
 	var pageNum int64
 	total := s.Total
