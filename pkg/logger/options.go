@@ -20,8 +20,44 @@ type LumberjackOption struct {
 	LogPath string
 }
 
+func WithLevel(level zapcore.Level) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).level = level
+	}
+}
+
+func WithColorful(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).colorful = flag
+	}
+}
+
+func WithLineNumPrefix(prefix string) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).lineNumPrefix = prefix
+	}
+}
+
+func WithLineNumLevel(level int) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).lineNumLevel = level
+	}
+}
+
 func WithSkipLumber(options *Options) {
 	getOptionsOrSetDefault(options).lumber = false
+}
+
+func WithKeepSourceDir(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).keepSourceDir = flag
+	}
+}
+
+func WithLumberjackOption(option LumberjackOption) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).lumberOps = option
+	}
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {
