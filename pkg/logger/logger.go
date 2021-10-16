@@ -36,7 +36,8 @@ func init() {
 
 // Interface logger interface
 type Interface interface {
-	LogMode(Level) Interface
+	LogMode(logger.LogLevel) Interface
+	LogLevel(Level) Interface
 	Debug(context.Context, string, ...interface{})
 	Info(context.Context, string, ...interface{})
 	Warn(context.Context, string, ...interface{})
@@ -51,13 +52,14 @@ type Logger struct {
 	normalStr, traceStr, traceErrStr, traceWarnStr string
 }
 
-type Level logger.LogLevel
+type Level zapcore.Level
 
 type Config struct {
-	logger.Config
-	LineNumPrefix string
-	LineNumLevel  int
-	KeepSourceDir bool
+	ops           Options
+	gorm          logger.Config
+	lineNumPrefix string
+	lineNumLevel  int
+	keepSourceDir bool
 }
 
 // New logger like gorm2
@@ -66,7 +68,10 @@ func New(options ...func(*Options)) *Logger {
 	for _, f := range options {
 		f(ops)
 	}
+	return newWithOption(ops)
+}
 
+func newWithOption(ops *Options) *Logger {
 	writer := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout))
 	if ops.lumber {
 		now := time.Now()
@@ -93,18 +98,19 @@ func New(options ...func(*Options)) *Logger {
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(enConfig),
 		writer,
-		ops.level,
+		zapcore.Level(ops.level),
 	)
 	l := zap.New(core)
 	return NewWithZap(
 		l,
 		Config{
-			LineNumPrefix: ops.lineNumPrefix,
-			LineNumLevel:  ops.lineNumLevel,
-			KeepSourceDir: ops.keepSourceDir,
-			Config: logger.Config{
+			ops: *ops,
+			gorm: logger.Config{
 				Colorful: ops.colorful,
 			},
+			lineNumPrefix: ops.lineNumPrefix,
+			lineNumLevel:  ops.lineNumLevel,
+			keepSourceDir: ops.keepSourceDir,
 		},
 	)
 }
@@ -118,7 +124,7 @@ func NewWithZap(zapLogger *zap.Logger, config Config) *Logger {
 		traceErrStr  = "%v%s %s\n[%.3fms] [rows:%v] %s"
 	)
 
-	if config.Colorful {
+	if config.gorm.Colorful {
 		normalStr = logger.Cyan + "%v" + logger.Blue + "%s " + logger.Reset
 		traceStr = logger.Cyan + "%v" + logger.Blue + "%s\n" + logger.Reset + logger.Yellow + "[%.3fms] " + logger.BlueBold + "[rows:%v]" + logger.Reset + " %s"
 		traceWarnStr = logger.Cyan + "%v" + logger.Blue + "%s " + logger.Yellow + "%s\n" + logger.Reset + logger.RedBold + "[%.3fms] " + logger.Yellow + "[rows:%v]" + logger.Magenta + " %s" + logger.Reset
@@ -143,10 +149,25 @@ func DefaultLogger() *Logger {
 
 // LogMode gorm log mode
 // LogMode log mode
-func (l *Logger) LogMode(level Level) Interface {
+func (l *Logger) LogMode(level logger.LogLevel) Interface {
 	newLogger := *l
-	newLogger.LogLevel = logger.LogLevel(level)
-	return &newLogger
+	zapLevel := zapcore.InfoLevel
+	switch level {
+	case logger.Warn:
+		zapLevel = zapcore.WarnLevel
+	case logger.Error:
+		zapLevel = zapcore.ErrorLevel
+	case logger.Silent:
+		zapLevel = zapcore.PanicLevel
+	}
+	newLogger.ops.level = Level(zapLevel)
+	return newWithOption(&newLogger.ops)
+}
+
+func (l *Logger) LogLevel(level Level) Interface {
+	newLogger := *l
+	newLogger.ops.level = level
+	return newWithOption(&newLogger.ops)
 }
 
 // Debug print info
@@ -183,7 +204,7 @@ func (l Logger) Error(ctx context.Context, format string, args ...interface{}) {
 
 // Trace print sql message
 func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
-	if !l.log.Core().Enabled(zapcore.DPanicLevel) || l.LogLevel <= logger.Silent {
+	if !l.log.Core().Enabled(zapcore.DPanicLevel) {
 		return
 	}
 	lineNum := l.removePrefix(utils.FileWithLineNum(), fileWithLineNum())
@@ -196,10 +217,10 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 	}
 	requestId := l.getRequestId(ctx)
 	switch {
-	case l.log.Core().Enabled(zapcore.ErrorLevel) && err != nil && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
+	case l.log.Core().Enabled(zapcore.ErrorLevel) && err != nil && (!l.gorm.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
 		l.log.Error(fmt.Sprintf(l.traceErrStr, requestId, lineNum, err, elapsedF, row, sql))
-	case l.log.Core().Enabled(zapcore.WarnLevel) && elapsed > l.SlowThreshold && l.SlowThreshold != 0:
-		slowLog := fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)
+	case l.log.Core().Enabled(zapcore.WarnLevel) && elapsed > l.gorm.SlowThreshold && l.gorm.SlowThreshold != 0:
+		slowLog := fmt.Sprintf("SLOW SQL >= %v", l.gorm.SlowThreshold)
 		l.log.Warn(fmt.Sprintf(l.traceWarnStr, requestId, lineNum, slowLog, elapsedF, row, sql))
 	case l.log.Core().Enabled(zapcore.DebugLevel):
 		l.log.Debug(fmt.Sprintf(l.traceStr, requestId, lineNum, elapsedF, row, sql))
@@ -249,16 +270,16 @@ func (l Logger) removePrefix(s1 string, s2 string) string {
 }
 
 func (l Logger) removeBaseDir(s string) string {
-	if !l.KeepSourceDir && strings.HasPrefix(s, sourceDir) {
+	if !l.keepSourceDir && strings.HasPrefix(s, sourceDir) {
 		s = strings.TrimPrefix(s, path.Dir(sourceDir)+"/")
 	}
-	if strings.HasPrefix(s, l.LineNumPrefix) {
-		s = strings.TrimPrefix(s, l.LineNumPrefix)
+	if strings.HasPrefix(s, l.lineNumPrefix) {
+		s = strings.TrimPrefix(s, l.lineNumPrefix)
 	}
 	arr := strings.Split(s, "@")
 	if len(arr) == 2 {
-		if l.LineNumLevel > 0 {
-			s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], l.LineNumLevel), arr[1])
+		if l.lineNumLevel > 0 {
+			s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], l.lineNumLevel), arr[1])
 		}
 	}
 	return s

@@ -6,7 +6,7 @@ import (
 )
 
 type Options struct {
-	level         zapcore.Level
+	level         Level
 	colorful      bool
 	lineNumPrefix string
 	lineNumLevel  int
@@ -20,7 +20,7 @@ type LumberjackOption struct {
 	LogPath string
 }
 
-func WithLevel(level zapcore.Level) func(*Options) {
+func WithLevel(level Level) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).level = level
 	}
@@ -63,7 +63,7 @@ func WithLumberjackOption(option LumberjackOption) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			level:         zapcore.DebugLevel,
+			level:         Level(zapcore.DebugLevel),
 			lineNumLevel:  2,
 			keepSourceDir: true,
 			lumber:        true,
