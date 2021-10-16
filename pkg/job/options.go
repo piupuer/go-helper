@@ -2,14 +2,8 @@ package job
 
 import (
 	"context"
-	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/logger"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	glogger "gorm.io/gorm/logger"
-	"time"
-
-	"os"
 )
 
 type Options struct {
@@ -55,28 +49,8 @@ func WithAutoRequestId(options *Options) {
 
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
-		enConfig := zap.NewProductionEncoderConfig()
-		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
-		}
-		core := zapcore.NewCore(
-			zapcore.NewConsoleEncoder(enConfig),
-			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
-			zapcore.DebugLevel,
-		)
-		l := zap.New(core)
 		return &Options{
-			logger: logger.New(
-				l,
-				logger.Config{
-					LineNumLevel:  2,
-					KeepSourceDir: true,
-					Config: glogger.Config{
-						Colorful: true,
-					},
-				},
-			),
+			logger: logger.DefaultLogger(),
 		}
 	}
 	return options
@@ -120,28 +94,8 @@ func WithDriverPrefix(prefix string) func(*DriverOptions) {
 
 func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 	if options == nil {
-		enConfig := zap.NewProductionEncoderConfig()
-		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
-		}
-		core := zapcore.NewCore(
-			zapcore.NewConsoleEncoder(enConfig),
-			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
-			zapcore.DebugLevel,
-		)
-		l := zap.New(core)
 		return &DriverOptions{
-			logger: logger.New(
-				l,
-				logger.Config{
-					LineNumLevel:  2,
-					KeepSourceDir: true,
-					Config: glogger.Config{
-						Colorful: true,
-					},
-				},
-			),
+			logger: logger.DefaultLogger(),
 		}
 	}
 	return options

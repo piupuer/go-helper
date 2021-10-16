@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/golang-module/carbon"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gorm.io/gorm"
@@ -45,6 +46,31 @@ type Config struct {
 	LineNumPrefix string
 	LineNumLevel  int
 	KeepSourceDir bool
+}
+
+// get default logger
+func DefaultLogger() *Logger {
+	enConfig := zap.NewProductionEncoderConfig()
+	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
+	}
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(enConfig),
+		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
+		zapcore.DebugLevel,
+	)
+	l := zap.New(core)
+	return New(
+		l,
+		Config{
+			LineNumLevel:  2,
+			KeepSourceDir: true,
+			Config: logger.Config{
+				Colorful: true,
+			},
+		},
+	)
 }
 
 // New logger like gorm2

@@ -2,16 +2,10 @@ package mq
 
 import (
 	"context"
-	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	glogger "gorm.io/gorm/logger"
-	"time"
-
-	"os"
 )
 
 type RabbitOptions struct {
@@ -81,32 +75,12 @@ func WithContext(ctx context.Context) func(*RabbitOptions) {
 
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
-		enConfig := zap.NewProductionEncoderConfig()
-		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
-		}
-		core := zapcore.NewCore(
-			zapcore.NewConsoleEncoder(enConfig),
-			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
-			zapcore.DebugLevel,
-		)
-		l := zap.New(core)
 		return &RabbitOptions{
 			Timeout:                10,
 			ReconnectMaxRetryCount: 3,
 			ChannelMaxLostCount:    5,
 			ReconnectInterval:      5,
-			logger: logger.New(
-				l,
-				logger.Config{
-					LineNumLevel:  2,
-					KeepSourceDir: true,
-					Config: glogger.Config{
-						Colorful: true,
-					},
-				},
-			),
+			logger:                 logger.DefaultLogger(),
 		}
 	}
 	return options
