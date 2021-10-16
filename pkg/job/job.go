@@ -9,7 +9,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/robfig/cron/v3"
 	uuid "github.com/satori/go.uuid"
-	glogger "gorm.io/gorm/logger"
 	"strings"
 	"sync"
 )
@@ -270,7 +269,7 @@ func (g *GoodJob) Stop(taskName string) {
 }
 
 type cronLogger struct {
-	l glogger.Interface
+	l logger.Interface
 }
 
 func (c cronLogger) Printf(format string, args ...interface{}) {

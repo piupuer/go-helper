@@ -34,12 +34,24 @@ func init() {
 	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("%slogger%slogger.go", string(os.PathSeparator), string(os.PathSeparator)))
 }
 
+// Interface logger interface
+type Interface interface {
+	LogMode(Level) Interface
+	Debug(context.Context, string, ...interface{})
+	Info(context.Context, string, ...interface{})
+	Warn(context.Context, string, ...interface{})
+	Error(context.Context, string, ...interface{})
+	Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error)
+}
+
 // zap logger for gorm
 type Logger struct {
 	Config
 	log                                            *zap.Logger
 	normalStr, traceStr, traceErrStr, traceWarnStr string
 }
+
+type Level logger.LogLevel
 
 type Config struct {
 	logger.Config
@@ -48,33 +60,57 @@ type Config struct {
 	KeepSourceDir bool
 }
 
-// get default logger
-func DefaultLogger() *Logger {
+// New logger like gorm2
+func New(options ...func(*Options)) *Logger {
+	ops := getOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+
+	writer := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout))
+	if ops.lumber {
+		now := time.Now()
+		filename := ops.lumberOps.Filename
+		if filename != "" {
+			filename = fmt.Sprintf("%s/%04d-%02d-%02d.log", ops.lumberOps.LogPath, now.Year(), now.Month(), now.Day())
+		}
+		ops.lumberOps.Filename = filename
+		hook := &ops.lumberOps
+		defer hook.Close()
+		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
+	}
+
 	enConfig := zap.NewProductionEncoderConfig()
 	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(carbon.Time2Carbon(t).ToRfc3339String())
 	}
+	if ops.colorful {
+		enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	} else {
+		enConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	}
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(enConfig),
-		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
-		zapcore.DebugLevel,
+		writer,
+		ops.level,
 	)
 	l := zap.New(core)
-	return New(
+	return NewWithZap(
 		l,
 		Config{
-			LineNumLevel:  2,
-			KeepSourceDir: true,
+			LineNumPrefix: ops.lineNumPrefix,
+			LineNumLevel:  ops.lineNumLevel,
+			KeepSourceDir: ops.keepSourceDir,
 			Config: logger.Config{
-				Colorful: true,
+				Colorful: ops.colorful,
 			},
 		},
 	)
 }
 
-// New logger like gorm2
-func New(zapLogger *zap.Logger, config Config) *Logger {
+// New with zap
+func NewWithZap(zapLogger *zap.Logger, config Config) *Logger {
 	var (
 		normalStr    = "%v%s "
 		traceStr     = "%v%s\n[%.3fms] [rows:%v] %s"
@@ -89,7 +125,7 @@ func New(zapLogger *zap.Logger, config Config) *Logger {
 		traceErrStr = logger.Cyan + "%v" + logger.RedBold + "%s " + logger.MagentaBold + "%s\n" + logger.Reset + logger.Yellow + "[%.3fms] " + logger.BlueBold + "[rows:%v]" + logger.Reset + " %s"
 	}
 
-	l := &Logger{
+	l := Logger{
 		log:          zapLogger,
 		Config:       config,
 		normalStr:    normalStr,
@@ -97,14 +133,19 @@ func New(zapLogger *zap.Logger, config Config) *Logger {
 		traceWarnStr: traceWarnStr,
 		traceErrStr:  traceErrStr,
 	}
-	return l
+	return &l
+}
+
+// get default logger
+func DefaultLogger() *Logger {
+	return New(WithSkipLumber)
 }
 
 // LogMode gorm log mode
 // LogMode log mode
-func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
+func (l *Logger) LogMode(level Level) Interface {
 	newLogger := *l
-	newLogger.LogLevel = level
+	newLogger.LogLevel = logger.LogLevel(level)
 	return &newLogger
 }
 

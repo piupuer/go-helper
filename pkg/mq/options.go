@@ -5,7 +5,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
-	glogger "gorm.io/gorm/logger"
 )
 
 type RabbitOptions struct {
@@ -13,7 +12,7 @@ type RabbitOptions struct {
 	ReconnectMaxRetryCount int
 	ChannelMaxLostCount    int
 	Timeout                int
-	logger                 glogger.Interface
+	logger                 logger.Interface
 	ctx                    context.Context
 }
 
@@ -49,7 +48,7 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
-func WithLogger(l glogger.Interface) func(*RabbitOptions) {
+func WithLogger(l logger.Interface) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if l != nil {
 			getRabbitOptionsOrSetDefault(options).logger = l
@@ -57,7 +56,7 @@ func WithLogger(l glogger.Interface) func(*RabbitOptions) {
 	}
 }
 
-func WithLoggerLevel(level glogger.LogLevel) func(*RabbitOptions) {
+func WithLoggerLevel(level logger.Level) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		l := options.logger
 		if options.logger == nil {

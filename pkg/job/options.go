@@ -3,17 +3,16 @@ package job
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/logger"
-	glogger "gorm.io/gorm/logger"
 )
 
 type Options struct {
-	logger        glogger.Interface
+	logger        logger.Interface
 	ctx           context.Context
 	prefix        string
 	AutoRequestId bool
 }
 
-func WithLogger(l glogger.Interface) func(*Options) {
+func WithLogger(l logger.Interface) func(*Options) {
 	return func(options *Options) {
 		if l != nil {
 			getOptionsOrSetDefault(options).logger = l
@@ -21,7 +20,7 @@ func WithLogger(l glogger.Interface) func(*Options) {
 	}
 }
 
-func WithLoggerLevel(level glogger.LogLevel) func(*Options) {
+func WithLoggerLevel(level logger.Level) func(*Options) {
 	return func(options *Options) {
 		l := options.logger
 		if options.logger == nil {
@@ -57,12 +56,12 @@ func getOptionsOrSetDefault(options *Options) *Options {
 }
 
 type DriverOptions struct {
-	logger glogger.Interface
+	logger logger.Interface
 	ctx    context.Context
 	prefix string
 }
 
-func WithDriverLogger(l glogger.Interface) func(*DriverOptions) {
+func WithDriverLogger(l logger.Interface) func(*DriverOptions) {
 	return func(options *DriverOptions) {
 		if l != nil {
 			getDriverOptionsOrSetDefault(options).logger = l
@@ -70,7 +69,7 @@ func WithDriverLogger(l glogger.Interface) func(*DriverOptions) {
 	}
 }
 
-func WithDriverLoggerLevel(level glogger.LogLevel) func(*DriverOptions) {
+func WithDriverLoggerLevel(level logger.Level) func(*DriverOptions) {
 	return func(options *DriverOptions) {
 		l := options.logger
 		if options.logger == nil {
