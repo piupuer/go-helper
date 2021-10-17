@@ -229,12 +229,10 @@ func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
 
 // check auth success
 func authorizator(data interface{}, c *gin.Context) bool {
-	if v, ok := data.(map[string]interface{}); ok {
-		if userIdStr, ok := v["user"].(string); ok {
-			userId := utils.Str2Int64(userIdStr)
-			c.Set("user", userId)
-			return true
-		}
+	if v, ok := data.(string); ok {
+		userId := utils.Str2Int64(v)
+		c.Set("user", userId)
+		return true
 	}
 	return false
 }
