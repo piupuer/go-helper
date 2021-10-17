@@ -222,7 +222,7 @@ type JwtOptions struct {
 	successWithData    func(interface{})
 	failWithMsg        func(format interface{}, a ...interface{})
 	failWithCodeAndMsg func(code int, format interface{}, a ...interface{})
-	loginPwdCheck      func(username, password string) (userId int64, pass bool)
+	loginPwdCheck      func(c *gin.Context, username, password string) (userId int64, pass bool)
 }
 
 func WithJwtLogger(l logger.Interface) func(*JwtOptions) {
@@ -327,7 +327,7 @@ func WithJwtFailWithCodeAndMsg(fun func(code int, format interface{}, a ...inter
 	}
 }
 
-func WithJwtLoginPwdCheck(fun func(username, password string) (int64, bool)) func(*JwtOptions) {
+func WithJwtLoginPwdCheck(fun func(c *gin.Context, username, password string) (userId int64, pass bool)) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
 			getJwtOptionsOptionsOrSetDefault(options).loginPwdCheck = fun
@@ -349,7 +349,7 @@ func getJwtOptionsOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 			successWithData:    resp.SuccessWithData,
 			failWithMsg:        resp.FailWithMsg,
 			failWithCodeAndMsg: resp.FailWithCodeAndMsg,
-			loginPwdCheck: func(username, password string) (i int64, b bool) {
+			loginPwdCheck: func(c *gin.Context, username, password string) (userId int64, pass bool) {
 				return 0, true
 			},
 		}

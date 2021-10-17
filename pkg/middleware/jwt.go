@@ -282,7 +282,7 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	}
 
 	// custom password check
-	userId, pass := ops.loginPwdCheck(r.Username, string(decodePwd))
+	userId, pass := ops.loginPwdCheck(c, r.Username, string(decodePwd))
 	if !pass {
 		return nil, fmt.Errorf(resp.LoginCheckErrorMsg)
 	}
