@@ -14,6 +14,8 @@ const (
 	OkMsg                      = "success"
 	NotOkMsg                   = "failed"
 	UnauthorizedMsg            = "login expired, please login again"
+	InvalidParameterMsg        = "invalid parameter"
+	IllegalParameterMsg        = "illegal parameter"
 	LoginCheckErrorMsg         = "wrong username or password"
 	ForbiddenMsg               = "no permission to access this resource"
 	InternalServerErrorMsg     = "server internal error"
