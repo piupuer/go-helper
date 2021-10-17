@@ -222,7 +222,7 @@ type JwtOptions struct {
 	successWithData    func(interface{})
 	failWithMsg        func(format interface{}, a ...interface{})
 	failWithCodeAndMsg func(code int, format interface{}, a ...interface{})
-	loginPwdCheck      func(username, password string) (int64, bool)
+	loginPwdCheck      func(username, password string) (userId int64, pass bool)
 }
 
 func WithJwtLogger(l logger.Interface) func(*JwtOptions) {
@@ -292,6 +292,46 @@ func WithJwtCookieName(cookieName string) func(*JwtOptions) {
 func WithJwtPrivateBytes(bs []byte) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		getJwtOptionsOptionsOrSetDefault(options).privateBytes = bs
+	}
+}
+
+func WithJwtSuccess(fun func()) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		if fun != nil {
+			getJwtOptionsOptionsOrSetDefault(options).success = fun
+		}
+	}
+}
+
+func WithJwtSuccessWithData(fun func(interface{})) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		if fun != nil {
+			getJwtOptionsOptionsOrSetDefault(options).successWithData = fun
+		}
+	}
+}
+
+func WithJwtFailWithMsg(fun func(format interface{}, a ...interface{})) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		if fun != nil {
+			getJwtOptionsOptionsOrSetDefault(options).failWithMsg = fun
+		}
+	}
+}
+
+func WithJwtFailWithCodeAndMsg(fun func(code int, format interface{}, a ...interface{})) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		if fun != nil {
+			getJwtOptionsOptionsOrSetDefault(options).failWithCodeAndMsg = fun
+		}
+	}
+}
+
+func WithJwtLoginPwdCheck(fun func(username, password string) (int64, bool)) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		if fun != nil {
+			getJwtOptionsOptionsOrSetDefault(options).loginPwdCheck = fun
+		}
 	}
 }
 
