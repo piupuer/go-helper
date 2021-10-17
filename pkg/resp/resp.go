@@ -1,6 +1,9 @@
 package resp
 
-import "github.com/golang-module/carbon"
+import (
+	"fmt"
+	"github.com/golang-module/carbon"
+)
 
 // base fields(like Id/CreatedAt/UpdatedAt common fields)
 type Base struct {
@@ -86,4 +89,77 @@ func (s *Page) GetLimit() (int, int) {
 	}
 	// gorm v2 interface is int
 	return int(limit), int(offset)
+}
+
+func GetResult(code int, data interface{}, format interface{}, a ...interface{}) Resp {
+	var f string
+	switch format.(type) {
+	case string:
+		f = format.(string)
+	case error:
+		f = fmt.Sprintf("%v", format.(error))
+	}
+	return Resp{
+		Code: code,
+		Data: data,
+		Msg:  fmt.Sprintf(f, a...),
+	}
+}
+
+func GetSuccess() Resp {
+	return GetResult(Ok, map[string]interface{}{}, CustomError[Ok])
+}
+
+func GetSuccessWithData(data interface{}) Resp {
+	return GetResult(Ok, data, CustomError[Ok])
+}
+
+func GetFailWithMsg(format interface{}, a ...interface{}) Resp {
+	return GetResult(NotOk, map[string]interface{}{}, format, a...)
+}
+
+func GetFailWithCode(code int) Resp {
+	// default NotOk
+	msg := CustomError[NotOk]
+	if val, ok := CustomError[code]; ok {
+		msg = val
+	}
+	return GetResult(code, map[string]interface{}{}, msg)
+}
+
+func GetFailWithCodeAndMsg(code int, format interface{}, a ...interface{}) Resp {
+	return GetResult(code, map[string]interface{}{}, format, a...)
+}
+
+func Success() {
+	panic(GetResult(Ok, map[string]interface{}{}, CustomError[Ok]))
+}
+
+func SuccessWithData(data interface{}) {
+	panic(GetResult(Ok, data, CustomError[Ok]))
+}
+
+func FailWithMsg(format interface{}, a ...interface{}) {
+	panic(GetFailWithMsg(format, a...))
+}
+
+func FailWithCode(code int) {
+	panic(GetFailWithCode(code))
+}
+
+func FailWithCodeAndMsg(code int, format interface{}, a ...interface{}) {
+	panic(GetFailWithCodeAndMsg(code, format, a...))
+}
+
+func CheckErr(format interface{}, a ...interface{}) {
+	var f string
+	switch format.(type) {
+	case string:
+		f = format.(string)
+	case error:
+		f = fmt.Sprintf("%v", format.(error))
+	}
+	if f != "" {
+		FailWithMsg(f, a...)
+	}
 }

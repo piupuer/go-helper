@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"encoding/base64"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -42,4 +44,21 @@ func RemoveRepeat(arr []string) []string {
 		}
 	}
 	return newArr
+}
+
+func Str2Int64(str string) int64 {
+	num, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func EncodeStr2Base64(str string) string {
+	return base64.StdEncoding.EncodeToString([]byte(str))
+}
+
+func DecodeStrFromBase64(str string) string {
+	decodeBytes, _ := base64.StdEncoding.DecodeString(str)
+	return string(decodeBytes)
 }
