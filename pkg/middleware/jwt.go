@@ -42,13 +42,13 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 		}
 
 		c.Set("JWT_PAYLOAD", claims)
-		identity := identity(c)
+		i := identity(c)
 
-		if identity != nil {
-			c.Set(mw.IdentityKey, identity)
+		if i != nil {
+			c.Set(mw.IdentityKey, i)
 		}
 
-		if !authorizator(identity, c) {
+		if !authorizator(i, c) {
 			unauthorized(c, http.StatusForbidden, jwt.ErrForbidden, *ops)
 			return
 		}
@@ -242,10 +242,7 @@ func authorizator(data interface{}, c *gin.Context) bool {
 // parse claims handler
 func identity(c *gin.Context) interface{} {
 	claims := jwt.ExtractClaims(c)
-	return map[string]interface{}{
-		"IdentityKey": claims[jwt.IdentityKey],
-		"user":        claims["user"],
-	}
+	return claims[jwt.IdentityKey]
 }
 
 func payload(data interface{}) jwt.MapClaims {
