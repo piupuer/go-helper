@@ -1,6 +1,7 @@
 package req
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -17,7 +18,7 @@ func ShouldBind(c *gin.Context, req interface{}) {
 }
 
 // validate request param
-func Validate(c *gin.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
+func Validate(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -26,6 +27,16 @@ func Validate(c *gin.Context, req interface{}, trans map[string]string, options 
 	if err != nil {
 		resp.FailWithMsg("%s: %v", resp.IllegalParameterMsg, err)
 	}
+}
+
+// validate request param return err
+func ValidateReturnErr(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
+	ops := getValidateOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	err := validate(ops.validator.Struct(req), trans, *ops)
+	return err
 }
 
 func validate(err error, custom map[string]string, ops ValidateOptions) (e error) {
