@@ -3,6 +3,7 @@ package resp
 import (
 	"fmt"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 // base fields(like Id/CreatedAt/UpdatedAt common fields)
@@ -114,6 +115,14 @@ func GetSuccessWithData(data interface{}) Resp {
 	return GetResult(Ok, data, CustomError[Ok])
 }
 
+func GetSuccessWithPageData(real, brief interface{}, page Page) Resp {
+	utils.Struct2StructByJson(real, &brief)
+	var rp PageData
+	rp.Page = page
+	rp.List = brief
+	return GetResult(Ok, rp, CustomError[Ok])
+}
+
 func GetFailWithMsg(format interface{}, a ...interface{}) Resp {
 	return GetResult(NotOk, map[string]interface{}{}, format, a...)
 }
@@ -132,11 +141,15 @@ func GetFailWithCodeAndMsg(code int, format interface{}, a ...interface{}) Resp 
 }
 
 func Success() {
-	panic(GetResult(Ok, map[string]interface{}{}, CustomError[Ok]))
+	panic(GetSuccess())
 }
 
 func SuccessWithData(data interface{}) {
-	panic(GetResult(Ok, data, CustomError[Ok]))
+	panic(GetSuccessWithData(data))
+}
+
+func SuccessWithPageData(real, brief interface{}, page Page) {
+	panic(GetSuccessWithPageData(real, brief, page))
 }
 
 func FailWithMsg(format interface{}, a ...interface{}) {
