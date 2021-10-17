@@ -57,7 +57,7 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
-func Login(options ...func(*JwtOptions)) gin.HandlerFunc {
+func JwtLogin(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -115,7 +115,7 @@ func Login(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
-func Logout(options ...func(*JwtOptions)) gin.HandlerFunc {
+func JwtLogout(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -143,7 +143,7 @@ func Logout(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
-func Refresh(options ...func(*JwtOptions)) gin.HandlerFunc {
+func JwtRefresh(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)

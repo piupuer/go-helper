@@ -157,7 +157,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			if len(logCache) >= 100 {
 				list := make([]OperationRecord, 0)
 				copy(list, logCache)
-				go ops.save(list)
+				go ops.save(c, list)
 				logCache = make([]OperationRecord, 0)
 			}
 			logLock.Unlock()
@@ -174,7 +174,7 @@ func getApiDesc(c *gin.Context, method, path string, ops OperationLogOptions) st
 			return oldCache
 		}
 	}
-	apis := ops.findApi()
+	apis := ops.findApi(c)
 	for _, api := range apis {
 		if api.Method == method && api.Path == path {
 			desc = api.Desc

@@ -75,6 +75,14 @@ func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
 	}
 }
 
+func WithCasbinRoleKey(fun func(c *gin.Context) string) func(*CasbinOptions) {
+	return func(options *CasbinOptions) {
+		if fun != nil {
+			getCasbinOptionsOptionsOrSetDefault(options).roleKey = fun
+		}
+	}
+}
+
 func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if enforcer != nil {
@@ -400,10 +408,18 @@ func WithOperationLogGetUserInfo(fun func(c *gin.Context) (username, roleName st
 	}
 }
 
-func WithOperationLogSave(fun func([]OperationRecord)) func(*OperationLogOptions) {
+func WithOperationLogSave(fun func(c *gin.Context, list []OperationRecord)) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
 			getOperationLogOptionsOptionsOrSetDefault(options).save = fun
+		}
+	}
+}
+
+func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*OperationLogOptions) {
+	return func(options *OperationLogOptions) {
+		if fun != nil {
+			getOperationLogOptionsOptionsOrSetDefault(options).findApi = fun
 		}
 	}
 }
