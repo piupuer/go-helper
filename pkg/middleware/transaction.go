@@ -8,7 +8,7 @@ import (
 )
 
 func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
-	ops := getTransactionOptionsOptionsOrSetDefault(nil)
+	ops := getTransactionOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

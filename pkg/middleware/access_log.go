@@ -7,7 +7,7 @@ import (
 )
 
 func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
-	ops := getAccessLogOptionsOptionsOrSetDefault(nil)
+	ops := getAccessLogOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

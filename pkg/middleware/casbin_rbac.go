@@ -8,7 +8,7 @@ import (
 )
 
 func Casbin(options ...func(*CasbinOptions)) gin.HandlerFunc {
-	ops := getCasbinOptionsOptionsOrSetDefault(nil)
+	ops := getCasbinOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

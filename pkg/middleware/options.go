@@ -18,9 +18,9 @@ const (
 	operationLogCtxKey      = "operation_log_response"
 	operationLogNotLogin    = "not login"
 	operationLogApiCacheKey = "OPERATION_LOG_API"
-	requestIdHeaderName     = "X-Request-Id"
-	requestIdCtxKey         = "RequestId"
-	transactionTxCtxKey     = "tx"
+	RequestIdHeaderName     = "X-Request-Id"
+	RequestIdCtxKey         = "RequestId"
+	TransactionTxCtxKey     = "tx"
 )
 
 type AccessLogOptions struct {
@@ -31,7 +31,7 @@ type AccessLogOptions struct {
 func WithAccessLogLogger(l logger.Interface) func(*AccessLogOptions) {
 	return func(options *AccessLogOptions) {
 		if l != nil {
-			getAccessLogOptionsOptionsOrSetDefault(options).logger = l
+			getAccessLogOptionsOrSetDefault(options).logger = l
 		}
 	}
 }
@@ -40,7 +40,7 @@ func WithAccessLogLoggerLevel(level logger.Level) func(*AccessLogOptions) {
 	return func(options *AccessLogOptions) {
 		l := options.logger
 		if options.logger == nil {
-			l = getAccessLogOptionsOptionsOrSetDefault(options).logger
+			l = getAccessLogOptionsOrSetDefault(options).logger
 		}
 		options.logger = l.LogLevel(level)
 	}
@@ -48,11 +48,11 @@ func WithAccessLogLoggerLevel(level logger.Level) func(*AccessLogOptions) {
 
 func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
 	return func(options *AccessLogOptions) {
-		getAccessLogOptionsOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
+		getAccessLogOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
 	}
 }
 
-func getAccessLogOptionsOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
+func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
 	if options == nil {
 		return &AccessLogOptions{
 			logger:    logger.DefaultLogger(),
@@ -71,14 +71,14 @@ type CasbinOptions struct {
 
 func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
-		getCasbinOptionsOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
+		getCasbinOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
 	}
 }
 
 func WithCasbinRoleKey(fun func(c *gin.Context) string) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if fun != nil {
-			getCasbinOptionsOptionsOrSetDefault(options).roleKey = fun
+			getCasbinOptionsOrSetDefault(options).roleKey = fun
 		}
 	}
 }
@@ -86,7 +86,7 @@ func WithCasbinRoleKey(fun func(c *gin.Context) string) func(*CasbinOptions) {
 func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if enforcer != nil {
-			getCasbinOptionsOptionsOrSetDefault(options).enforcer = enforcer
+			getCasbinOptionsOrSetDefault(options).enforcer = enforcer
 		}
 	}
 }
@@ -94,12 +94,12 @@ func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*CasbinOptions) {
 func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if fun != nil {
-			getCasbinOptionsOptionsOrSetDefault(options).failWithCode = fun
+			getCasbinOptionsOrSetDefault(options).failWithCode = fun
 		}
 	}
 }
 
-func getCasbinOptionsOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
+func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
 		return &CasbinOptions{
 			urlPrefix:    urlPrefix,
@@ -120,7 +120,7 @@ type ExceptionOptions struct {
 func WithExceptionLogger(l logger.Interface) func(*ExceptionOptions) {
 	return func(options *ExceptionOptions) {
 		if l != nil {
-			getExceptionOptionsOptionsOrSetDefault(options).logger = l
+			getExceptionOptionsOrSetDefault(options).logger = l
 		}
 	}
 }
@@ -129,7 +129,7 @@ func WithExceptionLoggerLevel(level logger.Level) func(*ExceptionOptions) {
 	return func(options *ExceptionOptions) {
 		l := options.logger
 		if options.logger == nil {
-			l = getExceptionOptionsOptionsOrSetDefault(options).logger
+			l = getExceptionOptionsOrSetDefault(options).logger
 		}
 		options.logger = l.LogLevel(level)
 	}
@@ -137,11 +137,11 @@ func WithExceptionLoggerLevel(level logger.Level) func(*ExceptionOptions) {
 
 func WithExceptionOperationLogCtxKey(key string) func(*ExceptionOptions) {
 	return func(options *ExceptionOptions) {
-		getExceptionOptionsOptionsOrSetDefault(options).operationLogCtxKey = key
+		getExceptionOptionsOrSetDefault(options).operationLogCtxKey = key
 	}
 }
 
-func getExceptionOptionsOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
+func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
 	if options == nil {
 		return &ExceptionOptions{
 			logger:             logger.DefaultLogger(),
@@ -162,27 +162,27 @@ type IdempotenceOptions struct {
 func WithIdempotenceRedis(rd redis.UniversalClient) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
 		if rd != nil {
-			getIdempotenceOptionsOptionsOrSetDefault(options).redis = rd
+			getIdempotenceOptionsOrSetDefault(options).redis = rd
 		}
 	}
 }
 
 func WithIdempotencePrefix(prefix string) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
-		getIdempotenceOptionsOptionsOrSetDefault(options).prefix = prefix
+		getIdempotenceOptionsOrSetDefault(options).prefix = prefix
 	}
 }
 
 func WithIdempotenceTokenName(name string) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
-		getIdempotenceOptionsOptionsOrSetDefault(options).tokenName = name
+		getIdempotenceOptionsOrSetDefault(options).tokenName = name
 	}
 }
 
 func WithIdempotenceSuccessWithData(fun func(interface{})) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
 		if fun != nil {
-			getIdempotenceOptionsOptionsOrSetDefault(options).successWithData = fun
+			getIdempotenceOptionsOrSetDefault(options).successWithData = fun
 		}
 	}
 }
@@ -190,12 +190,12 @@ func WithIdempotenceSuccessWithData(fun func(interface{})) func(*IdempotenceOpti
 func WithIdempotenceFailWithMsg(fun func(format interface{}, a ...interface{})) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
 		if fun != nil {
-			getIdempotenceOptionsOptionsOrSetDefault(options).failWithMsg = fun
+			getIdempotenceOptionsOrSetDefault(options).failWithMsg = fun
 		}
 	}
 }
 
-func getIdempotenceOptionsOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
+func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
 	if options == nil {
 		return &IdempotenceOptions{
 			prefix:          idempotencePrefix,
@@ -228,7 +228,7 @@ type JwtOptions struct {
 func WithJwtLogger(l logger.Interface) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if l != nil {
-			getJwtOptionsOptionsOrSetDefault(options).logger = l
+			getJwtOptionsOrSetDefault(options).logger = l
 		}
 	}
 }
@@ -237,7 +237,7 @@ func WithJwtLoggerLevel(level logger.Level) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		l := options.logger
 		if options.logger == nil {
-			l = getJwtOptionsOptionsOrSetDefault(options).logger
+			l = getJwtOptionsOrSetDefault(options).logger
 		}
 		options.logger = l.LogLevel(level)
 	}
@@ -245,60 +245,60 @@ func WithJwtLoggerLevel(level logger.Level) func(*JwtOptions) {
 
 func WithJwtRealm(realm string) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).realm = realm
+		getJwtOptionsOrSetDefault(options).realm = realm
 	}
 }
 
 func WithJwtKey(key string) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).key = key
+		getJwtOptionsOrSetDefault(options).key = key
 	}
 }
 
 func WithJwtTimeout(timeout int) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).timeout = timeout
+		getJwtOptionsOrSetDefault(options).timeout = timeout
 	}
 }
 
 func WithJwtMaxRefresh(maxRefresh int) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).maxRefresh = maxRefresh
+		getJwtOptionsOrSetDefault(options).maxRefresh = maxRefresh
 	}
 }
 
 func WithJwtTokenLookup(tokenLookup string) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).tokenLookup = tokenLookup
+		getJwtOptionsOrSetDefault(options).tokenLookup = tokenLookup
 	}
 }
 
 func WithJwtTokenHeaderName(tokenHeaderName string) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).tokenHeaderName = tokenHeaderName
+		getJwtOptionsOrSetDefault(options).tokenHeaderName = tokenHeaderName
 	}
 }
 
 func WithJwtSendCookie(options *JwtOptions) {
-	getJwtOptionsOptionsOrSetDefault(options).sendCookie = true
+	getJwtOptionsOrSetDefault(options).sendCookie = true
 }
 
 func WithJwtCookieName(cookieName string) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).cookieName = cookieName
+		getJwtOptionsOrSetDefault(options).cookieName = cookieName
 	}
 }
 
 func WithJwtPrivateBytes(bs []byte) func(*JwtOptions) {
 	return func(options *JwtOptions) {
-		getJwtOptionsOptionsOrSetDefault(options).privateBytes = bs
+		getJwtOptionsOrSetDefault(options).privateBytes = bs
 	}
 }
 
 func WithJwtSuccess(fun func()) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
-			getJwtOptionsOptionsOrSetDefault(options).success = fun
+			getJwtOptionsOrSetDefault(options).success = fun
 		}
 	}
 }
@@ -306,7 +306,7 @@ func WithJwtSuccess(fun func()) func(*JwtOptions) {
 func WithJwtSuccessWithData(fun func(interface{})) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
-			getJwtOptionsOptionsOrSetDefault(options).successWithData = fun
+			getJwtOptionsOrSetDefault(options).successWithData = fun
 		}
 	}
 }
@@ -314,7 +314,7 @@ func WithJwtSuccessWithData(fun func(interface{})) func(*JwtOptions) {
 func WithJwtFailWithMsg(fun func(format interface{}, a ...interface{})) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
-			getJwtOptionsOptionsOrSetDefault(options).failWithMsg = fun
+			getJwtOptionsOrSetDefault(options).failWithMsg = fun
 		}
 	}
 }
@@ -322,7 +322,7 @@ func WithJwtFailWithMsg(fun func(format interface{}, a ...interface{})) func(*Jw
 func WithJwtFailWithCodeAndMsg(fun func(code int, format interface{}, a ...interface{})) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
-			getJwtOptionsOptionsOrSetDefault(options).failWithCodeAndMsg = fun
+			getJwtOptionsOrSetDefault(options).failWithCodeAndMsg = fun
 		}
 	}
 }
@@ -330,12 +330,12 @@ func WithJwtFailWithCodeAndMsg(fun func(code int, format interface{}, a ...inter
 func WithJwtLoginPwdCheck(fun func(c *gin.Context, username, password string) (userId int64, pass bool)) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
-			getJwtOptionsOptionsOrSetDefault(options).loginPwdCheck = fun
+			getJwtOptionsOrSetDefault(options).loginPwdCheck = fun
 		}
 	}
 }
 
-func getJwtOptionsOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
+func getJwtOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 	if options == nil {
 		return &JwtOptions{
 			logger:             logger.DefaultLogger(),
@@ -375,7 +375,7 @@ type OperationLogOptions struct {
 func WithOperationLogLogger(l logger.Interface) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if l != nil {
-			getOperationLogOptionsOptionsOrSetDefault(options).logger = l
+			getOperationLogOptionsOrSetDefault(options).logger = l
 		}
 	}
 }
@@ -384,7 +384,7 @@ func WithOperationLogLoggerLevel(level logger.Level) func(*OperationLogOptions) 
 	return func(options *OperationLogOptions) {
 		l := options.logger
 		if options.logger == nil {
-			l = getOperationLogOptionsOptionsOrSetDefault(options).logger
+			l = getOperationLogOptionsOrSetDefault(options).logger
 		}
 		options.logger = l.LogLevel(level)
 	}
@@ -393,49 +393,49 @@ func WithOperationLogLoggerLevel(level logger.Level) func(*OperationLogOptions) 
 func WithOperationLogRedis(rd redis.UniversalClient) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if rd != nil {
-			getOperationLogOptionsOptionsOrSetDefault(options).redis = rd
+			getOperationLogOptionsOrSetDefault(options).redis = rd
 		}
 	}
 }
 
 func WithOperationLogCtxKey(key string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOptionsOrSetDefault(options).ctxKey = key
+		getOperationLogOptionsOrSetDefault(options).ctxKey = key
 	}
 }
 
 func WithOperationLogApiCacheKey(key string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOptionsOrSetDefault(options).apiCacheKey = key
+		getOperationLogOptionsOrSetDefault(options).apiCacheKey = key
 	}
 }
 
 func WithOperationLogUrlPrefix(prefix string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
+		getOperationLogOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
 	}
 }
 
 func WithOperationLogRealIpKey(key string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOptionsOrSetDefault(options).realIpKey = key
+		getOperationLogOptionsOrSetDefault(options).realIpKey = key
 	}
 }
 
 func WithOperationLogSkipGetOrOptionsMethod(options *OperationLogOptions) {
-	getOperationLogOptionsOptionsOrSetDefault(options).skipGetOrOptionsMethod = true
+	getOperationLogOptionsOrSetDefault(options).skipGetOrOptionsMethod = true
 }
 
 func WithOperationLogSkipPaths(paths ...string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOptionsOrSetDefault(options).skipPaths = append(getOperationLogOptionsOptionsOrSetDefault(options).skipPaths, paths...)
+		getOperationLogOptionsOrSetDefault(options).skipPaths = append(getOperationLogOptionsOrSetDefault(options).skipPaths, paths...)
 	}
 }
 
 func WithOperationLogSingleFileMaxSize(size int64) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if size >= 0 {
-			getOperationLogOptionsOptionsOrSetDefault(options).singleFileMaxSize = size
+			getOperationLogOptionsOrSetDefault(options).singleFileMaxSize = size
 		}
 	}
 }
@@ -443,7 +443,7 @@ func WithOperationLogSingleFileMaxSize(size int64) func(*OperationLogOptions) {
 func WithOperationLogGetUserInfo(fun func(c *gin.Context) (username, roleName string)) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
-			getOperationLogOptionsOptionsOrSetDefault(options).getUserInfo = fun
+			getOperationLogOptionsOrSetDefault(options).getUserInfo = fun
 		}
 	}
 }
@@ -451,7 +451,7 @@ func WithOperationLogGetUserInfo(fun func(c *gin.Context) (username, roleName st
 func WithOperationLogSave(fun func(c *gin.Context, list []OperationRecord)) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
-			getOperationLogOptionsOptionsOrSetDefault(options).save = fun
+			getOperationLogOptionsOrSetDefault(options).save = fun
 		}
 	}
 }
@@ -459,12 +459,12 @@ func WithOperationLogSave(fun func(c *gin.Context, list []OperationRecord)) func
 func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
-			getOperationLogOptionsOptionsOrSetDefault(options).findApi = fun
+			getOperationLogOptionsOrSetDefault(options).findApi = fun
 		}
 	}
 }
 
-func getOperationLogOptionsOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
+func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
 	if options == nil {
 		l := logger.DefaultLogger()
 		return &OperationLogOptions{
@@ -496,18 +496,18 @@ type RateOptions struct {
 func WithRateRedis(rd redis.UniversalClient) func(*RateOptions) {
 	return func(options *RateOptions) {
 		if rd != nil {
-			getRateOptionsOptionsOrSetDefault(options).redis = rd
+			getRateOptionsOrSetDefault(options).redis = rd
 		}
 	}
 }
 
 func WithRateMaxLimit(limit int64) func(*RateOptions) {
 	return func(options *RateOptions) {
-		getRateOptionsOptionsOrSetDefault(options).maxLimit = limit
+		getRateOptionsOrSetDefault(options).maxLimit = limit
 	}
 }
 
-func getRateOptionsOptionsOrSetDefault(options *RateOptions) *RateOptions {
+func getRateOptionsOrSetDefault(options *RateOptions) *RateOptions {
 	if options == nil {
 		return &RateOptions{
 			maxLimit: 200,
@@ -523,21 +523,21 @@ type RequestIdOptions struct {
 
 func WithRequestIdHeaderName(name string) func(*RequestIdOptions) {
 	return func(options *RequestIdOptions) {
-		getRequestIdOptionsOptionsOrSetDefault(options).headerName = name
+		getRequestIdOptionsOrSetDefault(options).headerName = name
 	}
 }
 
 func WithRequestIdCtxKey(key string) func(*RequestIdOptions) {
 	return func(options *RequestIdOptions) {
-		getRequestIdOptionsOptionsOrSetDefault(options).ctxKey = key
+		getRequestIdOptionsOrSetDefault(options).ctxKey = key
 	}
 }
 
-func getRequestIdOptionsOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOptions {
+func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOptions {
 	if options == nil {
 		return &RequestIdOptions{
-			headerName: requestIdHeaderName,
-			ctxKey:     requestIdCtxKey,
+			headerName: RequestIdHeaderName,
+			ctxKey:     RequestIdCtxKey,
 		}
 	}
 	return options
@@ -552,28 +552,28 @@ type TransactionOptions struct {
 func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
 	return func(options *TransactionOptions) {
 		if db != nil {
-			getTransactionOptionsOptionsOrSetDefault(options).dbNoTx = db
+			getTransactionOptionsOrSetDefault(options).dbNoTx = db
 		}
 	}
 }
 
 func WithTransactionRequestIdCtxKey(key string) func(*TransactionOptions) {
 	return func(options *TransactionOptions) {
-		getTransactionOptionsOptionsOrSetDefault(options).requestIdCtxKey = key
+		getTransactionOptionsOrSetDefault(options).requestIdCtxKey = key
 	}
 }
 
 func WithTransactionTxCtxKey(key string) func(*TransactionOptions) {
 	return func(options *TransactionOptions) {
-		getTransactionOptionsOptionsOrSetDefault(options).txCtxKey = key
+		getTransactionOptionsOrSetDefault(options).txCtxKey = key
 	}
 }
 
-func getTransactionOptionsOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
+func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
 		return &TransactionOptions{
-			requestIdCtxKey: requestIdCtxKey,
-			txCtxKey:        transactionTxCtxKey,
+			requestIdCtxKey: RequestIdCtxKey,
+			txCtxKey:        TransactionTxCtxKey,
 		}
 	}
 	return options

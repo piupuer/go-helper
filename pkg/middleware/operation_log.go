@@ -45,7 +45,7 @@ type OperationRecord struct {
 }
 
 func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
-	ops := getOperationLogOptionsOptionsOrSetDefault(nil)
+	ops := getOperationLogOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

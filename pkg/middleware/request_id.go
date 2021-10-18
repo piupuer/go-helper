@@ -6,7 +6,7 @@ import (
 )
 
 func RequestId(options ...func(*RequestIdOptions)) gin.HandlerFunc {
-	ops := getRequestIdOptionsOptionsOrSetDefault(nil)
+	ops := getRequestIdOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

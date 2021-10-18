@@ -10,7 +10,7 @@ import (
 )
 
 func Rate(options ...func(*RateOptions)) gin.HandlerFunc {
-	ops := getRateOptionsOptionsOrSetDefault(nil)
+	ops := getRateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

@@ -27,7 +27,7 @@ end
 )
 
 func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
-	ops := getIdempotenceOptionsOptionsOrSetDefault(nil)
+	ops := getIdempotenceOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
@@ -53,7 +53,7 @@ func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 }
 
 func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
-	ops := getIdempotenceOptionsOptionsOrSetDefault(nil)
+	ops := getIdempotenceOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}

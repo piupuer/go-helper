@@ -9,7 +9,7 @@ import (
 )
 
 func Exception(options ...func(*ExceptionOptions)) gin.HandlerFunc {
-	ops := getExceptionOptionsOptionsOrSetDefault(nil)
+	ops := getExceptionOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
