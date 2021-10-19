@@ -1,37 +1,40 @@
 package rpc
 
-import "io/ioutil"
+import (
+	"github.com/piupuer/go-helper/pkg/constant"
+	"io/ioutil"
+)
 
 type GrpcOptions struct {
-	ServerName  string
-	CaPem       []byte
-	ClientPem   []byte
-	ClientKey   []byte
-	Timeout     int
-	HealthCheck bool
+	serverName  string
+	caPem       []byte
+	clientPem   []byte
+	clientKey   []byte
+	timeout     int
+	healthCheck bool
 }
 
 func WithGrpcServerName(name string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).ServerName = name
+		getGrpcOptionsOrSetDefault(options).serverName = name
 	}
 }
 
 func WithGrpcCaPem(caPem []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).CaPem = caPem
+		getGrpcOptionsOrSetDefault(options).caPem = caPem
 	}
 }
 
 func WithGrpcClientPem(clientPem []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).ClientPem = clientPem
+		getGrpcOptionsOrSetDefault(options).clientPem = clientPem
 	}
 }
 
 func WithGrpcClientKey(clientKey []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).ClientKey = clientKey
+		getGrpcOptionsOrSetDefault(options).clientKey = clientKey
 	}
 }
 
@@ -39,7 +42,7 @@ func WithGrpcCaPemFile(caPem string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		bs, err := ioutil.ReadFile(caPem)
 		if err == nil {
-			getGrpcOptionsOrSetDefault(options).CaPem = bs
+			getGrpcOptionsOrSetDefault(options).caPem = bs
 		}
 	}
 }
@@ -48,7 +51,7 @@ func WithGrpcClientPemFile(clientPem string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		bs, err := ioutil.ReadFile(clientPem)
 		if err == nil {
-			getGrpcOptionsOrSetDefault(options).ClientPem = bs
+			getGrpcOptionsOrSetDefault(options).clientPem = bs
 		}
 	}
 }
@@ -57,7 +60,7 @@ func WithGrpcClientKeyFile(clientKey string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		bs, err := ioutil.ReadFile(clientKey)
 		if err == nil {
-			getGrpcOptionsOrSetDefault(options).ClientKey = bs
+			getGrpcOptionsOrSetDefault(options).clientKey = bs
 		}
 	}
 }
@@ -65,20 +68,19 @@ func WithGrpcClientKeyFile(clientKey string) func(*GrpcOptions) {
 func WithGrpcTimeout(second int) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		if second > 0 {
-			getGrpcOptionsOrSetDefault(options).Timeout = second
+			getGrpcOptionsOrSetDefault(options).timeout = second
 		}
 	}
 }
 
 func WithGrpcHealthCheck(options *GrpcOptions) {
-	getGrpcOptionsOrSetDefault(options).HealthCheck = true
+	getGrpcOptionsOrSetDefault(options).healthCheck = true
 }
 
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 	if options == nil {
 		return &GrpcOptions{
-			Timeout:     10,
-			HealthCheck: false,
+			timeout: constant.GrpcTimeout,
 		}
 	}
 	return options

@@ -130,8 +130,8 @@ func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
 
 	c := cron.New()
 	j := job{
-		AutoRequestId: g.ops.AutoRequestId,
-		Func:          task.Func,
+		ops:  g.ops,
+		Func: task.Func,
 	}
 	c.AddJob(task.Expr, j)
 
@@ -164,8 +164,8 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	fun := (func(task GoodTask) func() {
 		return func() {
 			ctx := context.Background()
-			if g.ops.AutoRequestId {
-				ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
+			if g.ops.autoRequestId {
+				ctx = context.WithValue(ctx, g.ops.requestIdCtxKey, uuid.NewV4().String())
 			}
 			task.Func(ctx)
 		}
@@ -282,15 +282,15 @@ func (c cronLogger) Printf(format string, args ...interface{}) {
 }
 
 type job struct {
-	AutoRequestId bool
-	Func          func(ctx context.Context) error
+	ops  Options
+	Func func(ctx context.Context) error
 }
 
 func (j job) Run() {
 	if j.Func != nil {
 		ctx := context.Background()
-		if j.AutoRequestId {
-			ctx = context.WithValue(ctx, logger.RequestIdContextKey, uuid.NewV4().String())
+		if j.ops.autoRequestId {
+			ctx = context.WithValue(ctx, j.ops.requestIdCtxKey, uuid.NewV4().String())
 		}
 		j.Func(ctx)
 	}

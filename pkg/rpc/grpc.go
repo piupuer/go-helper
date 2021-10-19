@@ -26,20 +26,20 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 		f(ops)
 	}
 	gr.ops = *ops
-	if len(ops.ClientKey) > 0 || len(ops.ClientPem) > 0 || len(ops.CaPem) > 0 {
-		cert, err := tls.X509KeyPair(gr.ops.ClientPem, gr.ops.ClientKey)
+	if len(ops.clientKey) > 0 || len(ops.clientPem) > 0 || len(ops.caPem) > 0 {
+		cert, err := tls.X509KeyPair(gr.ops.clientPem, gr.ops.clientKey)
 		if err != nil {
 			gr.Error = fmt.Errorf("[grpc]load x509 key pair err: %v", err)
 			return &gr
 		}
 		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(gr.ops.CaPem); !ok {
+		if ok := certPool.AppendCertsFromPEM(gr.ops.caPem); !ok {
 			gr.Error = fmt.Errorf("[grpc]append certs from pem err: %v", err)
 			return &gr
 		}
 		gr.ctl = credentials.NewTLS(&tls.Config{
 			Certificates: []tls.Certificate{cert},
-			ServerName:   gr.ops.ServerName,
+			ServerName:   gr.ops.serverName,
 			RootCAs:      certPool,
 		})
 	}
@@ -54,7 +54,7 @@ func (gr Grpc) Conn() (*grpc.ClientConn, error) {
 		option = grpc.WithInsecure()
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(gr.ops.Timeout)*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(gr.ops.timeout)*time.Second)
 	conn, err := grpc.DialContext(
 		ctx,
 		gr.uri,
@@ -63,7 +63,7 @@ func (gr Grpc) Conn() (*grpc.ClientConn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("[grpc]dial %s err: %v", gr.uri, err)
 	}
-	if gr.ops.HealthCheck {
+	if gr.ops.healthCheck {
 		// health check
 		client := grpc_health_v1.NewHealthClient(conn)
 		h, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})

@@ -4,23 +4,11 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"gorm.io/gorm"
 	"strings"
-)
-
-const (
-	urlPrefix               = "api"
-	roleKey                 = "admin"
-	idempotencePrefix       = "idempotence_"
-	idempotenceTokenName    = "api-idempotence-token"
-	operationLogCtxKey      = "operation_log_response"
-	operationLogNotLogin    = "not login"
-	operationLogApiCacheKey = "OPERATION_LOG_API"
-	RequestIdHeaderName     = "X-Request-Id"
-	RequestIdCtxKey         = "RequestId"
-	TransactionTxCtxKey     = "tx"
 )
 
 type AccessLogOptions struct {
@@ -56,7 +44,7 @@ func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOption
 	if options == nil {
 		return &AccessLogOptions{
 			logger:    logger.DefaultLogger(),
-			urlPrefix: urlPrefix,
+			urlPrefix: constant.MiddlewareUrlPrefix,
 		}
 	}
 	return options
@@ -102,10 +90,10 @@ func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
 		return &CasbinOptions{
-			urlPrefix:    urlPrefix,
+			urlPrefix:    constant.MiddlewareUrlPrefix,
 			failWithCode: resp.FailWithCode,
 			roleKey: func(c *gin.Context) string {
-				return roleKey
+				return constant.MiddlewareRoleKey
 			},
 		}
 	}
@@ -115,6 +103,7 @@ func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 type ExceptionOptions struct {
 	logger             logger.Interface
 	operationLogCtxKey string
+	requestIdCtxKey    string
 }
 
 func WithExceptionLogger(l logger.Interface) func(*ExceptionOptions) {
@@ -145,7 +134,8 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 	if options == nil {
 		return &ExceptionOptions{
 			logger:             logger.DefaultLogger(),
-			operationLogCtxKey: operationLogCtxKey,
+			operationLogCtxKey: constant.MiddlewareOperationLogCtxKey,
+			requestIdCtxKey:    constant.MiddlewareRequestIdCtxKey,
 		}
 	}
 	return options
@@ -154,6 +144,7 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 type IdempotenceOptions struct {
 	redis           redis.UniversalClient
 	prefix          string
+	expire          int
 	tokenName       string
 	successWithData func(interface{})
 	failWithMsg     func(format interface{}, a ...interface{})
@@ -170,6 +161,14 @@ func WithIdempotenceRedis(rd redis.UniversalClient) func(*IdempotenceOptions) {
 func WithIdempotencePrefix(prefix string) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
 		getIdempotenceOptionsOrSetDefault(options).prefix = prefix
+	}
+}
+
+func WithIdempotenceExpire(hours int) func(*IdempotenceOptions) {
+	return func(options *IdempotenceOptions) {
+		if hours > 0 {
+			getIdempotenceOptionsOrSetDefault(options).expire = hours
+		}
 	}
 }
 
@@ -198,8 +197,9 @@ func WithIdempotenceFailWithMsg(fun func(format interface{}, a ...interface{})) 
 func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
 	if options == nil {
 		return &IdempotenceOptions{
-			prefix:          idempotencePrefix,
-			tokenName:       idempotenceTokenName,
+			prefix:          constant.MiddlewareIdempotencePrefix,
+			expire:          constant.MiddlewareIdempotenceExpire,
+			tokenName:       constant.MiddlewareIdempotenceTokenName,
 			successWithData: resp.SuccessWithData,
 			failWithMsg:     resp.FailWithMsg,
 		}
@@ -469,11 +469,11 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 		l := logger.DefaultLogger()
 		return &OperationLogOptions{
 			logger:      l,
-			ctxKey:      operationLogCtxKey,
-			apiCacheKey: operationLogApiCacheKey,
-			urlPrefix:   urlPrefix,
+			ctxKey:      constant.MiddlewareOperationLogCtxKey,
+			apiCacheKey: constant.MiddlewareOperationLogApiCacheKey,
+			urlPrefix:   constant.MiddlewareUrlPrefix,
 			getUserInfo: func(c *gin.Context) (username, roleName string) {
-				return operationLogNotLogin, operationLogNotLogin
+				return constant.MiddlewareOperationLogNotLogin, constant.MiddlewareOperationLogNotLogin
 			},
 			singleFileMaxSize: 100,
 			save: func(c *gin.Context, list []OperationRecord) {
@@ -536,8 +536,8 @@ func WithRequestIdCtxKey(key string) func(*RequestIdOptions) {
 func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOptions {
 	if options == nil {
 		return &RequestIdOptions{
-			headerName: RequestIdHeaderName,
-			ctxKey:     RequestIdCtxKey,
+			headerName: constant.MiddlewareRequestIdHeaderName,
+			ctxKey:     constant.MiddlewareRequestIdCtxKey,
 		}
 	}
 	return options
@@ -572,8 +572,8 @@ func WithTransactionTxCtxKey(key string) func(*TransactionOptions) {
 func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
 		return &TransactionOptions{
-			requestIdCtxKey: RequestIdCtxKey,
-			txCtxKey:        TransactionTxCtxKey,
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
 		}
 	}
 	return options

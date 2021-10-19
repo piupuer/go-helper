@@ -2,7 +2,7 @@ package fsm
 
 import (
 	"context"
-	"strings"
+	"github.com/piupuer/go-helper/pkg/constant"
 )
 
 type Options struct {
@@ -18,9 +18,6 @@ func WithContext(ctx context.Context) func(*Options) {
 
 func WithPrefix(prefix string) func(*Options) {
 	return func(options *Options) {
-		if !strings.HasSuffix(prefix, "_") {
-			prefix = prefix + "_"
-		}
 		getOptionsOrSetDefault(options).prefix = prefix
 	}
 }
@@ -28,7 +25,7 @@ func WithPrefix(prefix string) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			prefix: "tb_fsm_",
+			prefix: constant.FsmPrefix,
 		}
 	}
 	return options

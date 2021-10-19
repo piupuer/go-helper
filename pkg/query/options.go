@@ -3,13 +3,8 @@ package query
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
-	"github.com/piupuer/go-helper/pkg/middleware"
-)
-
-const (
-	primaryKey  = "id"
-	cacheExpire = 86400
 )
 
 type MysqlOptions struct {
@@ -59,8 +54,8 @@ func getMysqlOptionsOrSetDefault(options *MysqlOptions) *MysqlOptions {
 		return &MysqlOptions{
 			logger:          logger.DefaultLogger(),
 			ctx:             context.Background(),
-			txCtxKey:        middleware.TransactionTxCtxKey,
-			requestIdCtxKey: middleware.RequestIdCtxKey,
+			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 		}
 	}
 	return options
@@ -70,6 +65,7 @@ type MysqlReadOptions struct {
 	preloads    []string
 	cache       bool
 	cacheExpire int
+	column      string
 }
 
 func WithMySqlReadPreload(preloads ...string) func(*MysqlReadOptions) {
@@ -90,11 +86,20 @@ func WithMySqlReadCacheExpire(seconds int) func(*MysqlReadOptions) {
 	}
 }
 
+func WithMySqlReadColumn(column string) func(*MysqlReadOptions) {
+	return func(options *MysqlReadOptions) {
+		if column != "" {
+			options.column = column
+		}
+	}
+}
+
 func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOptions {
 	if options == nil {
 		return &MysqlReadOptions{
 			preloads:    []string{},
-			cacheExpire: cacheExpire,
+			cacheExpire: constant.QueryCacheExpire,
+			column:      constant.QueryPrimaryKey,
 		}
 	}
 	return options

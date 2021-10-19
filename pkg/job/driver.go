@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const prefix = "job-cron:"
-
 type RedisClientDriver struct {
 	client  redis.UniversalClient
 	timeout time.Duration
@@ -37,11 +35,7 @@ func (rd *RedisClientDriver) Ping() error {
 }
 
 func (rd *RedisClientDriver) getKeyPre(serviceName string) string {
-	p := prefix
-	if rd.ops.prefix != "" {
-		p = rd.ops.prefix
-	}
-	return fmt.Sprintf("%s%s:", p, serviceName)
+	return fmt.Sprintf("%s%s:", rd.ops.prefix, serviceName)
 }
 
 func (rd *RedisClientDriver) SetTimeout(timeout time.Duration) {

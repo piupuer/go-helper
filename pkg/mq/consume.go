@@ -56,7 +56,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					if err == nil {
 						break
 					} else {
-						time.Sleep(time.Duration(co.qu.ex.rb.ops.ReconnectInterval) * time.Second)
+						time.Sleep(time.Duration(co.qu.ex.rb.ops.reconnectInterval) * time.Second)
 					}
 				}
 				if co.ops.NewRequestIdWhenConnectionLost {

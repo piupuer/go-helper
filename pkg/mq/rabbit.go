@@ -106,7 +106,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 
 // get a channel
 func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
-	if rb.channelLostCount > rb.ops.ChannelMaxLostCount {
+	if rb.channelLostCount > rb.ops.channelMaxLostCount {
 		rb.ops.logger.Warn(ctx, "get channel failed %d retries, connection maybe lost", rb.channelLostCount)
 		rb.lost = true
 	}
@@ -130,7 +130,7 @@ func (rb *Rabbit) reconnect(ctx context.Context) error {
 	if !rb.lost {
 		return nil
 	}
-	interval := time.Duration(rb.ops.ReconnectInterval) * time.Second
+	interval := time.Duration(rb.ops.reconnectInterval) * time.Second
 	retryCount := 0
 	var err error
 	for {
@@ -145,7 +145,7 @@ func (rb *Rabbit) reconnect(ctx context.Context) error {
 		} else {
 			retryCount++
 		}
-		if retryCount >= rb.ops.ReconnectMaxRetryCount {
+		if retryCount >= rb.ops.reconnectMaxRetryCount {
 			break
 		}
 	}

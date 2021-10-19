@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"net/http"
 	"runtime/debug"
@@ -21,7 +20,7 @@ func Exception(options ...func(*ExceptionOptions)) gin.HandlerFunc {
 					Code:      resp.InternalServerError,
 					Data:      map[string]interface{}{},
 					Msg:       resp.CustomError[resp.InternalServerError],
-					RequestId: c.GetString(logger.RequestIdContextKey),
+					RequestId: c.GetString(ops.requestIdCtxKey),
 				}
 				// set json data
 				c.JSON(http.StatusOK, rp)

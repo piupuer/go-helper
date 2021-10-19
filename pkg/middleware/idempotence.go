@@ -11,7 +11,6 @@ import (
 
 // redis lua script(read => delete => get delete flag)
 const (
-	expire                   = 24 * time.Hour
 	lua               string = `
 local current = redis.call('GET', KEYS[1])
 if current == false then
@@ -68,7 +67,7 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 // generate token by redis
 func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
 	token := uuid.NewV4().String()
-	ops.redis.Set(c, ops.prefix+token, true, expire)
+	ops.redis.Set(c, ops.prefix+token, true, time.Duration(ops.expire)*time.Hour)
 	return token
 }
 

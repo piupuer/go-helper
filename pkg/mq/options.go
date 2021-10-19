@@ -8,10 +8,10 @@ import (
 )
 
 type RabbitOptions struct {
-	ReconnectInterval      int
-	ReconnectMaxRetryCount int
-	ChannelMaxLostCount    int
-	Timeout                int
+	reconnectInterval      int
+	reconnectMaxRetryCount int
+	channelMaxLostCount    int
+	timeout                int
 	logger                 logger.Interface
 	ctx                    context.Context
 }
@@ -19,7 +19,7 @@ type RabbitOptions struct {
 func WithReconnectInterval(second int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if second > 0 {
-			getRabbitOptionsOrSetDefault(options).ReconnectInterval = second
+			getRabbitOptionsOrSetDefault(options).reconnectInterval = second
 		}
 	}
 }
@@ -27,7 +27,7 @@ func WithReconnectInterval(second int) func(*RabbitOptions) {
 func WithReconnectMaxRetryCount(count int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if count > 0 {
-			getRabbitOptionsOrSetDefault(options).ReconnectMaxRetryCount = count
+			getRabbitOptionsOrSetDefault(options).reconnectMaxRetryCount = count
 		}
 	}
 }
@@ -35,7 +35,7 @@ func WithReconnectMaxRetryCount(count int) func(*RabbitOptions) {
 func WithChannelMaxLostCount(count int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if count > 0 {
-			getRabbitOptionsOrSetDefault(options).ChannelMaxLostCount = count
+			getRabbitOptionsOrSetDefault(options).channelMaxLostCount = count
 		}
 	}
 }
@@ -43,7 +43,7 @@ func WithChannelMaxLostCount(count int) func(*RabbitOptions) {
 func WithTimeout(second int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if second > 0 {
-			getRabbitOptionsOrSetDefault(options).Timeout = second
+			getRabbitOptionsOrSetDefault(options).timeout = second
 		}
 	}
 }
@@ -75,10 +75,10 @@ func WithContext(ctx context.Context) func(*RabbitOptions) {
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
-			Timeout:                10,
-			ReconnectMaxRetryCount: 3,
-			ChannelMaxLostCount:    5,
-			ReconnectInterval:      5,
+			timeout:                10,
+			reconnectMaxRetryCount: 3,
+			channelMaxLostCount:    5,
+			reconnectInterval:      5,
 			logger:                 logger.DefaultLogger(),
 		}
 	}

@@ -2,12 +2,6 @@ package fsm
 
 import "fmt"
 
-const (
-	LogStatusWaiting   uint = iota // pending approval
-	LogStatusApproved              // approved
-	LogStatusRefused               // approval rejection
-	LogStatusCancelled             // approval cancelled
-)
 
 var (
 	ErrDbNil                  = fmt.Errorf("db instance is empty")
@@ -21,20 +15,4 @@ var (
 	ErrNoPermissionOrEnded    = fmt.Errorf("no permission to approve or approval ended")
 	ErrOnlySubmitterCancel    = fmt.Errorf("only the submitter can cancel")
 	ErrStartedCannotCancel    = fmt.Errorf("the process is already in progress and cannot be cancelled halfway")
-)
-
-const (
-	MsgSubmitterCancel = "submitter cancelled"
-	MsgEnded           = "process ended"
-	MsgConfigChanged   = "configuration changes"
-)
-
-const (
-	SuffixWaiting   = "waiting"
-	SuffixResubmit  = "resubmit"
-	SuffixSubmitted = "submitted"
-	SuffixApproved  = "approved"
-	SuffixRefused   = "refused"
-	SuffixConfirm   = "confirm"
-	SuffixConfirmed = "confirmed"
 )

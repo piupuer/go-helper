@@ -113,7 +113,7 @@ func (pu *Publish) publish() error {
 			return err
 		}
 	}
-	timeout := time.Duration(pu.ex.rb.ops.Timeout) * time.Second
+	timeout := time.Duration(pu.ex.rb.ops.timeout) * time.Second
 	timer := time.NewTimer(timeout)
 	index := 0
 	for {
@@ -128,8 +128,8 @@ func (pu *Publish) publish() error {
 			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
 			return fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 		case <-timer.C:
-			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.Timeout)
-			return fmt.Errorf("publish timeout: %ds", pu.ex.rb.ops.Timeout)
+			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
+			return fmt.Errorf("publish timeout: %ds", pu.ex.rb.ops.timeout)
 		}
 		if index == count {
 			break

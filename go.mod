@@ -6,6 +6,8 @@ require (
 	github.com/appleboy/gin-jwt/v2 v2.7.0
 	github.com/casbin/casbin/v2 v2.37.4
 	github.com/gin-gonic/gin v1.7.4
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.2
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-module/carbon v1.5.4

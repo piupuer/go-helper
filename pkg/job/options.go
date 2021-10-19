@@ -2,14 +2,16 @@ package job
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 )
 
 type Options struct {
-	logger        logger.Interface
-	ctx           context.Context
-	prefix        string
-	AutoRequestId bool
+	logger          logger.Interface
+	ctx             context.Context
+	prefix          string
+	requestIdCtxKey string
+	autoRequestId   bool
 }
 
 func WithLogger(l logger.Interface) func(*Options) {
@@ -42,14 +44,21 @@ func WithPrefix(prefix string) func(*Options) {
 	}
 }
 
+func WithRequestIdCtxKey(key string) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).requestIdCtxKey = key
+	}
+}
+
 func WithAutoRequestId(options *Options) {
-	getOptionsOrSetDefault(options).AutoRequestId = true
+	getOptionsOrSetDefault(options).autoRequestId = true
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger: logger.DefaultLogger(),
+			logger:          logger.DefaultLogger(),
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 		}
 	}
 	return options
@@ -95,6 +104,7 @@ func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 	if options == nil {
 		return &DriverOptions{
 			logger: logger.DefaultLogger(),
+			prefix: constant.JobDriverPrefix,
 		}
 	}
 	return options

@@ -2,17 +2,19 @@ package logger
 
 import (
 	"github.com/natefinch/lumberjack"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"go.uber.org/zap/zapcore"
 )
 
 type Options struct {
-	level         Level
-	colorful      bool
-	lineNumPrefix string
-	lineNumLevel  int
-	keepSourceDir bool
-	lumber        bool
-	lumberOps     LumberjackOption
+	level           Level
+	requestIdCtxKey string
+	colorful        bool
+	lineNumPrefix   string
+	lineNumLevel    int
+	keepSourceDir   bool
+	lumber          bool
+	lumberOps       LumberjackOption
 }
 
 type LumberjackOption struct {
@@ -23,6 +25,12 @@ type LumberjackOption struct {
 func WithLevel(level Level) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).level = level
+	}
+}
+
+func WithRequestIdCtxKey(key string) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).requestIdCtxKey = key
 	}
 }
 
@@ -63,10 +71,11 @@ func WithLumberjackOption(option LumberjackOption) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			level:         Level(zapcore.DebugLevel),
-			lineNumLevel:  2,
-			keepSourceDir: true,
-			lumber:        true,
+			level:           Level(zapcore.DebugLevel),
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			lineNumLevel:    2,
+			keepSourceDir:   true,
+			lumber:          true,
 			lumberOps: LumberjackOption{
 				Logger: lumberjack.Logger{
 					MaxSize:    50,

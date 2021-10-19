@@ -20,10 +20,6 @@ import (
 	"time"
 )
 
-const (
-	RequestIdContextKey = "RequestId"
-)
-
 var (
 	sourceDir = ""
 )
@@ -238,7 +234,7 @@ func (l Logger) getRequestId(ctx context.Context) string {
 	vi := reflect.ValueOf(ctx)
 	if vi.Kind() == reflect.Ptr {
 		if !vi.IsNil() {
-			v = ctx.Value(RequestIdContextKey)
+			v = ctx.Value(l.ops.requestIdCtxKey)
 		}
 	}
 	requestId := ""

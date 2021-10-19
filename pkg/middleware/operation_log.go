@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"io/ioutil"
@@ -124,8 +125,8 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			
 			username, roleName := ops.getUserInfo(c)
 
-			record.Username = operationLogNotLogin
-			record.RoleName = operationLogNotLogin
+			record.Username = constant.MiddlewareOperationLogNotLogin
+			record.RoleName = constant.MiddlewareOperationLogNotLogin
 			if username != "" {
 				record.Username = username
 				record.RoleName = roleName

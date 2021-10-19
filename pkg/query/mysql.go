@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
@@ -55,21 +56,21 @@ func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 // get one data by id
 // model must be pointer
 func (my MySql) GetById(id uint, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumns(primaryKey, id, model, options...)
+	return my.FindByColumns(id, model, options...)
 }
 
 // find data by ids
 func (my MySql) FindByIds(ids []uint, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumns(primaryKey, ids, model, options...)
+	return my.FindByColumns(ids, model, options...)
 }
 
 // find data by columns
-func (my MySql) FindByColumns(column string, ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumnsWithPreload(column, ids, model, options...)
+func (my MySql) FindByColumns(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
+	return my.FindByColumnsWithPreload(ids, model, options...)
 }
 
 // find data by columns with preload other tables
-func (my MySql) FindByColumnsWithPreload(column string, ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
+func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -91,9 +92,6 @@ func (my MySql) FindByColumnsWithPreload(column string, ids interface{}, model i
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return fmt.Errorf("model must be a pointer")
-	}
-	if column == "" {
-		column = primaryKey
 	}
 	// check param/value len
 	if idsRv.Kind() == reflect.Slice {
@@ -124,7 +122,7 @@ func (my MySql) FindByColumnsWithPreload(column string, ids interface{}, model i
 	newIdsRv = reflect.ValueOf(newIds)
 
 	// column not primary, value maybe array
-	if column != primaryKey && !newIdsIsArr && newIdsRv.Kind() != reflect.Slice && rv.Elem().Kind() == reflect.Slice {
+	if ops.column != constant.QueryPrimaryKey && !newIdsIsArr && newIdsRv.Kind() != reflect.Slice && rv.Elem().Kind() == reflect.Slice {
 		newIdsIsArr = true
 	}
 	// ids is array, model is not array, use firstId
@@ -145,9 +143,9 @@ func (my MySql) FindByColumnsWithPreload(column string, ids interface{}, model i
 			preload = "preload_" + strings.ToLower(strings.Join(ops.preloads, "_"))
 		}
 		// cache key: table+preloads+key+ids+modelIsArr
-		cacheKey = fmt.Sprintf("%s_%s_%s_%s_find", structName, preload, column, utils.Struct2Json(newIds))
+		cacheKey = fmt.Sprintf("%s_%s_%s_%s_find", structName, preload, ops.column, utils.Struct2Json(newIds))
 		if rv.Elem().Kind() != reflect.Slice {
-			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, preload, column, utils.Struct2Json(newIds))
+			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, preload, ops.column, utils.Struct2Json(newIds))
 		}
 		oldCache, cacheErr := my.ops.redis.Get(my.ops.ctx, cacheKey).Result()
 		if cacheErr == nil {
@@ -181,17 +179,17 @@ func (my MySql) FindByColumnsWithPreload(column string, ids interface{}, model i
 	}
 	if !newIdsIsArr {
 		err = query.
-			Where(fmt.Sprintf("`%s` = ?", column), newIds).
+			Where(fmt.Sprintf("`%s` = ?", ops.column), newIds).
 			First(model).Error
 	} else {
 		if newIdsIsArr && newIdsRv.Kind() != reflect.Slice {
 			// column not primary, value maybe array
 			err = query.
-				Where(fmt.Sprintf("`%s` = ?", column), firstId).
+				Where(fmt.Sprintf("`%s` = ?", ops.column), firstId).
 				Find(model).Error
 		} else {
 			err = query.
-				Where(fmt.Sprintf("`%s` IN (?)", column), newIds).
+				Where(fmt.Sprintf("`%s` IN (?)", ops.column), newIds).
 				Find(model).Error
 		}
 	}
