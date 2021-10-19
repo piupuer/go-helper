@@ -38,6 +38,14 @@ func WithMysqlLoggerLevel(level logger.Level) func(*MysqlOptions) {
 	}
 }
 
+func WithMysqlRedis(rd redis.UniversalClient) func(*MysqlOptions) {
+	return func(options *MysqlOptions) {
+		if rd != nil {
+			getMysqlOptionsOrSetDefault(options).redis = rd
+		}
+	}
+}
+
 func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if ctx != nil {

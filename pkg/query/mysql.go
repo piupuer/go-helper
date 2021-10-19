@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -13,6 +14,7 @@ import (
 
 type MySql struct {
 	ops MysqlOptions
+	Ctx context.Context
 	Tx  *gorm.DB
 	Db  *gorm.DB
 }
@@ -25,6 +27,7 @@ func NewMySql(dbNoTx *gorm.DB, options ...func(*MysqlOptions)) MySql {
 	my := MySql{}
 	tx := getTx(dbNoTx, *ops)
 	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
+	my.Ctx = rc
 	my.Tx = tx.WithContext(rc)
 	my.Db = dbNoTx.WithContext(rc)
 	return my
