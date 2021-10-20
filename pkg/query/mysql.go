@@ -26,9 +26,10 @@ func NewMySql(dbNoTx *gorm.DB, options ...func(*MysqlOptions)) MySql {
 		f(ops)
 	}
 	my := MySql{}
-	tx := getTx(dbNoTx, *ops)
 	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
 	my.Ctx = rc
+	ops.ctx = rc
+	tx := getTx(dbNoTx, *ops)
 	my.Tx = tx.WithContext(rc)
 	my.Db = dbNoTx.WithContext(rc)
 	return my
