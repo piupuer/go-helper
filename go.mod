@@ -22,6 +22,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.2.0
 	github.com/streadway/amqp v1.0.0
+	github.com/thedevsaddam/gojsonq/v2 v2.5.2 // indirect
 	github.com/thoas/go-funk v0.9.1
 	github.com/ulule/limiter/v3 v3.8.0
 	go.uber.org/zap v1.18.1

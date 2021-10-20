@@ -208,7 +208,7 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 }
 
 // find data by query condition
-func (my MySql) Find(query *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
+func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -291,7 +291,7 @@ func (my MySql) Find(query *gorm.DB, page *resp.Page, model interface{}, options
 }
 
 // scan data  query condition(often used to JOIN)
-func (my MySql) Scan(query *gorm.DB, page *resp.Page, model interface{}) (err error) {
+func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{}) (err error) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
 		return fmt.Errorf("model must be a pointer")

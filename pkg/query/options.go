@@ -104,3 +104,60 @@ func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOption
 	}
 	return options
 }
+
+type RedisOptions struct {
+	logger          logger.Interface
+	ctx             context.Context
+	requestIdCtxKey string
+	database        string
+}
+
+func WithRedisLogger(l logger.Interface) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		if l != nil {
+			getRedisOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithRedisLoggerLevel(level logger.Level) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		l := options.logger
+		if options.logger == nil {
+			l = getRedisOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogLevel(level)
+	}
+}
+
+func WithRedisCtx(ctx context.Context) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		if ctx != nil {
+			getRedisOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func WithRedisRequestIdCtxKey(key string) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		getRedisOptionsOrSetDefault(options).requestIdCtxKey = key
+	}
+}
+
+func WithRedisDatabase(database string) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		getRedisOptionsOrSetDefault(options).database = database
+	}
+}
+
+func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
+	if options == nil {
+		return &RedisOptions{
+			logger:          logger.DefaultLogger(),
+			ctx:             context.Background(),
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			database:        "query_redis",
+		}
+	}
+	return options
+}
