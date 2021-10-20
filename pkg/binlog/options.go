@@ -6,7 +6,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 type Options struct {
@@ -20,7 +19,6 @@ type Options struct {
 	serverId       uint32
 	executionPath  string
 	binlogPos      string
-	namingStrategy schema.Namer
 }
 
 func WithLogger(l logger.Interface) func(*Options) {
@@ -103,12 +101,6 @@ func WithBinlogPos(key string) func(*Options) {
 	}
 }
 
-func WithNamingStrategy(naming schema.NamingStrategy) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).namingStrategy = naming
-	}
-}
-
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
@@ -117,9 +109,6 @@ func getOptionsOrSetDefault(options *Options) *Options {
 			serverId:      100,
 			executionPath: "mysqldump",
 			binlogPos:     "mysql_binlog_pos",
-			namingStrategy: schema.NamingStrategy{
-				SingularTable: true,
-			},
 		}
 	}
 	return options

@@ -39,7 +39,7 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 		if t.Kind() == reflect.Ptr {
 			t = t.Elem()
 		}
-		tableNames[i] = ops.namingStrategy.TableName(reflect.New(t).Elem().Type().Name())
+		tableNames[i] = ops.db.NamingStrategy.TableName(reflect.New(t).Elem().Type().Name())
 	}
 	// gen config
 	cfg := canal.NewDefaultConfig()
