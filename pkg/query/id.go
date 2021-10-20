@@ -2,11 +2,12 @@ package query
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/pkg/utils"
 	uuid "github.com/satori/go.uuid"
 )
 
 func NewRequestId(ctx context.Context, ctxKey string) context.Context {
-	if ctx == nil {
+	if utils.InterfaceIsNil(ctx) {
 		ctx = context.Background()
 	}
 	requestId := ""
