@@ -6,9 +6,11 @@ require (
 	github.com/appleboy/gin-jwt/v2 v2.7.0
 	github.com/casbin/casbin/v2 v2.37.4
 	github.com/gin-gonic/gin v1.7.4
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-mysql-org/go-mysql v1.3.0
+	github.com/go-playground/locales v0.14.0
+	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-redis/redis/v8 v8.11.2
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
@@ -25,8 +27,8 @@ require (
 	go.uber.org/zap v1.18.1
 	google.golang.org/grpc v1.27.0
 	google.golang.org/protobuf v1.26.0
-	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/go-playground/validator.v9 v9.31.0
 	gorm.io/driver/mysql v1.1.2
 	gorm.io/gorm v1.21.12
 )

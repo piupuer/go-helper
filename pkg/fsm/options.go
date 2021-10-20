@@ -30,6 +30,3 @@ func getOptionsOrSetDefault(options *Options) *Options {
 	}
 	return options
 }
-
-type MigrateOptions struct {
-}
