@@ -25,7 +25,7 @@ func Migrate(db *gorm.DB, options ...func(*Options)) error {
 	for _, f := range options {
 		f(ops)
 	}
-	session := initSession(db, ops.prefix)
+	session := initSession(db.WithContext(ops.ctx), ops.prefix)
 	return session.AutoMigrate(
 		new(Machine),
 		new(Event),
