@@ -155,7 +155,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			logLock.Lock()
 			logCache = append(logCache, record)
 			if len(logCache) >= ops.maxCountBeforeSave {
-				list := make([]OperationRecord, 0)
+				list := make([]OperationRecord, len(logCache))
 				copy(list, logCache)
 				go ops.save(c, list)
 				logCache = make([]OperationRecord, 0)
