@@ -54,12 +54,44 @@ func Str2Uint(str string) uint {
 	return uint(num)
 }
 
+func Str2UintArr(str string) (ids []uint) {
+	idArr := strings.Split(str, ",")
+	for _, v := range idArr {
+		ids = append(ids, Str2Uint(v))
+	}
+	return
+}
+
+func Str2Int(str string) int {
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
 func Str2Int64(str string) int64 {
 	num, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		return 0
 	}
 	return num
+}
+
+func Str2IntArr(str string) (ids []int) {
+	idArr := strings.Split(str, ",")
+	for _, v := range idArr {
+		ids = append(ids, Str2Int(v))
+	}
+	return
+}
+
+func Str2Int64Arr(str string) (ids []int64) {
+	idArr := strings.Split(str, ",")
+	for _, v := range idArr {
+		ids = append(ids, Str2Int64(v))
+	}
+	return
 }
 
 func EncodeStr2Base64(str string) string {
