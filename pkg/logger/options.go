@@ -19,7 +19,8 @@ type Options struct {
 
 type LumberjackOption struct {
 	lumberjack.Logger
-	LogPath string
+	LogPath   string
+	LogSuffix string
 }
 
 func WithLevel(level Level) func(*Options) {
@@ -84,7 +85,8 @@ func getOptionsOrSetDefault(options *Options) *Options {
 					LocalTime:  true,
 					Compress:   true,
 				},
-				LogPath: "logs",
+				LogPath:   "logs",
+				LogSuffix: ".log",
 			},
 		}
 	}
