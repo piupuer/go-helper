@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -122,7 +121,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				UserAgent: c.Request.UserAgent(),
 			}
 			record.CreatedAt = endTime
-			
+
 			username, roleName := ops.getUserInfo(c)
 
 			record.Username = constant.MiddlewareOperationLogNotLogin
@@ -155,7 +154,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			// delay to update to db
 			logLock.Lock()
 			logCache = append(logCache, record)
-			if len(logCache) >= 100 {
+			if len(logCache) >= ops.maxCountBeforeSave {
 				list := make([]OperationRecord, 0)
 				copy(list, logCache)
 				go ops.save(c, list)
@@ -170,8 +169,8 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 func getApiDesc(c *gin.Context, method, path string, ops OperationLogOptions) string {
 	desc := "no desc"
 	if ops.redis != nil {
-		oldCache, err := ops.redis.HGet(c, ops.apiCacheKey, fmt.Sprintf("%s_%s", method, path)).Result()
-		if err == redis.Nil {
+		oldCache, _ := ops.redis.HGet(c, ops.apiCacheKey, fmt.Sprintf("%s_%s", method, path)).Result()
+		if oldCache != "" {
 			return oldCache
 		}
 	}

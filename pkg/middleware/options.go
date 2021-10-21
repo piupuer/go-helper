@@ -369,6 +369,7 @@ type OperationLogOptions struct {
 	singleFileMaxSize      int64
 	getUserInfo            func(c *gin.Context) (username, roleName string)
 	save                   func(c *gin.Context, list []OperationRecord)
+	maxCountBeforeSave     int
 	findApi                func(c *gin.Context) []OperationApi
 }
 
@@ -456,6 +457,14 @@ func WithOperationLogSave(fun func(c *gin.Context, list []OperationRecord)) func
 	}
 }
 
+func WithOperationLogSaveMaxCount(count int) func(*OperationLogOptions) {
+	return func(options *OperationLogOptions) {
+		if count > 0 {
+			getOperationLogOptionsOrSetDefault(options).maxCountBeforeSave = count
+		}
+	}
+}
+
 func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
@@ -479,6 +488,7 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 			save: func(c *gin.Context, list []OperationRecord) {
 				l.Warn(c, "operation log save handler is not config")
 			},
+			maxCountBeforeSave: constant.MiddlewareOperationLogMaxCountBeforeSave,
 			findApi: func(c *gin.Context) []OperationApi {
 				l.Warn(c, "operation log find api handler is not config")
 				return []OperationApi{}
