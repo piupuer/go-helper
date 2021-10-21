@@ -7,5 +7,5 @@ func InterfaceIsNil(i interface{}) bool {
 	if v.Kind() == reflect.Ptr {
 		return v.IsNil()
 	}
-	return false
+	return i == nil
 }
