@@ -20,12 +20,12 @@ func (rd Redis) Table(name string, args ...interface{}) (ins *Redis) {
 	ins = rd.Session()
 	if strings.Contains(name, " ") || strings.Contains(name, "`") || len(args) > 0 {
 		if results := tableRegexp.FindStringSubmatch(name); len(results) == 2 {
-			ins.Statement.Table = rd.namingStrategy.TableName(results[1])
+			ins.Statement.Table = rd.ops.namingStrategy.TableName(results[1])
 			return
 		}
 	}
 
-	ins.Statement.Table = rd.namingStrategy.TableName(name)
+	ins.Statement.Table = rd.ops.namingStrategy.TableName(name)
 	return
 }
 

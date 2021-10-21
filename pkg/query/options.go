@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"gorm.io/gorm/schema"
 )
 
 type MysqlOptions struct {
@@ -110,6 +111,7 @@ type RedisOptions struct {
 	ctx             context.Context
 	requestIdCtxKey string
 	database        string
+	namingStrategy  schema.Namer
 }
 
 func WithRedisLogger(l logger.Interface) func(*RedisOptions) {
@@ -147,6 +149,12 @@ func WithRedisRequestIdCtxKey(key string) func(*RedisOptions) {
 func WithRedisDatabase(database string) func(*RedisOptions) {
 	return func(options *RedisOptions) {
 		getRedisOptionsOrSetDefault(options).database = database
+	}
+}
+
+func WithRedisNamingStrategy(name schema.Namer) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		getRedisOptionsOrSetDefault(options).namingStrategy = name
 	}
 }
 

@@ -16,14 +16,13 @@ import (
 
 // query redis json value like gorm v2
 type Redis struct {
-	ops            RedisOptions
-	redis          redis.UniversalClient
-	Ctx            context.Context
-	Error          error
-	clone          int
-	Statement      *Statement
-	cacheStore     *sync.Map
-	namingStrategy schema.Namer
+	ops        RedisOptions
+	redis      redis.UniversalClient
+	Ctx        context.Context
+	Error      error
+	clone      int
+	Statement  *Statement
+	cacheStore *sync.Map
 }
 
 func NewRedis(client redis.UniversalClient, options ...func(*RedisOptions)) Redis {
@@ -33,6 +32,9 @@ func NewRedis(client redis.UniversalClient, options ...func(*RedisOptions)) Redi
 	}
 	if client == nil {
 		panic("redis client is empty")
+	}
+	if ops.namingStrategy == nil {
+		panic("redis namingStrategy is empty")
 	}
 	rd := Redis{
 		redis: client,
@@ -57,10 +59,9 @@ func (rd *Redis) AddError(err error) error {
 func (rd Redis) Session() *Redis {
 	if rd.clone > 0 {
 		tx := &Redis{
-			ops:            rd.ops,
-			redis:          rd.redis,
-			Ctx:            rd.Ctx,
-			namingStrategy: rd.namingStrategy,
+			ops:   rd.ops,
+			redis: rd.redis,
+			Ctx:   rd.Ctx,
 		}
 
 		if rd.clone == 1 {

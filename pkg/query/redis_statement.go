@@ -141,10 +141,10 @@ func (stmt *Statement) Parse(value interface{}) (err error) {
 	if stmt.DB.cacheStore == nil {
 		stmt.DB.cacheStore = &sync.Map{}
 	}
-	if stmt.DB.namingStrategy == nil {
-		stmt.DB.namingStrategy = schema.NamingStrategy{}
+	if stmt.DB.ops.namingStrategy == nil {
+		stmt.DB.ops.namingStrategy = schema.NamingStrategy{}
 	}
-	if stmt.Schema, err = schema.Parse(value, stmt.DB.cacheStore, stmt.DB.namingStrategy); err == nil && stmt.Table == "" {
+	if stmt.Schema, err = schema.Parse(value, stmt.DB.cacheStore, stmt.DB.ops.namingStrategy); err == nil && stmt.Table == "" {
 		if tables := strings.Split(stmt.Schema.Table, "."); len(tables) == 2 {
 			stmt.Table = tables[1]
 			return
