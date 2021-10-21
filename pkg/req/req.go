@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"gopkg.in/go-playground/validator.v9"
 	"strings"
 )
@@ -15,6 +16,16 @@ func ShouldBind(c *gin.Context, req interface{}) {
 	if err != nil {
 		resp.FailWithMsg("%s: %v", resp.InvalidParameterMsg, err)
 	}
+}
+
+// get uint path id
+func UintId(c *gin.Context) uint {
+	i := c.Param("id")
+	id := utils.Str2Uint(i)
+	if id == 0 {
+		resp.CheckErr("invalid path id: %s", i)
+	}
+	return id
 }
 
 // validate request param
