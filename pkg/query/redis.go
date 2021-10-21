@@ -37,6 +37,7 @@ func NewRedis(client redis.UniversalClient, options ...func(*RedisOptions)) Redi
 		panic("redis namingStrategy is empty")
 	}
 	rd := Redis{
+		ops:   *ops,
 		redis: client,
 		clone: 1,
 	}
