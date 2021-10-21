@@ -316,8 +316,22 @@ func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{})
 
 // create data
 func (my MySql) Create(req interface{}, model interface{}) (err error) {
-	utils.Struct2StructByJson(req, model)
-	err = my.Tx.Create(model).Error
+	i := model
+	v := reflect.ValueOf(req)
+	if v.Kind() == reflect.Slice {
+		mv := reflect.Indirect(reflect.ValueOf(model))
+		if mv.Kind() == reflect.Struct {
+			slice := reflect.MakeSlice(reflect.SliceOf(mv.Type()), 0, 0)
+			arr := reflect.New(slice.Type())
+			i = arr.Interface()
+		} else if mv.Kind() == reflect.Slice {
+			slice := reflect.MakeSlice(mv.Type(), 0, 0)
+			arr := reflect.New(slice.Type())
+			i = arr.Interface()
+		}
+	}
+	utils.Struct2StructByJson(req, i)
+	err = my.Tx.Create(i).Error
 	return
 }
 
