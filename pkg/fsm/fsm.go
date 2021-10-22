@@ -3,7 +3,6 @@ package fsm
 import (
 	"fmt"
 	"github.com/looplab/fsm"
-	"github.com/piupuer/go-helper/models"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -153,7 +152,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		m["approval_role_id"] = r.ApprovalRoleId
 		m["approval_user_id"] = r.ApprovalUserId
 		m["approval_opinion"] = r.ApprovalOpinion
-		m["next_event_id"] = models.Zero
+		m["next_event_id"] = constant.Zero
 		m["detail"] = constant.FsmMsgSubmitterCancel
 		rp.Cancel = true
 		err = fs.session.
@@ -287,7 +286,7 @@ func (fs Fsm) CancelLog(category uint) error {
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
-	m["next_event_id"] = models.Zero
+	m["next_event_id"] = constant.Zero
 	m["detail"] = constant.FsmMsgConfigChanged
 	return fs.session.
 		Model(&Log{}).
@@ -316,7 +315,7 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 		if log.SubmitterRoleId != r.ApprovalRoleId && log.SubmitterUserId != r.ApprovalUserId {
 			return nil, ErrOnlySubmitterCancel
 		} else {
-			if log.CurrentEvent.Level > models.Zero {
+			if log.CurrentEvent.Level > constant.Zero {
 				return nil, ErrStartedCannotCancel
 			}
 			return log, nil
@@ -333,7 +332,7 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 	if !utils.Contains(roles, r.ApprovalRoleId) && !utils.Contains(users, r.ApprovalUserId) {
 		return nil, ErrNoPermissionApprove
 	}
-	if r.Approved == constant.FsmLogStatusRefused && log.NextEvent.Refuse == models.Zero {
+	if r.Approved == constant.FsmLogStatusRefused && log.NextEvent.Refuse == constant.Zero {
 		return nil, ErrNoPermissionRefuse
 	}
 	return log, nil
@@ -406,7 +405,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 			prevCancel = logs[i-1].Approved == constant.FsmLogStatusCancelled
 			prevOpinion = logs[i-1].ApprovalOpinion
 		}
-		if i == l-1 && log.NextEventId == models.Zero {
+		if i == l-1 && log.NextEventId == constant.Zero {
 			end = true
 		}
 		if end || cancel {
@@ -464,7 +463,7 @@ func (fs Fsm) FindPendingLogByApprover(req req.FsmPendingLog) ([]Log, error) {
 	query := fs.session.
 		Where("approved = ?", constant.FsmLogStatusWaiting).
 		Where("id IN (?)", append(logIds1, logIds2...))
-	if uint(req.Category) > models.Zero {
+	if uint(req.Category) > constant.Zero {
 		query.Where("category = ?", req.Category)
 	}
 	err = query.Find(&logs).Error
@@ -541,7 +540,7 @@ func (fs Fsm) getStartEvent(machineId uint) (*Event, error) {
 		Preload("Src").
 		Preload("Dst").
 		Where("machine_id = ?", machineId).
-		Where("sort = ?", models.Zero).
+		Where("sort = ?", constant.Zero).
 		First(&event).Error
 	return &event, err
 }
@@ -777,7 +776,7 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 		levels[li2Name] = uint(i + 1)
 		levels[li2Dst] = uint(i + 1)
 	}
-	if machine.SubmitterConfirm == models.One {
+	if machine.SubmitterConfirm == constant.One {
 		// L0 waiting confirm / L2 approved / L0 confirmed
 		l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixConfirm)
 		l0Srcs := []string{
@@ -850,16 +849,16 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 		}
 
 		// default: no edit/refuse permission
-		edit := models.Zero
-		refuse := models.Zero
+		edit := constant.Zero
+		refuse := constant.Zero
 		editFields := ""
 		roles := make([]Role, 0)
 		users := make([]User, 0)
 		if i == 0 {
 			// submitter has edit perssion
-			edit = models.One
+			edit = constant.One
 			editFields = machine.SubmitterEditFields
-		} else if i < len(desc)-1 || machine.SubmitterConfirm == models.Zero {
+		} else if i < len(desc)-1 || machine.SubmitterConfirm == constant.Zero {
 			// machineIddle levels
 			index := (i+1)/2 - 1
 			edit = uint(r[index].Edit)
@@ -868,9 +867,9 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 			// mock roles/users
 			roles = fs.getRoles(r[index].Roles)
 			users = fs.getUsers(r[index].Users)
-		} else if i == len(desc)-1 && machine.SubmitterConfirm == models.One {
+		} else if i == len(desc)-1 && machine.SubmitterConfirm == constant.One {
 			// save submitter confirm edit fields
-			edit = models.One
+			edit = constant.One
 			editFields = machine.SubmitterConfirmEditFields
 		}
 
