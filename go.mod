@@ -17,6 +17,7 @@ require (
 	github.com/hibiken/asynq v0.18.6
 	github.com/libi/dcron v0.2.2
 	github.com/looplab/fsm v0.3.0
+	github.com/minio/minio-go/v7 v7.0.15 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
