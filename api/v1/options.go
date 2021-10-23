@@ -18,6 +18,12 @@ type Options struct {
 	findRoleKeywordByRoleIds func(roleIds []uint) []string
 }
 
+func WithCache(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).cache = flag
+	}
+}
+
 func WithCacheOps(ops ...func(options *query.RedisOptions)) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).cacheOps = append(getOptionsOrSetDefault(options).cacheOps, ops...)
@@ -27,6 +33,36 @@ func WithCacheOps(ops ...func(options *query.RedisOptions)) func(*Options) {
 func WithDbOps(ops ...func(options *query.MysqlOptions)) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).dbOps = append(getOptionsOrSetDefault(options).dbOps, ops...)
+	}
+}
+
+func WithRedis(rd redis.UniversalClient) func(*Options) {
+	return func(options *Options) {
+		if rd != nil {
+			getOptionsOrSetDefault(options).redis = rd
+		}
+	}
+}
+
+func WithOperationAllowedToDelete(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).operationAllowedToDelete = flag
+	}
+}
+
+func WithGetCurrentUser(fun func(c *gin.Context) ms.CurrentUser) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).getCurrentUser = fun
+		}
+	}
+}
+
+func WithFindRoleKeywordByRoleIds(fun func(roleIds []uint) []string) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).findRoleKeywordByRoleIds = fun
+		}
 	}
 }
 
