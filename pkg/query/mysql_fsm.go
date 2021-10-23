@@ -1,0 +1,26 @@
+package query
+
+import (
+	"github.com/piupuer/go-helper/pkg/fsm"
+	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/resp"
+)
+
+// find finite state machine
+func (my MySql) FindFsm(r req.FsmMachine) ([]resp.FsmMachine, error) {
+	f := fsm.New(my.Tx)
+	return f.FindMachine(r)
+}
+
+// create finite state machine
+func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
+	f := fsm.New(my.Tx)
+	_, err := f.CreateMachine(r)
+	return err
+}
+
+// find waiting approve log
+func (my MySql) FindFsmApprovingLog(r req.FsmPendingLog) ([]fsm.Log, error) {
+	f := fsm.New(my.Tx)
+	return f.FindPendingLogByApprover(r)
+}
