@@ -28,6 +28,16 @@ func UintId(c *gin.Context) uint {
 	return id
 }
 
+// get uint path id with err
+func UintIdWithErr(c *gin.Context) (uint, error) {
+	i := c.Param("id")
+	id := utils.Str2Uint(i)
+	if id == 0 {
+		return id, fmt.Errorf("invalid path id")
+	}
+	return id, nil
+}
+
 type Ids struct {
 	Ids string `json:"ids" form:"ids"`
 }
