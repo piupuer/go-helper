@@ -34,6 +34,7 @@ var (
 )
 
 type SysMessage struct {
+	M
 	FromUserId uint                     `gorm:"comment:'sender user id'" json:"fromUserId"`
 	Title      string                   `gorm:"comment:'title'" json:"title"`
 	Content    string                   `gorm:"comment:'content'" json:"content"`
@@ -43,6 +44,7 @@ type SysMessage struct {
 }
 
 type SysMessageLog struct {
+	M
 	ToUserId  uint       `gorm:"comment:'receiver user id'" json:"toUserId"`
 	MessageId uint       `gorm:"comment:'message id'" json:"messageId"`
 	Message   SysMessage `gorm:"foreignKey:MessageId" json:"message"`
