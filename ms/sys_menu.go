@@ -15,6 +15,7 @@ type SysMenu struct {
 	Breadcrumb *uint     `gorm:"type:tinyint(1);default:1;comment:'breadcrumb(0: disabled 1: enabled)'" json:"breadcrumb"`
 	ParentId   uint      `gorm:"default:0;comment:'parent menu id'" json:"parentId"`
 	Children   []SysMenu `gorm:"-" json:"children"`
+	RoleIds    []uint    `gorm:"-'" json:"roleIds"`
 }
 
 type SysMenuRoleRelation struct {
