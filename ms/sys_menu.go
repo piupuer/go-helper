@@ -16,3 +16,8 @@ type SysMenu struct {
 	ParentId   uint      `gorm:"default:0;comment:'parent menu id'" json:"parentId"`
 	Children   []SysMenu `gorm:"-" json:"children"`
 }
+
+type SysMenuRoleRelation struct {
+	SysMenuId uint `json:"sysMenuId"`
+	SysRoleId uint `json:"sysRoleId"`
+}
