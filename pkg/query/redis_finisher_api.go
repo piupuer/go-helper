@@ -1,7 +1,6 @@
 package query
 
 import (
-	"fmt"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"reflect"
 )
@@ -41,24 +40,22 @@ func (rd Redis) Count(count *int64) *Redis {
 	return ins
 }
 
-func (rd Redis) FindWithPage(query *Redis, page *resp.Page, model interface{}) (err error) {
+func (rd Redis) FindWithPage(query *Redis, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		return fmt.Errorf("model must be a pointer")
+		rd.ops.logger.Warn(rd.ops.ctx, "model must be a pointer")
+		return
 	}
 
 	if !page.NoPagination {
-		err = query.Count(&page.Total).Error
-		if err == nil && page.Total > 0 {
+		query.Count(&page.Total)
+		if page.Total > 0 {
 			limit, offset := page.GetLimit()
-			err = query.Limit(limit).Offset(offset).Find(model).Error
+			query.Limit(limit).Offset(offset).Find(model)
 		}
 	} else {
-		err = query.Find(model).Error
-		if err == nil {
-			page.Total = int64(rv.Elem().Len())
-			page.GetLimit()
-		}
+		query.Find(model)
+		page.Total = int64(rv.Elem().Len())
+		page.GetLimit()
 	}
-	return
 }
