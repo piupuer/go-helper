@@ -55,7 +55,7 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 		var r req.CreateApiReq
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
-		r.RoleKeywords = ops.findRoleKeywordByRoleIds(r.RoleIds)
+		r.RoleKeywords = ops.findRoleKeywordByRoleIds(c, r.RoleIds)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		err := q.CreateApi(&r)

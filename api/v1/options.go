@@ -15,7 +15,7 @@ type Options struct {
 	redis                    redis.UniversalClient
 	operationAllowedToDelete bool
 	getCurrentUser           func(c *gin.Context) ms.CurrentUser
-	findRoleKeywordByRoleIds func(roleIds []uint) []string
+	findRoleKeywordByRoleIds func(c *gin.Context, roleIds []uint) []string
 }
 
 func WithCache(flag bool) func(*Options) {
@@ -58,7 +58,7 @@ func WithGetCurrentUser(fun func(c *gin.Context) ms.CurrentUser) func(*Options) 
 	}
 }
 
-func WithFindRoleKeywordByRoleIds(fun func(roleIds []uint) []string) func(*Options) {
+func WithFindRoleKeywordByRoleIds(fun func(c *gin.Context, roleIds []uint) []string) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).findRoleKeywordByRoleIds = fun
