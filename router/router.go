@@ -14,6 +14,9 @@ func NewRouter(options ...func(*Options)) *Router {
 	for _, f := range options {
 		f(ops)
 	}
+	if ops.group == nil {
+		panic("group is empty")
+	}
 	r := &Router{
 		ops: *ops,
 	}
