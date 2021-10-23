@@ -1,4 +1,4 @@
-package models
+package ms
 
 // refer to: github.com/casbin/gorm-adapter/v2/adapter.go CasbinRule
 type SysCasbin struct {

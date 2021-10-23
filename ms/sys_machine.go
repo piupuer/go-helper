@@ -1,4 +1,4 @@
-package models
+package ms
 
 import "github.com/piupuer/go-helper/models"
 
@@ -15,7 +15,7 @@ var SysMachineStatusConst = map[uint]string{
 }
 
 type SysMachine struct {
-	models.M
+	ms.M
 	Host      string `gorm:"comment:'host(IP/Domain)'" json:"host"`
 	SshPort   int    `gorm:"comment:'ssh port'" json:"sshPort"`
 	Version   string `gorm:"comment:'os version'" json:"version"`

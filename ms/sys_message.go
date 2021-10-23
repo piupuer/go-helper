@@ -1,4 +1,4 @@
-package models
+package ms
 
 import (
 	"github.com/golang-module/carbon"

@@ -1,12 +1,10 @@
 package fsm
 
-import (
-	"github.com/piupuer/go-helper/models"
-)
+import "github.com/piupuer/go-helper/ms"
 
 // finite state machine
 type Machine struct {
-	models.M
+	ms.M
 	Name                       string  `gorm:"comment:'fsm name'" json:"name"`
 	SubmitterName              string  `gorm:"comment:'submitter username or role name'" json:"submitterName"`
 	SubmitterEditFields        string  `gorm:"comment:'submitter can edit fields'" json:"submitterEditFields"`
@@ -18,7 +16,7 @@ type Machine struct {
 
 // fsm event
 type Event struct {
-	models.M
+	ms.M
 	MachineId  uint        `gorm:"index:idx_m_id_sort,unique;" json:"machineId"`
 	Machine    Machine     `gorm:"foreignKey:MachineId" json:"machine"`
 	Sort       uint        `gorm:"index:idx_m_id_sort,unique;comment:'sort by level'" json:"sort"`
@@ -68,7 +66,7 @@ type EventItem struct {
 
 // fsm log(save every operation)
 type Log struct {
-	models.M
+	ms.M
 	Category         uint      `gorm:"default:1;comment:'custom category(>0)'" json:"category"`
 	Uuid             string    `gorm:"comment:'unique str'" json:"uuid"`
 	Approved         uint      `gorm:"type:tinyint(1);default:0;comment:'approval status'" json:"approved"`

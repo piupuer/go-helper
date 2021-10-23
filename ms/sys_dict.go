@@ -1,4 +1,4 @@
-package models
+package ms
 
 type SysDict struct {
 	M
