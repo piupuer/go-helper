@@ -19,6 +19,6 @@ type SysMenu struct {
 }
 
 type SysMenuRoleRelation struct {
-	SysMenuId uint `json:"sysMenuId"`
-	SysRoleId uint `json:"sysRoleId"`
+	MenuId uint `json:"menuId"`
+	RoleId uint `json:"roleId"`
 }
