@@ -1,7 +1,5 @@
 package ms
 
-import "github.com/piupuer/go-helper/models"
-
 const (
 	SysMachineStatusUnhealthy    uint   = 0
 	SysMachineStatusHealthy      uint   = 1
@@ -15,7 +13,7 @@ var SysMachineStatusConst = map[uint]string{
 }
 
 type SysMachine struct {
-	ms.M
+	M
 	Host      string `gorm:"comment:'host(IP/Domain)'" json:"host"`
 	SshPort   int    `gorm:"comment:'ssh port'" json:"sshPort"`
 	Version   string `gorm:"comment:'os version'" json:"version"`

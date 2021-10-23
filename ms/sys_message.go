@@ -1,8 +1,6 @@
 package ms
 
-import (
-	"github.com/golang-module/carbon"
-)
+import "github.com/golang-module/carbon"
 
 const (
 	// message type
