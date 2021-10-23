@@ -56,22 +56,22 @@ func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 
 // get one data by id
 // model must be pointer
-func (my MySql) GetById(id uint, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumns(id, model, options...)
+func (my MySql) GetById(id uint, model interface{}, options ...func(*MysqlReadOptions)) {
+	my.FindByColumns(id, model, options...)
 }
 
 // find data by ids
-func (my MySql) FindByIds(ids []uint, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumns(ids, model, options...)
+func (my MySql) FindByIds(ids []uint, model interface{}, options ...func(*MysqlReadOptions)) {
+	my.FindByColumns(ids, model, options...)
 }
 
 // find data by columns
-func (my MySql) FindByColumns(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
-	return my.FindByColumnsWithPreload(ids, model, options...)
+func (my MySql) FindByColumns(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) {
+	my.FindByColumnsWithPreload(ids, model, options...)
 }
 
 // find data by columns with preload other tables
-func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
+func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -87,12 +87,14 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 	newIdsRv := reflect.ValueOf(newIds)
 	newIdsIsArr := false
 	if idsRv.Kind() == reflect.Ptr {
-		return fmt.Errorf("ids cannot be pointer")
+		my.ops.logger.Warn(my.ops.ctx, "ids cannot be pointer")
+		return
 	}
 	// get model val
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return fmt.Errorf("model must be a pointer")
+		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		return
 	}
 	// check param/value len
 	if idsRv.Kind() == reflect.Slice {
@@ -179,19 +181,19 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 		query = query.Preload(preload)
 	}
 	if !newIdsIsArr {
-		err = query.
+		query.
 			Where(fmt.Sprintf("`%s` = ?", ops.column), newIds).
-			First(model).Error
+			First(model)
 	} else {
 		if newIdsIsArr && newIdsRv.Kind() != reflect.Slice {
 			// column not primary, value maybe array
-			err = query.
+			query.
 				Where(fmt.Sprintf("`%s` = ?", ops.column), firstId).
-				Find(model).Error
+				Find(model)
 		} else {
-			err = query.
+			query.
 				Where(fmt.Sprintf("`%s` IN (?)", ops.column), newIds).
-				Find(model).Error
+				Find(model)
 		}
 	}
 	if ops.cache {
@@ -209,7 +211,7 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 }
 
 // find data by query condition
-func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) (err error) {
+func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -219,7 +221,8 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 	}
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		return fmt.Errorf("model must be a pointer")
+		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		return
 	}
 
 	countCache := false
@@ -242,8 +245,8 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 				}
 			}
 			if !fromCache {
-				err = query.Count(&page.Total).Error
-				if ops.cache && err == nil {
+				query.Count(&page.Total)
+				if ops.cache && page.Total > 0 {
 					my.ops.redis.Set(my.ops.ctx, cacheKey, page.Total, time.Duration(ops.cacheExpire)*time.Second)
 				}
 			} else {
@@ -253,16 +256,17 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 		if page.Total > 0 || page.SkipCount {
 			limit, offset := page.GetLimit()
 			if page.LimitPrimary == "" {
-				err = query.Limit(limit).Offset(offset).Find(model).Error
+				query.Limit(limit).Offset(offset).Find(model)
 			} else {
 				// parse model
 				if query.Statement.Model != nil {
-					err = query.Statement.Parse(query.Statement.Model)
+					err := query.Statement.Parse(query.Statement.Model)
 					if err != nil {
+						my.ops.logger.Warn(my.ops.ctx, "parse model err: %v", err)
 						return
 					}
 				}
-				err = query.Joins(
+				query.Joins(
 					// add LimitPrimary index before join, improve query efficiency
 					fmt.Sprintf(
 						"JOIN (?) AS `OFFSET_T` ON `%s`.`id` = `OFFSET_T`.`%s`",
@@ -276,40 +280,37 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 						).
 						Limit(limit).
 						Offset(offset),
-				).Find(model).Error
+				).Find(model)
 			}
 		}
 	} else {
 		// no pagination
-		err = query.Find(model).Error
-		if err == nil {
-			page.Total = int64(rv.Elem().Len())
-			page.GetLimit()
-		}
+		query.Find(model)
+		page.Total = int64(rv.Elem().Len())
+		page.GetLimit()
 	}
 	page.CountCache = &countCache
 	return
 }
 
 // scan data  query condition(often used to JOIN)
-func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{}) (err error) {
+func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		return fmt.Errorf("model must be a pointer")
+		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		return
 	}
 
 	if !page.NoPagination {
-		err = query.Count(&page.Total).Error
-		if err == nil && page.Total > 0 {
+		query.Count(&page.Total)
+		if page.Total > 0 {
 			limit, offset := page.GetLimit()
-			err = query.Limit(limit).Offset(offset).Scan(model).Error
+			query.Limit(limit).Offset(offset).Scan(model)
 		}
 	} else {
-		err = query.Scan(model).Error
-		if err == nil {
-			page.Total = int64(rv.Elem().Len())
-			page.GetLimit()
-		}
+		query.Scan(model)
+		page.Total = int64(rv.Elem().Len())
+		page.GetLimit()
 	}
 	return
 }
