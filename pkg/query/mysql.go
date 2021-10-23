@@ -20,18 +20,21 @@ type MySql struct {
 	Db  *gorm.DB
 }
 
-func NewMySql(dbNoTx *gorm.DB, options ...func(*MysqlOptions)) MySql {
+func NewMySql(options ...func(*MysqlOptions)) MySql {
 	ops := getMysqlOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
+	}
+	if ops.db == nil {
+		panic("mysql db is empty")
 	}
 	my := MySql{}
 	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
 	my.Ctx = rc
 	ops.ctx = rc
-	tx := getTx(dbNoTx, *ops)
+	tx := getTx(ops.db, *ops)
 	my.Tx = tx.WithContext(rc)
-	my.Db = dbNoTx.WithContext(rc)
+	my.Db = ops.db.WithContext(rc)
 	return my
 }
 

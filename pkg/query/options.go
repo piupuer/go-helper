@@ -2,16 +2,20 @@ package query
 
 import (
 	"context"
+	"github.com/casbin/casbin/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
 type MysqlOptions struct {
 	logger          logger.Interface
+	db              *gorm.DB
 	redis           redis.UniversalClient
 	ctx             context.Context
+	enforcer        *casbin.Enforcer
 	txCtxKey        string
 	requestIdCtxKey string
 }
@@ -34,6 +38,14 @@ func WithMysqlLoggerLevel(level logger.Level) func(*MysqlOptions) {
 	}
 }
 
+func WithMysqlDb(db *gorm.DB) func(*MysqlOptions) {
+	return func(options *MysqlOptions) {
+		if db != nil {
+			getMysqlOptionsOrSetDefault(options).db = db
+		}
+	}
+}
+
 func WithMysqlRedis(rd redis.UniversalClient) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if rd != nil {
@@ -46,6 +58,14 @@ func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if ctx != nil {
 			getMysqlOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*MysqlOptions) {
+	return func(options *MysqlOptions) {
+		if enforcer != nil {
+			getMysqlOptionsOrSetDefault(options).enforcer = enforcer
 		}
 	}
 }
@@ -108,6 +128,7 @@ func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOption
 
 type RedisOptions struct {
 	logger          logger.Interface
+	redis           redis.UniversalClient
 	ctx             context.Context
 	requestIdCtxKey string
 	database        string
@@ -129,6 +150,14 @@ func WithRedisLoggerLevel(level logger.Level) func(*RedisOptions) {
 			l = getRedisOptionsOrSetDefault(options).logger
 		}
 		options.logger = l.LogLevel(level)
+	}
+}
+
+func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		if rd != nil {
+			getRedisOptionsOrSetDefault(options).redis = rd
+		}
 	}
 }
 

@@ -55,4 +55,3 @@ func getValidateOptionsOrSetDefault(options *ValidateOptions) *ValidateOptions {
 	}
 	return options
 }
-

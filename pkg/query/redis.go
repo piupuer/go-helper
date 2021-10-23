@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/thedevsaddam/gojsonq/v2"
 	"gorm.io/gorm"
@@ -17,7 +16,6 @@ import (
 // query redis json value like gorm v2
 type Redis struct {
 	ops        RedisOptions
-	redis      redis.UniversalClient
 	Ctx        context.Context
 	Error      error
 	clone      int
@@ -25,12 +23,12 @@ type Redis struct {
 	cacheStore *sync.Map
 }
 
-func NewRedis(client redis.UniversalClient, options ...func(*RedisOptions)) Redis {
+func NewRedis(options ...func(*RedisOptions)) Redis {
 	ops := getRedisOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
-	if client == nil {
+	if ops.redis == nil {
 		panic("redis client is empty")
 	}
 	if ops.namingStrategy == nil {
@@ -38,7 +36,6 @@ func NewRedis(client redis.UniversalClient, options ...func(*RedisOptions)) Redi
 	}
 	rd := Redis{
 		ops:   *ops,
-		redis: client,
 		clone: 1,
 	}
 	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
@@ -61,7 +58,6 @@ func (rd Redis) Session() *Redis {
 	if rd.clone > 0 {
 		tx := &Redis{
 			ops:   rd.ops,
-			redis: rd.redis,
 			Ctx:   rd.Ctx,
 		}
 
@@ -124,7 +120,7 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 	if !rd.Statement.json {
 		cacheKey := fmt.Sprintf("%s_%s", rd.ops.database, tableName)
 		var err error
-		str, err := rd.redis.Get(rd.Ctx, cacheKey).Result()
+		str, err := rd.ops.redis.Get(rd.Ctx, cacheKey).Result()
 		rd.ops.logger.Debug(rd.Ctx, "[query redis]read %s", tableName)
 		if err != nil {
 			rd.ops.logger.Debug(rd.Ctx, "[query redis]read %s err: %v", tableName, err)

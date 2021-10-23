@@ -8,4 +8,3 @@ const (
 	Four
 	Five
 )
-

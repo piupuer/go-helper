@@ -9,16 +9,16 @@ import (
 )
 
 type Options struct {
-	logger         logger.Interface
-	ctx            context.Context
-	dsn            *mysql.Config
-	db             *gorm.DB
-	redis          redis.UniversalClient
-	ignores        []string
-	models         []interface{}
-	serverId       uint32
-	executionPath  string
-	binlogPos      string
+	logger        logger.Interface
+	ctx           context.Context
+	dsn           *mysql.Config
+	db            *gorm.DB
+	redis         redis.UniversalClient
+	ignores       []string
+	models        []interface{}
+	serverId      uint32
+	executionPath string
+	binlogPos     string
 }
 
 func WithLogger(l logger.Interface) func(*Options) {

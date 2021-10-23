@@ -60,7 +60,7 @@ type EventUserRelation struct {
 
 // fsm event item(save event name)
 type EventItem struct {
-	Id uint `gorm:"primaryKey;comment:'primary key'" json:"id"`
+	Id   uint   `gorm:"primaryKey;comment:'primary key'" json:"id"`
 	Name string `gorm:"index:idx_name,unique;comment:'fsm event name'" json:"name"`
 }
 

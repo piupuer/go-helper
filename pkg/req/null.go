@@ -41,4 +41,3 @@ func (r *NullUint) Scan(v interface{}) error {
 	}
 	return fmt.Errorf("can not convert %v to NullUint", v)
 }
-

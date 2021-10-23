@@ -11,7 +11,7 @@ import (
 
 // redis lua script(read => delete => get delete flag)
 const (
-	lua               string = `
+	lua string = `
 local current = redis.call('GET', KEYS[1])
 if current == false then
     return '-1';

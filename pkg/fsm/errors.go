@@ -2,7 +2,6 @@ package fsm
 
 import "fmt"
 
-
 var (
 	ErrDbNil                  = fmt.Errorf("db instance is empty")
 	ErrEventsNil              = fmt.Errorf("events is empty")
