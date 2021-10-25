@@ -1,11 +1,8 @@
 package router
 
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/piupuer/go-helper/pkg/middleware"
-)
+import "github.com/piupuer/go-helper/pkg/middleware"
 
-func (rt Router) Base() gin.IRoutes {
+func (rt Router) Base() {
 	if rt.ops.jwt {
 		router1 := rt.ops.group.Group("/base")
 		router2 := rt.Casbin("/base")
@@ -17,5 +14,4 @@ func (rt Router) Base() gin.IRoutes {
 			router2.GET("/idempotenceToken", middleware.GetIdempotenceToken(rt.ops.idempotenceOps...))
 		}
 	}
-	return rt.ops.group
 }

@@ -1,11 +1,8 @@
 package router
 
-import (
-	"github.com/gin-gonic/gin"
-	v1 "github.com/piupuer/go-helper/api/v1"
-)
+import v1 "github.com/piupuer/go-helper/api/v1"
 
-func (rt Router) Menu() gin.IRoutes {
+func (rt Router) Menu() {
 	router1 := rt.Casbin("/menu")
 	router2 := rt.CasbinAndIdempotence("/menu")
 	router1.GET("/tree", v1.GetMenuTree(rt.ops.v1Ops...))
@@ -15,5 +12,4 @@ func (rt Router) Menu() gin.IRoutes {
 	router1.PATCH("/update/:id", v1.UpdateMenuById(rt.ops.v1Ops...))
 	router1.PATCH("/role/update/:id", v1.UpdateMenuByRoleId(rt.ops.v1Ops...))
 	router2.DELETE("/delete/batch", v1.BatchDeleteMenuByIds(rt.ops.v1Ops...))
-	return rt.ops.group
 }
