@@ -1,8 +1,11 @@
 package router
 
-import v1 "github.com/piupuer/go-helper/api/v1"
+import (
+	v1 "github.com/piupuer/go-helper/api/v1"
+	"github.com/piupuer/go-helper/pkg/query"
+)
 
-func (rt Router) Message() {
+func (rt Router) Message() *query.MessageHub {
 	router1 := rt.Casbin("/message")
 	router2 := rt.CasbinAndIdempotence("/message")
 	router1.GET("/all", v1.FindMessage(rt.ops.v1Ops...))
@@ -12,4 +15,8 @@ func (rt Router) Message() {
 	router1.PATCH("/deleted/batch", v1.BatchUpdateMessageDeleted(rt.ops.v1Ops...))
 	router1.PATCH("/read/all", v1.UpdateAllMessageRead(rt.ops.v1Ops...))
 	router1.PATCH("/deleted/all", v1.UpdateAllMessageDeleted(rt.ops.v1Ops...))
+
+	hub := v1.NewMessageHub(rt.ops.v1Ops...)
+	router1.GET("/ws", v1.MessageWs(hub, rt.ops.v1Ops...))
+	return hub
 }

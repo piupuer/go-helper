@@ -194,6 +194,14 @@ func WithIdempotenceFailWithMsg(fun func(format interface{}, a ...interface{})) 
 	}
 }
 
+func ParseIdempotenceOptions(options ...func(*IdempotenceOptions)) *IdempotenceOptions {
+	ops := getIdempotenceOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	return ops
+}
+
 func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
 	if options == nil {
 		return &IdempotenceOptions{

@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/middleware"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -203,6 +204,69 @@ func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 			ctx:             context.Background(),
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 			database:        "query_redis",
+		}
+	}
+	return options
+}
+
+type MessageHubOptions struct {
+	logger         logger.Interface
+	my             *MySql
+	rd             *Redis
+	idempotence    bool
+	idempotenceOps []func(*middleware.IdempotenceOptions)
+}
+
+func WithMessageHubLogger(l logger.Interface) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		if l != nil {
+			getMessageHubOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithMessageHubLoggerLevel(level logger.Level) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		l := options.logger
+		if options.logger == nil {
+			l = getMessageHubOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogLevel(level)
+	}
+}
+
+func WithMessageHubMysql(my *MySql) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		if my != nil {
+			getMessageHubOptionsOrSetDefault(options).my = my
+		}
+	}
+}
+
+func WithMessageHubRedis(redis *Redis) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		if redis != nil {
+			getMessageHubOptionsOrSetDefault(options).rd = redis
+		}
+	}
+}
+
+func WithMessageHubIdempotence(flag bool) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		getMessageHubOptionsOrSetDefault(options).idempotence = flag
+	}
+}
+
+func WithIdempotenceOps(ops ...func(*middleware.IdempotenceOptions)) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		getMessageHubOptionsOrSetDefault(options).idempotenceOps = append(getMessageHubOptionsOrSetDefault(options).idempotenceOps, ops...)
+	}
+}
+
+func getMessageHubOptionsOrSetDefault(options *MessageHubOptions) *MessageHubOptions {
+	if options == nil {
+		return &MessageHubOptions{
+			logger: logger.DefaultLogger(),
 		}
 	}
 	return options

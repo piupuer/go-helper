@@ -55,3 +55,22 @@ func ContainsUint(arr []uint, item uint) bool {
 	}
 	return false
 }
+
+// whether the array contains uint return index or return -1
+func ContainsUintIndex(arr []uint, item uint) int {
+	for i, v := range arr {
+		if v == item {
+			return i
+		}
+	}
+	return -1
+}
+
+// whether the array contains uint and remove it
+func ContainsUintThenRemove(arr []uint, item uint) []uint {
+	index := ContainsUintIndex(arr, item)
+	if index >= 0 {
+		arr = append(arr[:index], arr[index+1:]...)
+	}
+	return arr
+}

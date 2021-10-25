@@ -26,10 +26,7 @@ end
 )
 
 func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
-	ops := getIdempotenceOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
-	}
+	ops := ParseIdempotenceOptions(options...)
 	if ops.redis == nil {
 		panic("idempotence redis is empty")
 	}

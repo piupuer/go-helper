@@ -24,6 +24,7 @@ type Options struct {
 	uploadMergeConcurrentCount int
 	uploadMinio                *oss.MinioOss
 	uploadMinioBucket          string
+	messageHubOps              []func(options *query.MessageHubOptions)
 }
 
 func WithLogger(l logger.Interface) func(*Options) {
