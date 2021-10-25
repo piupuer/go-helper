@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/casbin/casbin/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
@@ -215,6 +216,7 @@ type MessageHubOptions struct {
 	rd             *Redis
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
+	findUserByIds  func(userIds []uint) []ms.SysMessageUser
 }
 
 func WithMessageHubLogger(l logger.Interface) func(*MessageHubOptions) {
@@ -257,9 +259,17 @@ func WithMessageHubIdempotence(flag bool) func(*MessageHubOptions) {
 	}
 }
 
-func WithIdempotenceOps(ops ...func(*middleware.IdempotenceOptions)) func(*MessageHubOptions) {
+func WithMessageHubIdempotenceOps(ops ...func(*middleware.IdempotenceOptions)) func(*MessageHubOptions) {
 	return func(options *MessageHubOptions) {
 		getMessageHubOptionsOrSetDefault(options).idempotenceOps = append(getMessageHubOptionsOrSetDefault(options).idempotenceOps, ops...)
+	}
+}
+
+func WithMessageHubFindUserByIds(fun func(userIds []uint) []ms.SysMessageUser) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		if fun != nil {
+			getMessageHubOptionsOrSetDefault(options).findUserByIds = fun
+		}
 	}
 }
 

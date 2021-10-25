@@ -109,6 +109,9 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 	if ops.dbNoTx == nil {
 		panic("message hub dbNoTx is empty")
 	}
+	if ops.findUserByIds == nil {
+		panic("message hub findUserByIds is empty")
+	}
 	hub := &MessageHub{
 		ops: *ops,
 	}
@@ -153,8 +156,9 @@ func (h *MessageHub) run() {
 		select {
 		case data := <-h.refreshUserMessage.C:
 			userIds := data.([]uint)
+			users := h.ops.findUserByIds(userIds)
 			// sync users message
-			h.ops.dbNoTx.SyncMessageByUserIds(userIds)
+			h.ops.dbNoTx.SyncMessageByUserIds(users)
 			for _, client := range h.getClients() {
 				for _, id := range userIds {
 					if client.User.UserId == id {

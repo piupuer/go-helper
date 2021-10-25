@@ -101,11 +101,7 @@ func (my MySql) UpdateAllMessageStatus(userId uint, status uint) error {
 		Update("status", status).Error
 }
 
-func (my MySql) SyncMessageByUserIds(userIds []uint) error {
-	users := make([]ms.SysMessageUser, 0)
-	my.Tx.
-		Where("id IN (?)", userIds).
-		Find(&users)
+func (my MySql) SyncMessageByUserIds(users []ms.SysMessageUser) error {
 	for _, user := range users {
 		messages := make([]ms.SysMessage, 0)
 		my.Tx.
