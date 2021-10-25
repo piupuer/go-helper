@@ -111,7 +111,11 @@ func WithUploadMinioBucket(bucket string) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			cache: false,
+			cache:                      false,
+			operationAllowedToDelete:   true,
+			uploadSaveDir:              "upload",
+			uploadSingleMaxSize:        32,
+			uploadMergeConcurrentCount: 10,
 		}
 	}
 	return options

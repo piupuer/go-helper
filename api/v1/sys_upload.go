@@ -155,6 +155,8 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 
 		// read file part
 		var filePart req.FilePartInfoReq
+		filePart.SaveDir = ops.uploadSaveDir
+		filePart.SingleMaxSize = ops.uploadSingleMaxSize
 		currentSize := uint(header.Size)
 		filePart.CurrentSize = &currentSize
 		filePart.ChunkNumber = utils.Str2Uint(strings.TrimSpace(c.Request.FormValue("chunkNumber")))
