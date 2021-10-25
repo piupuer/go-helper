@@ -12,6 +12,10 @@ import (
 
 func NewMessageHub(options ...func(*Options)) *query.MessageHub {
 	ops := ParseOptions(options...)
+	if ops.cache {
+		rd := query.NewRedis(ops.cacheOps...)
+		ops.messageHubOps = append(ops.messageHubOps, query.WithMessageHubRedis(&rd))
+	}
 	return query.NewMessageHub(ops.messageHubOps...)
 }
 

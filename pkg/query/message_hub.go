@@ -78,8 +78,8 @@ type MessageHub struct {
 
 // The message client is used to store connection information
 type MessageClient struct {
-	hub    *MessageHub
-	ctx    context.Context
+	hub *MessageHub
+	ctx context.Context
 	// websocket key
 	Key string
 	// websocket connection
@@ -106,6 +106,9 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 	for _, f := range options {
 		f(ops)
 	}
+	if ops.dbNoTx == nil {
+		panic("message hub dbNoTx is empty")
+	}
 	hub := &MessageHub{
 		ops: *ops,
 	}
@@ -121,13 +124,13 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 // websocket handler
 func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key string, user ms.CurrentUser, ip string) {
 	client := &MessageClient{
-		hub:    h,
-		ctx:    ctx,
-		Key:    key,
-		Conn:   conn,
-		User:   user,
-		Ip:     ip,
-		Send:   ch.NewCh(),
+		hub:  h,
+		ctx:  ctx,
+		Key:  key,
+		Conn: conn,
+		User: user,
+		Ip:   ip,
+		Send: ch.NewCh(),
 	}
 
 	go client.register()
@@ -151,7 +154,7 @@ func (h *MessageHub) run() {
 		case data := <-h.refreshUserMessage.C:
 			userIds := data.([]uint)
 			// sync users message
-			h.ops.my.SyncMessageByUserIds(userIds)
+			h.ops.dbNoTx.SyncMessageByUserIds(userIds)
 			for _, client := range h.getClients() {
 				for _, id := range userIds {
 					if client.User.UserId == id {
@@ -159,7 +162,7 @@ func (h *MessageHub) run() {
 						if h.ops.rd != nil {
 							total, _ = h.ops.rd.GetUnReadMessageCount(id)
 						} else {
-							total, _ = h.ops.my.GetUnReadMessageCount(id)
+							total, _ = h.ops.dbNoTx.GetUnReadMessageCount(id)
 						}
 						msg := resp.MessageWsResp{
 							Type: MessageRespUnRead,
@@ -188,7 +191,7 @@ func (h *MessageHub) count() {
 			for _, client := range h.getClients() {
 				infos = append(infos, fmt.Sprintf("%d-%s", client.User.UserId, client.Ip))
 			}
-			h.ops.logger.Debug(h.ops.my.Ctx, "[Message]active connection: %v", strings.Join(infos, ","))
+			h.ops.logger.Debug(h.ops.dbNoTx.Ctx, "[Message]active connection: %v", strings.Join(infos, ","))
 		}
 	}
 }
@@ -242,7 +245,7 @@ func (c *MessageClient) receive() {
 					err = errors.New(resp.IdempotenceTokenInvalidMsg)
 				} else {
 					data.FromUserId = c.User.UserId
-					err = c.hub.ops.my.CreateMessage(&data)
+					err = c.hub.ops.dbNoTx.CreateMessage(&data)
 				}
 			}
 			if err != nil {
@@ -257,7 +260,7 @@ func (c *MessageClient) receive() {
 		case MessageReqBatchRead:
 			var data req.Ids
 			utils.Struct2StructByJson(r.Data, &data)
-			err = c.hub.ops.my.BatchUpdateMessageRead(data.Uints())
+			err = c.hub.ops.dbNoTx.BatchUpdateMessageRead(data.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())
@@ -270,7 +273,7 @@ func (c *MessageClient) receive() {
 		case MessageReqBatchDeleted:
 			var data req.Ids
 			utils.Struct2StructByJson(r.Data, &data)
-			err = c.hub.ops.my.BatchUpdateMessageDeleted(data.Uints())
+			err = c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(data.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())
@@ -281,7 +284,7 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqAllRead:
-			err = c.hub.ops.my.UpdateAllMessageRead(c.User.UserId)
+			err = c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.UserId)
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())
@@ -292,7 +295,7 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqAllDeleted:
-			err = c.hub.ops.my.UpdateAllMessageDeleted(c.User.UserId)
+			err = c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.UserId)
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())

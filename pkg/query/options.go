@@ -211,7 +211,7 @@ func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 
 type MessageHubOptions struct {
 	logger         logger.Interface
-	my             *MySql
+	dbNoTx         *MySql
 	rd             *Redis
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
@@ -235,10 +235,10 @@ func WithMessageHubLoggerLevel(level logger.Level) func(*MessageHubOptions) {
 	}
 }
 
-func WithMessageHubMysql(my *MySql) func(*MessageHubOptions) {
+func WithMessageHubDbNoTx(dbNoTx *MySql) func(*MessageHubOptions) {
 	return func(options *MessageHubOptions) {
-		if my != nil {
-			getMessageHubOptionsOrSetDefault(options).my = my
+		if dbNoTx != nil {
+			getMessageHubOptionsOrSetDefault(options).dbNoTx = dbNoTx
 		}
 	}
 }
