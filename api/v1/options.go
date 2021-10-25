@@ -5,11 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/oss"
 	"github.com/piupuer/go-helper/pkg/query"
 )
 
 type Options struct {
+	logger                     logger.Interface
 	cache                      bool
 	cacheOps                   []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
@@ -22,6 +24,24 @@ type Options struct {
 	uploadMergeConcurrentCount int
 	uploadMinio                *oss.MinioOss
 	uploadMinioBucket          string
+}
+
+func WithLogger(l logger.Interface) func(*Options) {
+	return func(options *Options) {
+		if l != nil {
+			getOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithLoggerLevel(level logger.Level) func(*Options) {
+	return func(options *Options) {
+		l := options.logger
+		if options.logger == nil {
+			l = getOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogLevel(level)
+	}
 }
 
 func WithCache(flag bool) func(*Options) {
@@ -111,6 +131,7 @@ func WithUploadMinioBucket(bucket string) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
+			logger:                     logger.DefaultLogger(),
 			cache:                      false,
 			operationAllowedToDelete:   true,
 			uploadSaveDir:              "upload",

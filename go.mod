@@ -14,6 +14,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hibiken/asynq v0.18.6
 	github.com/libi/dcron v0.2.2
 	github.com/looplab/fsm v0.3.0
