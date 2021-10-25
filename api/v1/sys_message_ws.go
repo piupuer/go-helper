@@ -16,6 +16,8 @@ func NewMessageHub(options ...func(*Options)) *query.MessageHub {
 		rd := query.NewRedis(ops.cacheOps...)
 		ops.messageHubOps = append(ops.messageHubOps, query.WithMessageHubRedis(&rd))
 	}
+	my := query.NewMySql(ops.dbOps...)
+	ops.messageHubOps = append(ops.messageHubOps, query.WithMessageHubDbNoTx(&my))
 	return query.NewMessageHub(ops.messageHubOps...)
 }
 
