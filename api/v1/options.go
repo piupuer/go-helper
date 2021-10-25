@@ -129,6 +129,12 @@ func WithUploadMinioBucket(bucket string) func(*Options) {
 	}
 }
 
+func WithMessageHubOps(ops ...func(options *query.MessageHubOptions)) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).messageHubOps = append(getOptionsOrSetDefault(options).messageHubOps, ops...)
+	}
+}
+
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
