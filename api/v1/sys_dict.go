@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -13,8 +14,15 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 		var r req.DictReq
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		list := q.FindDict(&r)
+		list := make([]ms.SysDict, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindDict(&r)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindDict(&r)
+		}
 		resp.SuccessWithPageData(list, []resp.DictResp{}, r.Page)
 	}
 }
@@ -66,8 +74,15 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 		var r req.DictDataReq
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		list := q.FindDictData(&r)
+		list := make([]ms.SysDictData, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindDictData(&r)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindDictData(&r)
+		}
 		resp.SuccessWithPageData(list, []resp.DictDataResp{}, r.Page)
 	}
 }

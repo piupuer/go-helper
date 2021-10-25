@@ -39,9 +39,9 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 	// find all api
 	my.Tx.Find(&allApi)
 	// find all casbin by current user's role id
-	currentCasbins, err := my.FindCasbinByRoleKeyword(currentRoleKeyword)
+	currentCasbins, err := FindCasbinByRoleKeyword(my.ops.enforcer, currentRoleKeyword)
 	// find all casbin by current role id
-	casbins, err := my.FindCasbinByRoleKeyword(roleKeyword)
+	casbins, err := FindCasbinByRoleKeyword(my.ops.enforcer, roleKeyword)
 	if err != nil {
 		return tree, accessIds, err
 	}

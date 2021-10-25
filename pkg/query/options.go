@@ -62,7 +62,7 @@ func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	}
 }
 
-func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*MysqlOptions) {
+func WithMysqlCasbinEnforcer(enforcer *casbin.Enforcer) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if enforcer != nil {
 			getMysqlOptionsOrSetDefault(options).enforcer = enforcer
@@ -130,6 +130,7 @@ type RedisOptions struct {
 	logger          logger.Interface
 	redis           redis.UniversalClient
 	ctx             context.Context
+	enforcer        *casbin.Enforcer
 	requestIdCtxKey string
 	database        string
 	namingStrategy  schema.Namer
@@ -165,6 +166,14 @@ func WithRedisCtx(ctx context.Context) func(*RedisOptions) {
 	return func(options *RedisOptions) {
 		if ctx != nil {
 			getRedisOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func WithRedisCasbinEnforcer(enforcer *casbin.Enforcer) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		if enforcer != nil {
+			getRedisOptionsOrSetDefault(options).enforcer = enforcer
 		}
 	}
 }

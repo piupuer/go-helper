@@ -18,9 +18,15 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 		u := ops.getCurrentUser(c)
 		r.ToUserId = u.UserId
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-
-		list := q.FindUnDeleteMessage(&r)
+		list := make([]resp.MessageResp, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindUnDeleteMessage(&r)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindUnDeleteMessage(&r)
+		}
 		resp.SuccessWithPageData(list, []resp.MessageResp{}, r.Page)
 	}
 }
@@ -33,9 +39,16 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-
-		total, err := q.GetUnReadMessageCount(u.UserId)
+		var total int64
+		var err error
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			total, err = rd.GetUnReadMessageCount(u.UserId)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			total, err = my.GetUnReadMessageCount(u.UserId)
+		}
 		resp.CheckErr(err)
 		resp.SuccessWithData(total)
 	}

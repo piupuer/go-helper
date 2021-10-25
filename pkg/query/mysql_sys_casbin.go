@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/casbin/casbin/v2"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
@@ -71,18 +72,17 @@ func (my MySql) BatchDeleteRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 	return my.ops.enforcer.RemovePolicies(rules)
 }
 
-func (my MySql) FindCasbinByRoleKeyword(roleKeyword string) ([]ms.SysCasbin, error) {
+func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) ([]ms.SysCasbin, error) {
 	casbins := make([]ms.SysCasbin, 0)
-	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
+	if enforcer == nil {
 		return casbins, fmt.Errorf("casbin enforcer is empty")
 	}
 	list := make([][]string, 0)
 	if roleKeyword != "" {
 		// filter rules by keyword
-		list = my.ops.enforcer.GetFilteredPolicy(0, roleKeyword)
+		list = enforcer.GetFilteredPolicy(0, roleKeyword)
 	} else {
-		list = my.ops.enforcer.GetFilteredPolicy(0)
+		list = enforcer.GetFilteredPolicy(0)
 	}
 
 	var added []string

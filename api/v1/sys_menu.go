@@ -25,10 +25,10 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		menus, err := q.GetMenuTree(u.RoleId)
+		list, err := q.GetMenuTree(u.RoleId)
 		resp.CheckErr(err)
 		var rp []resp.MenuTreeResp
-		utils.Struct2StructByJson(menus, &rp)
+		utils.Struct2StructByJson(list, &rp)
 		CacheSetMenuTree(c, u.UserId, rp, *ops)
 		resp.SuccessWithData(rp)
 	}
@@ -43,12 +43,21 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		id := req.UintId(c)
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		menus, ids, err := q.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
+		list := make([]ms.SysMenu, 0)
+		ids := make([]uint, 0)
+		var err error
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list, ids, err = rd.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list, ids, err = my.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
+		}
 		resp.CheckErr(err)
 		var rp resp.MenuTreeWithAccessResp
 		rp.AccessIds = ids
-		utils.Struct2StructByJson(menus, &rp.List)
+		utils.Struct2StructByJson(list, &rp.List)
 		resp.SuccessWithData(rp)
 	}
 }
@@ -61,10 +70,17 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		menus := q.FindMenu(u.RoleId, u.RoleSort)
+		list := make([]ms.SysMenu, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindMenu(u.RoleId, u.RoleSort)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindMenu(u.RoleId, u.RoleSort)
+		}
 		var rp []resp.MenuTreeResp
-		utils.Struct2StructByJson(menus, &rp)
+		utils.Struct2StructByJson(list, &rp)
 		resp.SuccessWithData(rp)
 	}
 }

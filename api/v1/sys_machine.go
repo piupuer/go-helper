@@ -14,8 +14,15 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 		var r req.MachineReq
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		list := q.FindMachine(&r)
+		list := make([]ms.SysMachine, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindMachine(&r)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindMachine(&r)
+		}
 		resp.SuccessWithPageData(list, []resp.MachineResp{}, r.Page)
 	}
 }

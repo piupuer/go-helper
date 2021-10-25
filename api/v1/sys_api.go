@@ -15,10 +15,16 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r req.ApiReq
 		req.ShouldBind(c, &r)
-		list := make([]ms.SysApi, 0)
 		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		list = q.FindApi(&r)
+		list := make([]ms.SysApi, 0)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list = rd.FindApi(&r)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list = my.FindApi(&r)
+		}
 		resp.SuccessWithPageData(list, []resp.ApiResp{}, r.Page)
 	}
 }
@@ -32,12 +38,18 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 		var r req.ApiReq
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
+		ops.addCtx(c)
 		list := make([]resp.ApiGroupByCategoryResp, 0)
 		ids := make([]uint, 0)
 		var err error
-		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		list, ids, err = q.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
+		switch ops.cache {
+		case true:
+			rd := query.NewRedis(ops.cacheOps...)
+			list, ids, err = rd.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
+		default:
+			my := query.NewMySql(ops.dbOps...)
+			list, ids, err = my.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
+		}
 		resp.CheckErr(err)
 		var rp resp.ApiTreeWithAccessResp
 		rp.AccessIds = ids
