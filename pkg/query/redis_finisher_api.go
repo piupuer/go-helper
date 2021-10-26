@@ -7,7 +7,7 @@ import (
 
 // gorm.Find
 func (rd Redis) Find(dest interface{}) *Redis {
-	ins := rd.Session()
+	ins := rd.getInstance()
 	if !ins.check() {
 		return ins
 	}
@@ -20,7 +20,7 @@ func (rd Redis) Find(dest interface{}) *Redis {
 
 // like gorm.First
 func (rd Redis) First(dest interface{}) *Redis {
-	ins := rd.Session()
+	ins := rd.getInstance()
 	ins.Statement.limit = 1
 	ins.Statement.first = true
 	ins.Find(dest)
@@ -29,7 +29,7 @@ func (rd Redis) First(dest interface{}) *Redis {
 
 // like gorm.Count
 func (rd Redis) Count(count *int64) *Redis {
-	ins := rd.Session()
+	ins := rd.getInstance()
 	ins.Statement.Dest = count
 	ins.Statement.count = true
 	if !ins.check() {

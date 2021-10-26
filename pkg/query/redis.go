@@ -53,12 +53,23 @@ func (rd *Redis) AddError(err error) error {
 	return rd.Error
 }
 
+// create new db session
+func (rd *Redis) Session() *Redis {
+	return &Redis{
+		ops:       rd.ops,
+		Ctx:       rd.Ctx,
+		Statement: rd.Statement,
+		Error:     rd.Error,
+		clone:     1,
+	}
+}
+
 // get new instance
-func (rd Redis) Session() *Redis {
+func (rd Redis) getInstance() *Redis {
 	if rd.clone > 0 {
 		tx := &Redis{
-			ops:   rd.ops,
-			Ctx:   rd.Ctx,
+			ops: rd.ops,
+			Ctx: rd.Ctx,
 		}
 
 		if rd.clone == 1 {
@@ -79,7 +90,7 @@ func (rd Redis) Session() *Redis {
 
 // check table name
 func (rd Redis) check() bool {
-	ins := rd.Session()
+	ins := rd.getInstance()
 	// check table name when json is false
 	if !ins.Statement.json && strings.TrimSpace(ins.Statement.Table) == "" {
 		rd.Error = fmt.Errorf("invalid table name: '%s'", ins.Statement.Table)
