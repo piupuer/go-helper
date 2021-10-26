@@ -4,6 +4,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -51,11 +52,11 @@ func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOption
 }
 
 type CasbinOptions struct {
-	logger       logger.Interface
-	urlPrefix    string
-	roleKey      func(c *gin.Context) string
-	enforcer     *casbin.Enforcer
-	failWithCode func(code int)
+	logger         logger.Interface
+	urlPrefix      string
+	getCurrentUser func(c *gin.Context) ms.User
+	enforcer       *casbin.Enforcer
+	failWithCode   func(code int)
 }
 
 func WithCasbinLogger(l logger.Interface) func(*CasbinOptions) {
@@ -82,10 +83,10 @@ func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
 	}
 }
 
-func WithCasbinRoleKey(fun func(c *gin.Context) string) func(*CasbinOptions) {
+func WithGetCurrentUser(fun func(c *gin.Context) ms.User) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if fun != nil {
-			getCasbinOptionsOrSetDefault(options).roleKey = fun
+			getCasbinOptionsOrSetDefault(options).getCurrentUser = fun
 		}
 	}
 }
@@ -112,10 +113,6 @@ func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 		options.logger = logger.DefaultLogger()
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.failWithCode = resp.FailWithCode
-		options.roleKey = func(c *gin.Context) string {
-			options.logger.Warn(c, "cabsin role key is empty")
-			return constant.MiddlewareRoleKey
-		}
 	}
 	return options
 }
@@ -514,10 +511,10 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 			return constant.MiddlewareOperationLogNotLogin, constant.MiddlewareOperationLogNotLogin
 		}
 		options.save = func(c *gin.Context, list []OperationRecord) {
-			options.logger.Warn(c, "operation log save handler is empty")
+			options.logger.Warn(c, "operation log save is empty")
 		}
 		options.findApi = func(c *gin.Context) []OperationApi {
-			options.logger.Warn(c, "operation log find api handler is empty")
+			options.logger.Warn(c, "operation log findApi is empty")
 			return []OperationApi{}
 		}
 	}

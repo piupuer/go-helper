@@ -13,16 +13,19 @@ func Casbin(options ...func(*CasbinOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	if ops.enforcer == nil {
-		panic("casbin enforcer handler is empty")
+		panic("casbin enforcer is empty")
+	}
+	if ops.enforcer == nil {
+		panic("casbin getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
 		// get role.key as subject
-		sub := ops.roleKey(c)
+		sub := ops.getCurrentUser(c)
 		// request path as object
 		obj := strings.Replace(c.Request.URL.Path, "/"+ops.urlPrefix, "", 1)
 		// request method as action
 		act := c.Request.Method
-		if !check(sub, obj, act, *ops) {
+		if !check(sub.RoleKeyword, obj, act, *ops) {
 			ops.failWithCode(resp.Forbidden)
 			return
 		}
