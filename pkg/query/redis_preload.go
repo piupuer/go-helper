@@ -110,7 +110,7 @@ func preload(db *Redis, rels []*schema.Relationship) {
 			cols = append(cols, col2...)
 		}
 		for _, col := range cols {
-			ins.AddError(ins.Session().Table(rel.JoinTable.Table).Where(localUtils.CamelCaseLowerFirst(col.Name), "in", toQueryValues(values)).Find(&relatedRows).Error)
+			ins.AddError(ins.Session().Table(localUtils.CamelCaseLowerFirst(rel.JoinTable.Name)).Where(localUtils.CamelCaseLowerFirst(col.Name), "in", toQueryValues(values)).Find(&relatedRows).Error)
 		}
 
 		// convert join identity map to relation identity map
@@ -180,7 +180,7 @@ func preload(db *Redis, rels []*schema.Relationship) {
 		cols = append(cols, col2...)
 	}
 	for _, col := range cols {
-		ins.AddError(ins.Session().Table(rel.FieldSchema.Table).Where(localUtils.CamelCaseLowerFirst(col.Name), "in", toQueryValues(values)).Find(reflectResults.Addr().Interface()).Error)
+		ins.AddError(ins.Session().Table(localUtils.CamelCaseLowerFirst(rel.FieldSchema.Name)).Where(localUtils.CamelCaseLowerFirst(col.Name), "in", toQueryValues(values)).Find(reflectResults.Addr().Interface()).Error)
 	}
 	fieldValues := make([]interface{}, len(relForeignFields))
 
