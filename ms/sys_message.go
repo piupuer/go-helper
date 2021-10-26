@@ -50,8 +50,3 @@ type SysMessageLog struct {
 	Message   SysMessage `gorm:"foreignKey:MessageId" json:"message"`
 	Status    uint       `gorm:"type:tinyint;default:0;comment:'status(0: unread, 1: read, 2: deleted)'" json:"status"`
 }
-
-type SysMessageUser struct {
-	M
-	RoleId uint `json:"roleId"`
-}

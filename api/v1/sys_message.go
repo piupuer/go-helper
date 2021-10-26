@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 func FindMessage(options ...func(*Options)) gin.HandlerFunc {
@@ -12,11 +13,14 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 	if ops.getCurrentUser == nil {
 		panic("getCurrentUser is empty")
 	}
+	if ops.findUserByIds == nil {
+		panic("findUserByIds is empty")
+	}
 	return func(c *gin.Context) {
 		var r req.MessageReq
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
-		r.ToUserId = u.UserId
+		r.ToUserId = u.Id
 		ops.addCtx(c)
 		list := make([]resp.MessageResp, 0)
 		switch ops.cache {
@@ -26,6 +30,32 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 		default:
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindUnDeleteMessage(&r)
+		}
+		userIds := make([]uint, 0)
+		for _, item := range list {
+			if !utils.ContainsUint(userIds, item.ToUserId) {
+				userIds = append(userIds, item.ToUserId)
+			}
+			if !utils.ContainsUint(userIds, item.FromUserId) {
+				userIds = append(userIds, item.FromUserId)
+			}
+		}
+		users := ops.findUserByIds(c, userIds)
+		for i, item := range list {
+			for _, user := range users {
+				if item.ToUserId == user.Id {
+					list[i].ToUsername = user.Username
+					list[i].ToNickname = user.Nickname
+					break
+				}
+			}
+			for _, user := range users {
+				if item.FromUserId == user.Id {
+					list[i].FromUsername = user.Username
+					list[i].FromNickname = user.Nickname
+					break
+				}
+			}
 		}
 		resp.SuccessWithPageData(list, []resp.MessageResp{}, r.Page)
 	}
@@ -44,10 +74,10 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 		switch ops.cache {
 		case true:
 			rd := query.NewRedis(ops.cacheOps...)
-			total, err = rd.GetUnReadMessageCount(u.UserId)
+			total, err = rd.GetUnReadMessageCount(u.Id)
 		default:
 			my := query.NewMySql(ops.dbOps...)
-			total, err = my.GetUnReadMessageCount(u.UserId)
+			total, err = my.GetUnReadMessageCount(u.Id)
 		}
 		resp.CheckErr(err)
 		resp.SuccessWithData(total)
@@ -65,7 +95,7 @@ func PushMessage(options ...func(*Options)) gin.HandlerFunc {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		r.FromUserId = u.UserId
+		r.FromUserId = u.Id
 		err := q.CreateMessage(&r)
 		resp.CheckErr(err)
 		resp.Success()
@@ -107,7 +137,7 @@ func UpdateAllMessageRead(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)
-		err := q.UpdateAllMessageRead(u.UserId)
+		err := q.UpdateAllMessageRead(u.Id)
 		resp.CheckErr(err)
 		resp.Success()
 	}
@@ -122,7 +152,7 @@ func UpdateAllMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)
-		err := q.UpdateAllMessageDeleted(u.UserId)
+		err := q.UpdateAllMessageDeleted(u.Id)
 		resp.CheckErr(err)
 		resp.Success()
 	}

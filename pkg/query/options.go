@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"github.com/casbin/casbin/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
@@ -216,7 +217,7 @@ type MessageHubOptions struct {
 	rd             *Redis
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
-	findUserByIds  func(userIds []uint) []ms.SysMessageUser
+	findUserByIds  func(c *gin.Context, userIds []uint) []ms.User
 }
 
 func WithMessageHubLogger(l logger.Interface) func(*MessageHubOptions) {
@@ -265,7 +266,7 @@ func WithMessageHubIdempotenceOps(ops ...func(*middleware.IdempotenceOptions)) f
 	}
 }
 
-func WithMessageHubFindUserByIds(fun func(userIds []uint) []ms.SysMessageUser) func(*MessageHubOptions) {
+func WithMessageHubFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.User) func(*MessageHubOptions) {
 	return func(options *MessageHubOptions) {
 		if fun != nil {
 			getMessageHubOptionsOrSetDefault(options).findUserByIds = fun

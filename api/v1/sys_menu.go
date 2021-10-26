@@ -17,7 +17,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		u := ops.getCurrentUser(c)
-		oldCache, ok := CacheGetMenuTree(c, u.UserId, *ops)
+		oldCache, ok := CacheGetMenuTree(c, u.Id, *ops)
 		if ok {
 			resp.SuccessWithData(oldCache)
 			return
@@ -29,7 +29,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 		resp.CheckErr(err)
 		var rp []resp.MenuTreeResp
 		utils.Struct2StructByJson(list, &rp)
-		CacheSetMenuTree(c, u.UserId, rp, *ops)
+		CacheSetMenuTree(c, u.Id, rp, *ops)
 		resp.SuccessWithData(rp)
 	}
 }

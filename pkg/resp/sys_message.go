@@ -2,12 +2,16 @@ package resp
 
 type MessageResp struct {
 	Base
-	Status     uint   `json:"status"`
-	ToUserId   uint   `json:"toUserId"`
-	Type       uint   `json:"type"`
-	Title      string `json:"title"`
-	Content    string `json:"content"`
-	FromUserId uint   `json:"fromUserId"`
+	Status       uint   `json:"status"`
+	ToUserId     uint   `json:"toUserId"`
+	ToUsername   string `json:"toUsername"`
+	ToNickname   string `json:"toNickname"`
+	Type         uint   `json:"type"`
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	FromUserId   uint   `json:"fromUserId"`
+	FromUsername string `json:"fromUsername"`
+	FromNickname string `json:"fromNickname"`
 }
 
 type MessageWsResp struct {

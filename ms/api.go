@@ -1,7 +1,10 @@
 package ms
 
-type CurrentUser struct {
-	UserId          uint   `json:"userId"`
+type User struct {
+	M
+	Username        string `json:"username"`
+	Mobile          string `json:"mobile"`
+	Nickname        string `json:"nickname"`
 	RoleId          uint   `json:"roleId"`
 	RoleSort        uint   `json:"roleSort"`
 	RoleKeyword     string `json:"roleKeyword"`

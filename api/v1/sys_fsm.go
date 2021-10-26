@@ -42,7 +42,7 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		var r req.FsmPendingLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
-		r.ApprovalRoleId = u.UserId
+		r.ApprovalRoleId = u.Id
 		r.ApprovalUserId = u.RoleId
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)

@@ -17,8 +17,9 @@ type Options struct {
 	dbOps                      []func(options *query.MysqlOptions)
 	redis                      redis.UniversalClient
 	operationAllowedToDelete   bool
-	getCurrentUser             func(c *gin.Context) ms.CurrentUser
+	getCurrentUser             func(c *gin.Context) ms.User
 	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
+	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64
 	uploadMergeConcurrentCount int
@@ -77,7 +78,7 @@ func WithOperationAllowedToDelete(flag bool) func(*Options) {
 	}
 }
 
-func WithGetCurrentUser(fun func(c *gin.Context) ms.CurrentUser) func(*Options) {
+func WithGetCurrentUser(fun func(c *gin.Context) ms.User) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).getCurrentUser = fun
@@ -89,6 +90,14 @@ func WithFindRoleKeywordByRoleIds(fun func(c *gin.Context, roleIds []uint) []str
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).findRoleKeywordByRoleIds = fun
+		}
+	}
+}
+
+func WithFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.User) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).findUserByIds = fun
 		}
 	}
 }

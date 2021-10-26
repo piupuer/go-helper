@@ -85,7 +85,7 @@ type MessageClient struct {
 	// websocket connection
 	Conn *websocket.Conn
 	// current user
-	User ms.CurrentUser
+	User ms.User
 	// request ip
 	Ip string
 	// The channel sends messages to user
@@ -125,7 +125,7 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 }
 
 // websocket handler
-func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key string, user ms.CurrentUser, ip string) {
+func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key string, user ms.User, ip string) {
 	client := &MessageClient{
 		hub:  h,
 		ctx:  ctx,
@@ -145,7 +145,7 @@ func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key strin
 func (h *MessageHub) SendToUserIds(userIds []uint, msg resp.MessageWsResp) {
 	for _, client := range h.getClients() {
 		// Notify the specified user
-		if utils.ContainsUint(userIds, client.User.UserId) {
+		if utils.ContainsUint(userIds, client.User.Id) {
 			client.Send.SafeSend(msg)
 		}
 	}
@@ -156,12 +156,12 @@ func (h *MessageHub) run() {
 		select {
 		case data := <-h.refreshUserMessage.C:
 			userIds := data.([]uint)
-			users := h.ops.findUserByIds(userIds)
+			users := h.ops.findUserByIds(&gin.Context{}, userIds)
 			// sync users message
 			h.ops.dbNoTx.SyncMessageByUserIds(users)
 			for _, client := range h.getClients() {
 				for _, id := range userIds {
-					if client.User.UserId == id {
+					if client.User.Id == id {
 						var total int64
 						if h.ops.rd != nil {
 							total, _ = h.ops.rd.GetUnReadMessageCount(id)
@@ -193,7 +193,7 @@ func (h *MessageHub) count() {
 		case <-ticker.C:
 			infos := make([]string, 0)
 			for _, client := range h.getClients() {
-				infos = append(infos, fmt.Sprintf("%d-%s", client.User.UserId, client.Ip))
+				infos = append(infos, fmt.Sprintf("%d-%s", client.User.Id, client.Ip))
 			}
 			h.ops.logger.Debug(h.ops.dbNoTx.Ctx, "[Message]active connection: %v", strings.Join(infos, ","))
 		}
@@ -227,7 +227,7 @@ func (c *MessageClient) receive() {
 		// decompress data
 		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
-		c.hub.ops.logger.Debug(c.ctx, "[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.UserId, data)
+		c.hub.ops.logger.Debug(c.ctx, "[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
 		var r req.MessageWsReq
 		utils.Json2Struct(data, &r)
 		switch r.Type {
@@ -248,7 +248,7 @@ func (c *MessageClient) receive() {
 				if c.hub.ops.idempotence && !middleware.CheckIdempotenceToken(c.ctx, data.IdempotenceToken, *ops) {
 					err = errors.New(resp.IdempotenceTokenInvalidMsg)
 				} else {
-					data.FromUserId = c.User.UserId
+					data.FromUserId = c.User.Id
 					err = c.hub.ops.dbNoTx.CreateMessage(&data)
 				}
 			}
@@ -288,7 +288,7 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqAllRead:
-			err = c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.UserId)
+			err = c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.Id)
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())
@@ -299,7 +299,7 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqAllDeleted:
-			err = c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.UserId)
+			err = c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.Id)
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err.Error())
@@ -392,16 +392,16 @@ func (c *MessageClient) register() {
 	defer c.hub.lock.Unlock()
 
 	t := carbon.Now()
-	active, ok := c.hub.userLastActive[c.User.UserId]
+	active, ok := c.hub.userLastActive[c.User.Id]
 	last := carbon.CreateFromTimestamp(active)
 	c.hub.clients[c.Key] = c
 	if !ok || last.AddDuration(lastActiveRegisterPeriod.String()).Lt(t) {
-		if !utils.ContainsUint(c.hub.userIds, c.User.UserId) {
-			c.hub.userIds = append(c.hub.userIds, c.User.UserId)
+		if !utils.ContainsUint(c.hub.userIds, c.User.Id) {
+			c.hub.userIds = append(c.hub.userIds, c.User.Id)
 		}
-		c.hub.ops.logger.Debug(c.ctx, "[Message][online][%s]%d-%s", c.Key, c.User.UserId, c.Ip)
+		c.hub.ops.logger.Debug(c.ctx, "[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 		go func() {
-			c.hub.refreshUserMessage.SafeSend([]uint{c.User.UserId})
+			c.hub.refreshUserMessage.SafeSend([]uint{c.User.Id})
 		}()
 
 		msg := resp.MessageWsResp{
@@ -411,11 +411,11 @@ func (c *MessageClient) register() {
 			}),
 		}
 		// Inform everyone except yourself
-		go c.hub.SendToUserIds(utils.ContainsUintThenRemove(c.hub.userIds, c.User.UserId), msg)
+		go c.hub.SendToUserIds(utils.ContainsUintThenRemove(c.hub.userIds, c.User.Id), msg)
 
-		c.hub.userLastActive[c.User.UserId] = t.Timestamp()
+		c.hub.userLastActive[c.User.Id] = t.Timestamp()
 	} else {
-		c.hub.userLastActive[c.User.UserId] = t.Timestamp()
+		c.hub.userLastActive[c.User.Id] = t.Timestamp()
 	}
 }
 
@@ -427,7 +427,7 @@ func (c *MessageClient) close() {
 	if _, ok := c.hub.clients[c.Key]; ok {
 		delete(c.hub.clients, c.Key)
 		c.Send.SafeClose()
-		c.hub.ops.logger.Debug(c.ctx, "[Message][offline][%s]%d-%s", c.Key, c.User.UserId, c.Ip)
+		c.hub.ops.logger.Debug(c.ctx, "[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 	}
 
 	c.Conn.Close()
