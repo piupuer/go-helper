@@ -165,6 +165,9 @@ func ParseOptions(options ...func(*Options)) *Options {
 	}
 	// check ops
 	if ops.binlog {
+		if ops.redis != nil {
+			ops.binlogOps = append(ops.binlogOps, query.WithRedisClient(ops.redis))
+		}
 		query.NewRedis(ops.binlogOps...)
 	}
 	query.NewMySql(ops.dbOps...)
