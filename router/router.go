@@ -19,6 +19,7 @@ func NewRouter(options ...func(*Options)) *Router {
 	if ops.group == nil {
 		panic("group is empty")
 	}
+	// router auto transmit children
 	if ops.logger != nil {
 		ops.jwtOps = append(ops.jwtOps, middleware.WithJwtLogger(ops.logger))
 		ops.v1Ops = append(ops.v1Ops, v1.WithDbOps(
@@ -27,12 +28,19 @@ func NewRouter(options ...func(*Options)) *Router {
 		ops.v1Ops = append(ops.v1Ops, v1.WithBinlogOps(
 			query.WithRedisLogger(ops.logger),
 		))
+		ops.v1Ops = append(ops.v1Ops, v1.WithMessageHubOps(
+			query.WithMessageHubLogger(ops.logger),
+		))
 	}
 	if ops.redis != nil {
 		ops.idempotenceOps = append(ops.idempotenceOps, middleware.WithIdempotenceRedis(ops.redis))
 		ops.v1Ops = append(ops.v1Ops, v1.WithRedis(ops.redis))
 	}
 	ops.v1Ops = append(ops.v1Ops, v1.WithBinlog(ops.redisBinlog))
+	ops.v1Ops = append(ops.v1Ops, v1.WithMessageHubOps(
+		query.WithMessageHubIdempotence(ops.idempotence),
+		query.WithMessageHubIdempotenceOps(ops.idempotenceOps...),
+	))
 	r := &Router{
 		ops: *ops,
 	}
