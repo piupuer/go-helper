@@ -51,10 +51,29 @@ func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOption
 }
 
 type CasbinOptions struct {
+	logger       logger.Interface
 	urlPrefix    string
 	roleKey      func(c *gin.Context) string
 	enforcer     *casbin.Enforcer
 	failWithCode func(code int)
+}
+
+func WithCasbinLogger(l logger.Interface) func(*CasbinOptions) {
+	return func(options *CasbinOptions) {
+		if l != nil {
+			getCasbinOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithCasbinLoggerLevel(level logger.Level) func(*CasbinOptions) {
+	return func(options *CasbinOptions) {
+		l := options.logger
+		if options.logger == nil {
+			l = getCasbinOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogLevel(level)
+	}
 }
 
 func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
@@ -89,10 +108,13 @@ func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
+		l := logger.DefaultLogger()
 		return &CasbinOptions{
+			logger:       l,
 			urlPrefix:    constant.MiddlewareUrlPrefix,
 			failWithCode: resp.FailWithCode,
 			roleKey: func(c *gin.Context) string {
+				l.Warn(c, "cabsin role key is empty")
 				return constant.MiddlewareRoleKey
 			},
 		}
