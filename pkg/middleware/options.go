@@ -83,7 +83,7 @@ func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
 	}
 }
 
-func WithGetCurrentUser(fun func(c *gin.Context) ms.User) func(*CasbinOptions) {
+func WithCasbinGetCurrentUser(fun func(c *gin.Context) ms.User) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if fun != nil {
 			getCasbinOptionsOrSetDefault(options).getCurrentUser = fun
