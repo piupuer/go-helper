@@ -23,9 +23,9 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 		r.ToUserId = u.Id
 		ops.addCtx(c)
 		list := make([]resp.MessageResp, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindUnDeleteMessage(&r)
 		default:
 			my := query.NewMySql(ops.dbOps...)
@@ -71,9 +71,9 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		var total int64
 		var err error
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			total, err = rd.GetUnReadMessageCount(u.Id)
 		default:
 			my := query.NewMySql(ops.dbOps...)

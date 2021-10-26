@@ -15,9 +15,9 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysDict, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindDict(&r)
 		default:
 			my := query.NewMySql(ops.dbOps...)
@@ -75,9 +75,9 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysDictData, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindDictData(&r)
 		default:
 			my := query.NewMySql(ops.dbOps...)

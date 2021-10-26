@@ -15,9 +15,9 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysMachine, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindMachine(&r)
 		default:
 			my := query.NewMySql(ops.dbOps...)

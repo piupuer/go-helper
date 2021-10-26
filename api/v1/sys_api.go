@@ -17,9 +17,9 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysApi, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindApi(&r)
 		default:
 			my := query.NewMySql(ops.dbOps...)
@@ -42,9 +42,9 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 		list := make([]resp.ApiGroupByCategoryResp, 0)
 		ids := make([]uint, 0)
 		var err error
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list, ids, err = rd.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
 		default:
 			my := query.NewMySql(ops.dbOps...)

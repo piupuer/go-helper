@@ -46,9 +46,9 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		list := make([]ms.SysMenu, 0)
 		ids := make([]uint, 0)
 		var err error
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list, ids, err = rd.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
 		default:
 			my := query.NewMySql(ops.dbOps...)
@@ -71,9 +71,9 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		list := make([]ms.SysMenu, 0)
-		switch ops.cache {
+		switch ops.binlog {
 		case true:
-			rd := query.NewRedis(ops.cacheOps...)
+			rd := query.NewRedis(ops.binlogOps...)
 			list = rd.FindMenu(u.RoleId, u.RoleSort)
 		default:
 			my := query.NewMySql(ops.dbOps...)

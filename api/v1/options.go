@@ -12,8 +12,8 @@ import (
 
 type Options struct {
 	logger                     logger.Interface
-	cache                      bool
-	cacheOps                   []func(options *query.RedisOptions)
+	binlog                     bool
+	binlogOps                  []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
 	redis                      redis.UniversalClient
 	operationAllowedToDelete   bool
@@ -46,15 +46,15 @@ func WithLoggerLevel(level logger.Level) func(*Options) {
 	}
 }
 
-func WithCache(flag bool) func(*Options) {
+func WithBinlog(flag bool) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).cache = flag
+		getOptionsOrSetDefault(options).binlog = flag
 	}
 }
 
-func WithCacheOps(ops ...func(options *query.RedisOptions)) func(*Options) {
+func WithBinlogOps(ops ...func(options *query.RedisOptions)) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).cacheOps = append(getOptionsOrSetDefault(options).cacheOps, ops...)
+		getOptionsOrSetDefault(options).binlogOps = append(getOptionsOrSetDefault(options).binlogOps, ops...)
 	}
 }
 
@@ -148,7 +148,7 @@ func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
 			logger:                     logger.DefaultLogger(),
-			cache:                      false,
+			binlog:                     false,
 			operationAllowedToDelete:   true,
 			uploadSaveDir:              "upload",
 			uploadSingleMaxSize:        32,
@@ -164,16 +164,16 @@ func ParseOptions(options ...func(*Options)) *Options {
 		f(ops)
 	}
 	// check ops
-	if ops.cache {
-		query.NewRedis(ops.cacheOps...)
+	if ops.binlog {
+		query.NewRedis(ops.binlogOps...)
 	}
 	query.NewMySql(ops.dbOps...)
 	return ops
 }
 
 func (ops *Options) addCtx(ctx context.Context) {
-	if ops.cache {
-		ops.cacheOps = append(ops.cacheOps, query.WithRedisCtx(ctx))
+	if ops.binlog {
+		ops.binlogOps = append(ops.binlogOps, query.WithRedisCtx(ctx))
 	}
 	ops.dbOps = append(ops.dbOps, query.WithMysqlCtx(ctx))
 }

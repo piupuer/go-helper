@@ -12,8 +12,8 @@ import (
 
 func NewMessageHub(options ...func(*Options)) *query.MessageHub {
 	ops := ParseOptions(options...)
-	if ops.cache {
-		rd := query.NewRedis(ops.cacheOps...)
+	if ops.binlog {
+		rd := query.NewRedis(ops.binlogOps...)
 		ops.messageHubOps = append(ops.messageHubOps, query.WithMessageHubRedis(&rd))
 	}
 	my := query.NewMySql(ops.dbOps...)
