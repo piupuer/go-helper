@@ -108,15 +108,13 @@ func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
-		l := logger.DefaultLogger()
-		return &CasbinOptions{
-			logger:       l,
-			urlPrefix:    constant.MiddlewareUrlPrefix,
-			failWithCode: resp.FailWithCode,
-			roleKey: func(c *gin.Context) string {
-				l.Warn(c, "cabsin role key is empty")
-				return constant.MiddlewareRoleKey
-			},
+		options := &CasbinOptions{}
+		options.logger = logger.DefaultLogger()
+		options.urlPrefix = constant.MiddlewareUrlPrefix
+		options.failWithCode = resp.FailWithCode
+		options.roleKey = func(c *gin.Context) string {
+			options.logger.Warn(c, "cabsin role key is empty")
+			return constant.MiddlewareRoleKey
 		}
 	}
 	return options
@@ -505,24 +503,22 @@ func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*Oper
 
 func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
 	if options == nil {
-		l := logger.DefaultLogger()
-		return &OperationLogOptions{
-			logger:      l,
-			ctxKey:      constant.MiddlewareOperationLogCtxKey,
-			apiCacheKey: constant.MiddlewareOperationLogApiCacheKey,
-			urlPrefix:   constant.MiddlewareUrlPrefix,
-			getUserInfo: func(c *gin.Context) (username, roleName string) {
-				return constant.MiddlewareOperationLogNotLogin, constant.MiddlewareOperationLogNotLogin
-			},
-			singleFileMaxSize: 100,
-			save: func(c *gin.Context, list []OperationRecord) {
-				l.Warn(c, "operation log save handler is not config")
-			},
-			maxCountBeforeSave: constant.MiddlewareOperationLogMaxCountBeforeSave,
-			findApi: func(c *gin.Context) []OperationApi {
-				l.Warn(c, "operation log find api handler is not config")
-				return []OperationApi{}
-			},
+		options := &OperationLogOptions{}
+		options.logger = logger.DefaultLogger()
+		options.ctxKey = constant.MiddlewareOperationLogCtxKey
+		options.apiCacheKey = constant.MiddlewareOperationLogApiCacheKey
+		options.urlPrefix = constant.MiddlewareUrlPrefix
+		options.maxCountBeforeSave = constant.MiddlewareOperationLogMaxCountBeforeSave
+		options.singleFileMaxSize = 100
+		options.getUserInfo = func(c *gin.Context) (username, roleName string) {
+			return constant.MiddlewareOperationLogNotLogin, constant.MiddlewareOperationLogNotLogin
+		}
+		options.save = func(c *gin.Context, list []OperationRecord) {
+			options.logger.Warn(c, "operation log save handler is empty")
+		}
+		options.findApi = func(c *gin.Context) []OperationApi {
+			options.logger.Warn(c, "operation log find api handler is empty")
+			return []OperationApi{}
 		}
 	}
 	return options
