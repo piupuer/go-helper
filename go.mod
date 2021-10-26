@@ -14,20 +14,22 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
-	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/gorilla/websocket v1.4.2
 	github.com/hibiken/asynq v0.18.6
 	github.com/libi/dcron v0.2.2
 	github.com/looplab/fsm v0.3.0
-	github.com/minio/minio-go/v7 v7.0.15 // indirect
+	github.com/minio/minio-go/v7 v7.0.15
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.2.0
+	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/streadway/amqp v1.0.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	github.com/thoas/go-funk v0.9.1
 	github.com/ulule/limiter/v3 v3.8.0
 	go.uber.org/zap v1.18.1
+	golang.org/x/crypto v0.0.0-20201216223049-8b5274cf687f
 	golang.org/x/text v0.3.6
 	google.golang.org/grpc v1.27.0
 	google.golang.org/protobuf v1.26.0
