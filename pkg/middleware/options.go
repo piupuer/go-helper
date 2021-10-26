@@ -108,7 +108,7 @@ func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
-		options := &CasbinOptions{}
+		options = &CasbinOptions{}
 		options.logger = logger.DefaultLogger()
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.failWithCode = resp.FailWithCode
@@ -503,7 +503,7 @@ func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*Oper
 
 func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
 	if options == nil {
-		options := &OperationLogOptions{}
+		options = &OperationLogOptions{}
 		options.logger = logger.DefaultLogger()
 		options.ctxKey = constant.MiddlewareOperationLogCtxKey
 		options.apiCacheKey = constant.MiddlewareOperationLogApiCacheKey
