@@ -27,9 +27,6 @@ end
 
 func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	ops := ParseIdempotenceOptions(options...)
-	if ops.redis == nil {
-		panic("idempotence redis is empty")
-	}
 	return func(c *gin.Context) {
 		// read token from header at first
 		token := c.Request.Header.Get(ops.tokenName)
@@ -53,9 +50,6 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	for _, f := range options {
 		f(ops)
 	}
-	if ops.redis == nil {
-		panic("idempotence redis is empty")
-	}
 	return func(c *gin.Context) {
 		ops.successWithData(GenIdempotenceToken(c, *ops))
 	}
@@ -64,15 +58,23 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 // generate token by redis
 func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
 	token := uuid.NewV4().String()
-	ops.redis.Set(c, ops.prefix+token, true, time.Duration(ops.expire)*time.Hour)
+	if ops.redis != nil {
+		ops.redis.Set(c, ops.prefix+token, true, time.Duration(ops.expire)*time.Hour)
+	} else {
+		ops.logger.Warn(c, "please enable redis, otherwise the idempotence is invalid")
+	}
 	return token
 }
 
 // check token by exec redis lua script
 func CheckIdempotenceToken(c context.Context, token string, ops IdempotenceOptions) bool {
-	res, err := ops.redis.Eval(c, lua, []string{ops.prefix + token}).Result()
-	if err != nil || res != "1" {
-		return false
+	if ops.redis != nil {
+		res, err := ops.redis.Eval(c, lua, []string{ops.prefix + token}).Result()
+		if err != nil || res != "1" {
+			return false
+		}
+	} else {
+		ops.logger.Warn(c, "please enable redis, otherwise the idempotence is invalid")
 	}
 	return true
 }

@@ -159,12 +159,31 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 }
 
 type IdempotenceOptions struct {
+	logger          logger.Interface
 	redis           redis.UniversalClient
 	prefix          string
 	expire          int
 	tokenName       string
 	successWithData func(interface{})
 	failWithMsg     func(format interface{}, a ...interface{})
+}
+
+func WithIdempotenceLogger(l logger.Interface) func(*IdempotenceOptions) {
+	return func(options *IdempotenceOptions) {
+		if l != nil {
+			getIdempotenceOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithIdempotenceLoggerLevel(level logger.Level) func(*IdempotenceOptions) {
+	return func(options *IdempotenceOptions) {
+		l := options.logger
+		if options.logger == nil {
+			l = getIdempotenceOptionsOrSetDefault(options).logger
+		}
+		options.logger = l.LogLevel(level)
+	}
 }
 
 func WithIdempotenceRedis(rd redis.UniversalClient) func(*IdempotenceOptions) {
@@ -222,6 +241,7 @@ func ParseIdempotenceOptions(options ...func(*IdempotenceOptions)) *IdempotenceO
 func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
 	if options == nil {
 		return &IdempotenceOptions{
+			logger:          logger.DefaultLogger(),
 			prefix:          constant.MiddlewareIdempotencePrefix,
 			expire:          constant.MiddlewareIdempotenceExpire,
 			tokenName:       constant.MiddlewareIdempotenceTokenName,

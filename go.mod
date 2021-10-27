@@ -1,6 +1,6 @@
 module github.com/piupuer/go-helper
 
-go 1.16
+go 1.17
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.7.0
