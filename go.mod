@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/appleboy/gin-jwt/v2 v2.7.0
 	github.com/casbin/casbin/v2 v2.37.4
+	github.com/foobaz/lossypng v0.0.0-20200814224715-48fa8819852a // indirect
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-mysql-org/go-mysql v1.3.0
 	github.com/go-playground/locales v0.14.0
@@ -20,6 +21,7 @@ require (
 	github.com/looplab/fsm v0.3.0
 	github.com/minio/minio-go/v7 v7.0.15
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.2.0
