@@ -23,6 +23,7 @@ func NewRouter(options ...func(*Options)) *Router {
 	if ops.logger != nil {
 		ops.jwtOps = append(ops.jwtOps, middleware.WithJwtLogger(ops.logger))
 		ops.casbinOps = append(ops.casbinOps, middleware.WithCasbinLogger(ops.logger))
+		ops.idempotenceOps = append(ops.idempotenceOps, middleware.WithIdempotenceLogger(ops.logger))
 		ops.v1Ops = append(ops.v1Ops, v1.WithDbOps(
 			query.WithMysqlLogger(ops.logger),
 		))
