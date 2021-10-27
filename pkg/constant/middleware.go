@@ -2,7 +2,6 @@ package constant
 
 const (
 	MiddlewareUrlPrefix                      = "api"
-	MiddlewareRoleKey                        = "admin"
 	MiddlewareIdempotencePrefix              = "idempotence_"
 	MiddlewareIdempotenceExpire              = 24
 	MiddlewareIdempotenceTokenName           = "api-idempotence-token"
