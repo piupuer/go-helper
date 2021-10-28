@@ -25,6 +25,7 @@ type Options struct {
 	uploadMergeConcurrentCount int
 	uploadMinio                *oss.MinioOss
 	uploadMinioBucket          string
+	MessageHub                 bool
 	messageHubOps              []func(options *query.MessageHubOptions)
 }
 
@@ -135,6 +136,12 @@ func WithUploadMinio(minio *oss.MinioOss) func(*Options) {
 func WithUploadMinioBucket(bucket string) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).uploadMinioBucket = bucket
+	}
+}
+
+func WithMessageHub(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).MessageHub = flag
 	}
 }
 

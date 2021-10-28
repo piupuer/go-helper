@@ -16,7 +16,11 @@ func (rt Router) Message() *query.MessageHub {
 	router1.PATCH("/read/all", v1.UpdateAllMessageRead(rt.ops.v1Ops...))
 	router1.PATCH("/deleted/all", v1.UpdateAllMessageDeleted(rt.ops.v1Ops...))
 
-	hub := v1.NewMessageHub(rt.ops.v1Ops...)
-	router1.GET("/ws", v1.MessageWs(hub, rt.ops.v1Ops...))
-	return hub
+	ops := v1.ParseOptions(rt.ops.v1Ops...)
+	if ops.MessageHub {
+		hub := v1.NewMessageHub(rt.ops.v1Ops...)
+		router1.GET("/ws", v1.MessageWs(hub, rt.ops.v1Ops...))
+		return hub
+	}
+	return nil
 }
