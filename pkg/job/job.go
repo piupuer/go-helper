@@ -83,7 +83,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	drv, err := NewDriver(
 		job.redis,
 		WithDriverLogger(job.ops.logger),
-		WithDriverContext(job.ops.ctx),
+		WithDriverCtx(job.ops.ctx),
 		WithDriverPrefix(job.ops.prefix),
 	)
 	if err != nil {
