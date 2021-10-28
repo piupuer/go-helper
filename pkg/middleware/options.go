@@ -26,16 +26,6 @@ func WithAccessLogLogger(l logger.Interface) func(*AccessLogOptions) {
 	}
 }
 
-func WithAccessLogLoggerLevel(level logger.Level) func(*AccessLogOptions) {
-	return func(options *AccessLogOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getAccessLogOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
 	return func(options *AccessLogOptions) {
 		getAccessLogOptionsOrSetDefault(options).urlPrefix = strings.Trim(prefix, "/")
@@ -65,16 +55,6 @@ func WithCasbinLogger(l logger.Interface) func(*CasbinOptions) {
 		if l != nil {
 			getCasbinOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithCasbinLoggerLevel(level logger.Level) func(*CasbinOptions) {
-	return func(options *CasbinOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getCasbinOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -132,16 +112,6 @@ func WithExceptionLogger(l logger.Interface) func(*ExceptionOptions) {
 	}
 }
 
-func WithExceptionLoggerLevel(level logger.Level) func(*ExceptionOptions) {
-	return func(options *ExceptionOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getExceptionOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithExceptionOperationLogCtxKey(key string) func(*ExceptionOptions) {
 	return func(options *ExceptionOptions) {
 		getExceptionOptionsOrSetDefault(options).operationLogCtxKey = key
@@ -174,16 +144,6 @@ func WithIdempotenceLogger(l logger.Interface) func(*IdempotenceOptions) {
 		if l != nil {
 			getIdempotenceOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithIdempotenceLoggerLevel(level logger.Level) func(*IdempotenceOptions) {
-	return func(options *IdempotenceOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getIdempotenceOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -276,16 +236,6 @@ func WithJwtLogger(l logger.Interface) func(*JwtOptions) {
 		if l != nil {
 			getJwtOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithJwtLoggerLevel(level logger.Level) func(*JwtOptions) {
-	return func(options *JwtOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getJwtOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -426,16 +376,6 @@ func WithOperationLogLogger(l logger.Interface) func(*OperationLogOptions) {
 		if l != nil {
 			getOperationLogOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithOperationLogLoggerLevel(level logger.Level) func(*OperationLogOptions) {
-	return func(options *OperationLogOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getOperationLogOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 

@@ -31,16 +31,6 @@ func WithMysqlLogger(l logger.Interface) func(*MysqlOptions) {
 	}
 }
 
-func WithMysqlLoggerLevel(level logger.Level) func(*MysqlOptions) {
-	return func(options *MysqlOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getMysqlOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithMysqlDb(db *gorm.DB) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if db != nil {
@@ -149,16 +139,6 @@ func WithRedisLogger(l logger.Interface) func(*RedisOptions) {
 	}
 }
 
-func WithRedisLoggerLevel(level logger.Level) func(*RedisOptions) {
-	return func(options *RedisOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getRedisOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
 	return func(options *RedisOptions) {
 		if rd != nil {
@@ -227,16 +207,6 @@ func WithMessageHubLogger(l logger.Interface) func(*MessageHubOptions) {
 		if l != nil {
 			getMessageHubOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithMessageHubLoggerLevel(level logger.Level) func(*MessageHubOptions) {
-	return func(options *MessageHubOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getMessageHubOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 

@@ -56,16 +56,6 @@ func WithLogger(l logger.Interface) func(*RabbitOptions) {
 	}
 }
 
-func WithLoggerLevel(level logger.Level) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getRabbitOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithContext(ctx context.Context) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		getRabbitOptionsOrSetDefault(options).ctx = ctx

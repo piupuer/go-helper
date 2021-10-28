@@ -29,16 +29,6 @@ func WithLogger(l logger.Interface) func(*Options) {
 	}
 }
 
-func WithLoggerLevel(level logger.Level) func(*Options) {
-	return func(options *Options) {
-		l := options.logger
-		if options.logger == nil {
-			l = getOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithContext(ctx context.Context) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).ctx = ctx

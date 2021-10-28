@@ -22,16 +22,6 @@ func WithMinioLogger(l logger.Interface) func(*MinioOptions) {
 	}
 }
 
-func WithMinioLoggerLevel(level logger.Level) func(*MinioOptions) {
-	return func(options *MinioOptions) {
-		l := options.logger
-		if options.logger == nil {
-			l = getMinioOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
-	}
-}
-
 func WithMinioContext(ctx context.Context) func(*MinioOptions) {
 	return func(options *MinioOptions) {
 		getMinioOptionsOrSetDefault(options).ctx = ctx
