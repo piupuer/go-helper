@@ -3,6 +3,7 @@ package fsm
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type Options struct {
@@ -10,9 +11,11 @@ type Options struct {
 	ctx    context.Context
 }
 
-func WithContext(ctx context.Context) func(*Options) {
+func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 

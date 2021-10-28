@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-sql-driver/mysql"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -29,9 +30,11 @@ func WithLogger(l logger.Interface) func(*Options) {
 	}
 }
 
-func WithContext(ctx context.Context) func(*Options) {
+func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 

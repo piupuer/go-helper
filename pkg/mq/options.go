@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
 )
@@ -56,9 +57,11 @@ func WithLogger(l logger.Interface) func(*RabbitOptions) {
 	}
 }
 
-func WithContext(ctx context.Context) func(*RabbitOptions) {
+func WithCtx(ctx context.Context) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
-		getRabbitOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getRabbitOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 
@@ -291,9 +294,11 @@ func WithPublishRouteKey(key string) func(*PublishOptions) {
 	}
 }
 
-func WithPublishContext(ctx context.Context) func(*PublishOptions) {
+func WithPublishCtx(ctx context.Context) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		getPublishOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getPublishOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 

@@ -3,6 +3,7 @@ package oss
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type MinioOptions struct {
@@ -22,9 +23,11 @@ func WithMinioLogger(l logger.Interface) func(*MinioOptions) {
 	}
 }
 
-func WithMinioContext(ctx context.Context) func(*MinioOptions) {
+func WithMinioCtx(ctx context.Context) func(*MinioOptions) {
 	return func(options *MinioOptions) {
-		getMinioOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getMinioOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 

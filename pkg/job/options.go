@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type Options struct {
@@ -22,9 +23,11 @@ func WithLogger(l logger.Interface) func(*Options) {
 	}
 }
 
-func WithContext(ctx context.Context) func(*Options) {
+func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 
@@ -70,9 +73,11 @@ func WithDriverLogger(l logger.Interface) func(*DriverOptions) {
 	}
 }
 
-func WithDriverContext(ctx context.Context) func(*DriverOptions) {
+func WithDriverCtx(ctx context.Context) func(*DriverOptions) {
 	return func(options *DriverOptions) {
-		getDriverOptionsOrSetDefault(options).ctx = ctx
+		if !utils.InterfaceIsNil(ctx) {
+			getDriverOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 

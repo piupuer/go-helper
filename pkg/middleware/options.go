@@ -9,6 +9,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -592,7 +593,7 @@ func WithPrintRouterLogger(l logger.Interface) func(*PrintRouterOptions) {
 
 func WithPrintRouterCtx(ctx context.Context) func(*PrintRouterOptions) {
 	return func(options *PrintRouterOptions) {
-		if ctx != nil {
+		if !utils.InterfaceIsNil(ctx) {
 			getPrintRouterOptionsOrSetDefault(options).ctx = ctx
 		}
 	}

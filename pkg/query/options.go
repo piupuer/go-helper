@@ -9,6 +9,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -49,7 +50,7 @@ func WithMysqlRedis(rd redis.UniversalClient) func(*MysqlOptions) {
 
 func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
-		if ctx != nil {
+		if !utils.InterfaceIsNil(ctx) {
 			getMysqlOptionsOrSetDefault(options).ctx = ctx
 		}
 	}
@@ -149,7 +150,7 @@ func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
 
 func WithRedisCtx(ctx context.Context) func(*RedisOptions) {
 	return func(options *RedisOptions) {
-		if ctx != nil {
+		if !utils.InterfaceIsNil(ctx) {
 			getRedisOptionsOrSetDefault(options).ctx = ctx
 		}
 	}
