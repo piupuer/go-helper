@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -631,6 +632,37 @@ func getTransactionOptionsOrSetDefault(options *TransactionOptions) *Transaction
 		return &TransactionOptions{
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
+		}
+	}
+	return options
+}
+
+type PrintRouterOptions struct {
+	logger logger.Interface
+	ctx    context.Context
+}
+
+func WithPrintRouterLogger(l logger.Interface) func(*PrintRouterOptions) {
+	return func(options *PrintRouterOptions) {
+		if l != nil {
+			getPrintRouterOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithPrintRouterCtx(ctx context.Context) func(*PrintRouterOptions) {
+	return func(options *PrintRouterOptions) {
+		if ctx != nil {
+			getPrintRouterOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func getPrintRouterOptionsOrSetDefault(options *PrintRouterOptions) *PrintRouterOptions {
+	if options == nil {
+		return &PrintRouterOptions{
+			logger: logger.DefaultLogger(),
+			ctx:    context.Background(),
 		}
 	}
 	return options
