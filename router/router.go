@@ -16,7 +16,7 @@ func NewRouter(options ...func(*Options)) *Router {
 	for _, f := range options {
 		f(ops)
 	}
-	if ops.Group == nil {
+	if ops.group == nil {
 		panic("group is empty")
 	}
 	// router auto transmit children
@@ -49,12 +49,27 @@ func NewRouter(options ...func(*Options)) *Router {
 	return r
 }
 
+// get group router
+func (rt Router) Group(path string) gin.IRoutes {
+	r := rt.ops.group.Group(path)
+	return r
+}
+
 // get casbin middleware router
 func (rt Router) Casbin(path string) gin.IRoutes {
-	r := rt.ops.Group.Group(path)
+	r := rt.Group(path)
 	if rt.ops.jwt {
 		r.Use(middleware.Jwt(rt.ops.jwtOps...))
 	}
+	if rt.ops.casbin {
+		r.Use(middleware.Casbin(rt.ops.casbinOps...))
+	}
+	return r
+}
+
+// get idempotence middleware router
+func (rt Router) Idempotence(path string) gin.IRoutes {
+	r := rt.Group(path)
 	if rt.ops.casbin {
 		r.Use(middleware.Casbin(rt.ops.casbinOps...))
 	}

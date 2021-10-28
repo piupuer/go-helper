@@ -12,7 +12,7 @@ type Options struct {
 	logger         logger.Interface
 	redis          redis.UniversalClient
 	redisBinlog    bool
-	Group          *gin.RouterGroup
+	group          *gin.RouterGroup
 	jwt            bool
 	jwtOps         []func(*middleware.JwtOptions)
 	casbin         bool
@@ -42,7 +42,7 @@ func WithLoggerLevel(level logger.Level) func(*Options) {
 
 func WithGroup(group *gin.RouterGroup) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).Group = group
+		getOptionsOrSetDefault(options).group = group
 	}
 }
 
