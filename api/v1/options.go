@@ -160,6 +160,7 @@ func getOptionsOrSetDefault(options *Options) *Options {
 			uploadSaveDir:              "upload",
 			uploadSingleMaxSize:        32,
 			uploadMergeConcurrentCount: 10,
+			MessageHub:                 true,
 		}
 	}
 	return options
