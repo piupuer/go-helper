@@ -73,8 +73,10 @@ func WithGrpcTimeout(second int) func(*GrpcOptions) {
 	}
 }
 
-func WithGrpcHealthCheck(options *GrpcOptions) {
-	getGrpcOptionsOrSetDefault(options).healthCheck = true
+func WithGrpcHealthCheck(flag bool) func(*GrpcOptions) {
+	return func(options *GrpcOptions) {
+		getGrpcOptionsOrSetDefault(options).healthCheck = flag
+	}
 }
 
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {

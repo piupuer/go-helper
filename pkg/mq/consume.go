@@ -32,17 +32,17 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 		for {
 			go func() {
 				for msg := range delivery {
-					if co.ops.AutoAck {
-						handler(ctx, co.qu.ops.Name, msg)
+					if co.ops.autoAck {
+						handler(ctx, co.qu.ops.name, msg)
 						continue
 					}
-					if handler(ctx, co.qu.ops.Name, msg) {
+					if handler(ctx, co.qu.ops.name, msg) {
 						err := msg.Ack(false)
 						if err != nil {
 							co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
 						}
 					} else {
-						err := msg.Nack(false, co.ops.NackRequeue)
+						err := msg.Nack(false, co.ops.nackRequeue)
 						if err != nil {
 							co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
 						}
@@ -59,7 +59,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 						time.Sleep(time.Duration(co.qu.ex.rb.ops.reconnectInterval) * time.Second)
 					}
 				}
-				if co.ops.NewRequestIdWhenConnectionLost {
+				if co.ops.newRequestIdWhenConnectionLost {
 					ctx = co.newContext(nil)
 				}
 				d, err := co.consume(ctx)
@@ -90,17 +90,17 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 	if !ok {
 		return fmt.Errorf("queue is empty, can't get one msg")
 	}
-	if co.ops.AutoAck {
-		handler(ctx, co.qu.ops.Name, msg)
+	if co.ops.autoAck {
+		handler(ctx, co.qu.ops.name, msg)
 		return nil
 	}
-	if handler(ctx, co.qu.ops.Name, msg) {
+	if handler(ctx, co.qu.ops.name, msg) {
 		err := msg.Ack(false)
 		if err != nil {
 			co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
 		}
 	} else {
-		err := msg.Nack(false, co.ops.NackRequeue)
+		err := msg.Nack(false, co.ops.nackRequeue)
 		if err != nil {
 			co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
 		}
@@ -128,28 +128,23 @@ func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 消费者流控, 防止数据库爆库
-	// 消息的消费需要配合Qos
+	// set channel qos
 	err = channel.Qos(
-		// 每次队列只消费一个消息, 这个消息处理不完服务器不会发送第二个消息过来
-		// 当前消费者一次能接受的最大消息数量
-		co.ops.QosPrefetchCount,
-		// 服务器传递的最大容量
-		co.ops.QosPrefetchSize,
-		// 如果为true 对channel可用 false则只对当前队列可用
-		co.ops.QosGlobal,
+		co.ops.qosPrefetchCount,
+		co.ops.qosPrefetchSize,
+		co.ops.qosGlobal,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return channel.Consume(
-		co.qu.ops.Name,
-		co.ops.Consumer,
-		co.ops.AutoAck,
-		co.ops.Exclusive,
-		co.ops.NoLocal,
-		co.ops.NoWait,
-		co.ops.Args,
+		co.qu.ops.name,
+		co.ops.consumer,
+		co.ops.autoAck,
+		co.ops.exclusive,
+		co.ops.noLocal,
+		co.ops.noWait,
+		co.ops.args,
 	)
 }
 
@@ -161,8 +156,8 @@ func (co *Consume) consumeOne(ctx context.Context) (amqp.Delivery, bool, error) 
 	}
 
 	return channel.Get(
-		co.qu.ops.Name,
-		co.ops.AutoAck,
+		co.qu.ops.name,
+		co.ops.autoAck,
 	)
 }
 
@@ -170,7 +165,7 @@ func (co *Consume) newContext(ctx context.Context) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	if co.ops.AutoRequestId {
+	if co.ops.autoRequestId {
 		ctx = context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, uuid.NewV4().String())
 	}
 	return ctx

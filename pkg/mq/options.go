@@ -86,171 +86,217 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 }
 
 type ExchangeOptions struct {
-	Name       string
-	Kind       string
-	Durable    bool
-	AutoDelete bool
-	Internal   bool
-	NoWait     bool
-	Args       amqp.Table
-	Declare    bool
-	NamePrefix string
+	name       string
+	kind       string
+	durable    bool
+	autoDelete bool
+	internal   bool
+	noWait     bool
+	args       amqp.Table
+	declare    bool
+	namePrefix string
 }
 
 func WithExchangeName(name string) func(*ExchangeOptions) {
 	return func(options *ExchangeOptions) {
-		getExchangeOptionsOrSetDefault(options).Name = name
+		getExchangeOptionsOrSetDefault(options).name = name
 	}
 }
 
 func WithExchangeKind(kind string) func(*ExchangeOptions) {
 	return func(options *ExchangeOptions) {
-		getExchangeOptionsOrSetDefault(options).Kind = kind
+		getExchangeOptionsOrSetDefault(options).kind = kind
 	}
 }
 
-func WithExchangeDurable(options *ExchangeOptions) {
-	getExchangeOptionsOrSetDefault(options).Durable = true
+func WithExchangeDurable(flag bool) func(*ExchangeOptions) {
+	return func(options *ExchangeOptions) {
+		getExchangeOptionsOrSetDefault(options).durable = flag
+	}
 }
 
-func WithExchangeAutoDelete(options *ExchangeOptions) {
-	getExchangeOptionsOrSetDefault(options).AutoDelete = true
+func WithExchangeAutoDelete(flag bool) func(*ExchangeOptions) {
+	return func(options *ExchangeOptions) {
+		getExchangeOptionsOrSetDefault(options).autoDelete = flag
+	}
 }
 
-func WithExchangeInternal(options *ExchangeOptions) {
-	getExchangeOptionsOrSetDefault(options).Internal = true
+func WithExchangeInternal(flag bool) func(*ExchangeOptions) {
+	return func(options *ExchangeOptions) {
+		getExchangeOptionsOrSetDefault(options).internal = flag
+	}
 }
 
-func WithExchangeNoWait(options *ExchangeOptions) {
-	getExchangeOptionsOrSetDefault(options).NoWait = true
+func WithExchangeNoWait(flag bool) func(*ExchangeOptions) {
+	return func(options *ExchangeOptions) {
+		getExchangeOptionsOrSetDefault(options).noWait = flag
+	}
 }
 
 func WithExchangeArgs(args amqp.Table) func(*ExchangeOptions) {
 	return func(options *ExchangeOptions) {
-		getExchangeOptionsOrSetDefault(options).Args = args
+		getExchangeOptionsOrSetDefault(options).args = args
 	}
 }
 
-func WithExchangeSkipDeclare(options *ExchangeOptions) {
-	getExchangeOptionsOrSetDefault(options).Declare = false
+func WithExchangeDeclare(flag bool) func(*ExchangeOptions) {
+	return func(options *ExchangeOptions) {
+		getExchangeOptionsOrSetDefault(options).declare = flag
+	}
 }
 
 func WithExchangeNamePrefix(prefix string) func(*ExchangeOptions) {
 	return func(options *ExchangeOptions) {
-		getExchangeOptionsOrSetDefault(options).NamePrefix = prefix
+		getExchangeOptionsOrSetDefault(options).namePrefix = prefix
 	}
 }
 
 func getExchangeOptionsOrSetDefault(options *ExchangeOptions) *ExchangeOptions {
 	if options == nil {
 		return &ExchangeOptions{
-			Kind:    amqp.ExchangeDirect,
-			Durable: true,
-			Declare: true,
+			kind:    amqp.ExchangeDirect,
+			durable: true,
+			declare: true,
 		}
 	}
 	return options
 }
 
 type QueueOptions struct {
-	Name           string
-	RouteKeys      []string
-	Durable        bool
-	AutoDelete     bool
-	Exclusive      bool
-	NoWait         bool
-	Args           amqp.Table
-	BindArgs       amqp.Table
-	Declare        bool
-	Bind           bool
-	DeadLetterName string
-	DeadLetterKey  string
-	MessageTTL     int32
-	NamePrefix     string
+	name           string
+	routeKeys      []string
+	durable        bool
+	autoDelete     bool
+	exclusive      bool
+	noWait         bool
+	args           amqp.Table
+	bindArgs       amqp.Table
+	declare        bool
+	bind           bool
+	deadLetterName string
+	deadLetterKey  string
+	messageTTL     int32
+	namePrefix     string
 }
 
 func WithQueueName(name string) func(*QueueOptions) {
 	return func(options *QueueOptions) {
-		getQueueOptionsOrSetDefault(options).Name = name
+		getQueueOptionsOrSetDefault(options).name = name
 	}
 }
 
-func WithQueueRouteKey(key string) func(*QueueOptions) {
+func WithQueueRouteKeys(keys ...string) func(*QueueOptions) {
 	return func(options *QueueOptions) {
-		d := getQueueOptionsOrSetDefault(options)
-		keys := d.RouteKeys
-		if !funk.ContainsString(keys, key) {
-			d.RouteKeys = append(keys, key)
-		}
+		getQueueOptionsOrSetDefault(options).routeKeys = append(getQueueOptionsOrSetDefault(options).routeKeys, keys...)
 	}
 }
 
-func WithQueueSkipDeclare(options *QueueOptions) {
-	getQueueOptionsOrSetDefault(options).Declare = false
+func WithQueueDurable(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).durable = flag
+	}
 }
 
-func WithQueueSkipBind(options *QueueOptions) {
-	getQueueOptionsOrSetDefault(options).Bind = false
+func WithQueueAutoDelete(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).autoDelete = flag
+	}
+}
+
+func WithQueueExclusive(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).exclusive = flag
+	}
+}
+
+func WithQueueNoWait(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).noWait = flag
+	}
+}
+
+func WithQueueArgs(args amqp.Table) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).args = args
+	}
+}
+
+func WithQueueBindArgs(args amqp.Table) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).bindArgs = args
+	}
+}
+
+func WithQueueDeclare(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).declare = flag
+	}
+}
+
+func WithQueueBind(flag bool) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		getQueueOptionsOrSetDefault(options).bind = flag
+	}
 }
 
 func WithQueueDeadLetterName(name string) func(*QueueOptions) {
 	return func(options *QueueOptions) {
-		getQueueOptionsOrSetDefault(options).DeadLetterName = name
+		getQueueOptionsOrSetDefault(options).deadLetterName = name
 	}
 }
 
 func WithQueueDeadLetterKey(key string) func(*QueueOptions) {
 	return func(options *QueueOptions) {
-		getQueueOptionsOrSetDefault(options).DeadLetterKey = key
+		getQueueOptionsOrSetDefault(options).deadLetterKey = key
 	}
 }
 
 func WithQueueMessageTTL(ttl int32) func(*QueueOptions) {
 	return func(options *QueueOptions) {
-		getQueueOptionsOrSetDefault(options).MessageTTL = ttl
+		getQueueOptionsOrSetDefault(options).messageTTL = ttl
 	}
 }
 
 func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 	if options == nil {
 		return &QueueOptions{
-			Durable: true,
-			Declare: true,
-			Bind:    true,
+			durable: true,
+			declare: true,
+			bind:    true,
 		}
 	}
 	return options
 }
 
 type PublishOptions struct {
-	RouteKeys    []string
-	ContentType  string
-	Headers      amqp.Table
-	DeliveryMode uint8
-	Mandatory    bool
-	Immediate    bool
-	Expiration   string
+	routeKeys    []string
+	contentType  string
+	headers      amqp.Table
+	deliveryMode uint8
+	mandatory    bool
+	immediate    bool
+	expiration   string
 	ctx          context.Context
 }
 
 func WithPublishOptionsContentType(contentType string) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		getPublishOptionsOrSetDefault(options).ContentType = contentType
+		getPublishOptionsOrSetDefault(options).contentType = contentType
 	}
 }
 
 func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		getPublishOptionsOrSetDefault(options).Headers = headers
+		getPublishOptionsOrSetDefault(options).headers = headers
 	}
 }
 
 func WithPublishRouteKey(key string) func(*PublishOptions) {
 	return func(options *PublishOptions) {
 		d := getPublishOptionsOrSetDefault(options)
-		keys := d.RouteKeys
+		keys := d.routeKeys
 		if !funk.ContainsString(keys, key) {
-			d.RouteKeys = append(keys, key)
+			d.routeKeys = append(keys, key)
 		}
 	}
 }
@@ -264,7 +310,7 @@ func WithPublishContext(ctx context.Context) func(*PublishOptions) {
 func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 	if options == nil {
 		return &PublishOptions{
-			ContentType: "text/plain",
+			contentType: "text/plain",
 			ctx:         context.Background(),
 		}
 	}
@@ -272,75 +318,89 @@ func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 }
 
 type ConsumeOptions struct {
-	QosPrefetchCount               int
-	QosPrefetchSize                int
-	QosGlobal                      bool
-	Consumer                       string
-	AutoAck                        bool
-	Exclusive                      bool
-	NoLocal                        bool
-	NoWait                         bool
-	Args                           amqp.Table
-	NackRequeue                    bool
-	AutoRequestId                  bool
-	NewRequestIdWhenConnectionLost bool
+	qosPrefetchCount               int
+	qosPrefetchSize                int
+	qosGlobal                      bool
+	consumer                       string
+	autoAck                        bool
+	exclusive                      bool
+	noLocal                        bool
+	noWait                         bool
+	args                           amqp.Table
+	nackRequeue                    bool
+	autoRequestId                  bool
+	newRequestIdWhenConnectionLost bool
 	oneCtx                         context.Context
 }
 
 func WithConsumeQosPrefetchCount(prefetchCount int) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).QosPrefetchCount = prefetchCount
+		getConsumeOptionsOrSetDefault(options).qosPrefetchCount = prefetchCount
 	}
 }
 
 func WithConsumeQosPrefetchSize(prefetchSize int) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).QosPrefetchSize = prefetchSize
+		getConsumeOptionsOrSetDefault(options).qosPrefetchSize = prefetchSize
 	}
 }
 
 func WithConsumeQosGlobal(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).QosGlobal = true
+	getConsumeOptionsOrSetDefault(options).qosGlobal = true
 }
 
 func WithConsumeConsumer(consumer string) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).Consumer = consumer
+		getConsumeOptionsOrSetDefault(options).consumer = consumer
 	}
 }
 
-func WithConsumeAutoAck(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).AutoAck = true
+func WithConsumeAutoAck(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).autoAck = flag
+	}
 }
 
-func WithConsumeExclusive(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).Exclusive = true
+func WithConsumeExclusive(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).exclusive = flag
+	}
 }
 
-func WithConsumeNoLocal(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).NoLocal = true
+func WithConsumeNoLocal(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).noLocal = flag
+	}
 }
 
-func WithConsumeNoWait(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).NoWait = true
+func WithConsumeNoWait(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).noWait = flag
+	}
 }
 
 func WithConsumeArgs(args amqp.Table) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).Args = args
+		getConsumeOptionsOrSetDefault(options).args = args
 	}
 }
 
-func WithConsumeNackRequeue(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).NackRequeue = true
+func WithConsumeNackRequeue(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).nackRequeue = flag
+	}
 }
 
-func WithConsumeAutoRequestId(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).AutoRequestId = true
+func WithConsumeAutoRequestId(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).autoRequestId = flag
+	}
 }
 
-func WithConsumeNewRequestIdWhenConnectionLost(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).NewRequestIdWhenConnectionLost = true
+func WithConsumeNewRequestIdWhenConnectionLost(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).newRequestIdWhenConnectionLost = flag
+	}
 }
 
 func WithConsumeOneContext(ctx context.Context) func(*ConsumeOptions) {
@@ -352,8 +412,8 @@ func WithConsumeOneContext(ctx context.Context) func(*ConsumeOptions) {
 func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {
 	if options == nil {
 		return &ConsumeOptions{
-			QosPrefetchCount: 2,
-			Consumer:         "any",
+			qosPrefetchCount: 2,
+			consumer:         "any",
 		}
 	}
 	return options

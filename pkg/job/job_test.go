@@ -26,8 +26,8 @@ func TestNew(t *testing.T) {
 		panic(err)
 	}
 	job.AddTask(GoodTask{
-		Name:    "work",
-		Expr:    "@every 10s",
+		Name: "work",
+		Expr: "@every 10s",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},
@@ -35,8 +35,8 @@ func TestNew(t *testing.T) {
 
 	time.Sleep(30 * time.Second)
 	job.AddTask(GoodTask{
-		Name:    "work2",
-		Expr:    "@every 5s",
+		Name: "work2",
+		Expr: "@every 5s",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},

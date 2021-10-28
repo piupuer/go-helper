@@ -324,8 +324,10 @@ func WithJwtTokenHeaderName(tokenHeaderName string) func(*JwtOptions) {
 	}
 }
 
-func WithJwtSendCookie(options *JwtOptions) {
-	getJwtOptionsOrSetDefault(options).sendCookie = true
+func WithJwtSendCookie(flag bool) func(*JwtOptions) {
+	return func(options *JwtOptions) {
+		getJwtOptionsOrSetDefault(options).sendCookie = flag
+	}
 }
 
 func WithJwtCookieName(cookieName string) func(*JwtOptions) {
@@ -468,8 +470,10 @@ func WithOperationLogRealIpKey(key string) func(*OperationLogOptions) {
 	}
 }
 
-func WithOperationLogSkipGetOrOptionsMethod(options *OperationLogOptions) {
-	getOperationLogOptionsOrSetDefault(options).skipGetOrOptionsMethod = true
+func WithOperationLogSkipGetOrOptionsMethod(flag bool) func(*OperationLogOptions) {
+	return func(options *OperationLogOptions) {
+		getOperationLogOptionsOrSetDefault(options).skipGetOrOptionsMethod = flag
+	}
 }
 
 func WithOperationLogSkipPaths(paths ...string) func(*OperationLogOptions) {

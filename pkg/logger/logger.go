@@ -140,7 +140,7 @@ func NewWithZap(zapLogger *zap.Logger, config Config) *Logger {
 
 // get default logger
 func DefaultLogger() *Logger {
-	return New(WithSkipLumber)
+	return New(WithLumber(false))
 }
 
 // LogMode gorm log mode

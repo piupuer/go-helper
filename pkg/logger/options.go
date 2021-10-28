@@ -53,8 +53,10 @@ func WithLineNumLevel(level int) func(*Options) {
 	}
 }
 
-func WithSkipLumber(options *Options) {
-	getOptionsOrSetDefault(options).lumber = false
+func WithLumber(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).lumber = flag
+	}
 }
 
 func WithKeepSourceDir(flag bool) func(*Options) {

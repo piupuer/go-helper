@@ -20,7 +20,7 @@ func TestNewRabbitMq(t *testing.T) {
 	}
 	err := ex.QueueWithDeadLetter(
 		WithQueueName("q1"),
-		WithQueueRouteKey("rt1"),
+		WithQueueRouteKeys("rt1"),
 		WithQueueDeadLetterName("dl-ex"),
 		WithQueueDeadLetterKey("dlr"),
 		WithQueueMessageTTL(30000),
@@ -28,10 +28,10 @@ func TestNewRabbitMq(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	err = ex.QueueWithDeadLetter(
 		WithQueueName("q2"),
-		WithQueueRouteKey("rt2"),
+		WithQueueRouteKeys("rt2"),
 		WithQueueDeadLetterName("dl-ex"),
 		WithQueueDeadLetterKey("dlr"),
 		WithQueueMessageTTL(30000),
@@ -44,7 +44,7 @@ func TestNewRabbitMq(t *testing.T) {
 		WithExchangeName("ex2"),
 	).Queue(
 		WithQueueName("q3"),
-		WithQueueRouteKey("rt3"),
+		WithQueueRouteKeys("rt3"),
 	).Error
 	if err != nil {
 		panic(err)
@@ -54,6 +54,6 @@ func TestNewRabbitMq(t *testing.T) {
 		WithExchangeName("dl-ex"),
 	).Queue(
 		WithQueueName("dlq"),
-		WithQueueRouteKey("dlr"),
+		WithQueueRouteKeys("dlr"),
 	).Error
 }

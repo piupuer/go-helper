@@ -56,8 +56,10 @@ func WithMinioSecret(secret string) func(*MinioOptions) {
 	}
 }
 
-func WithMinioHttps(options *MinioOptions) {
-	getMinioOptionsOrSetDefault(options).https = true
+func WithMinioHttps(flag bool) func(*MinioOptions) {
+	return func(options *MinioOptions) {
+		getMinioOptionsOrSetDefault(options).https = flag
+	}
 }
 
 func getMinioOptionsOrSetDefault(options *MinioOptions) *MinioOptions {

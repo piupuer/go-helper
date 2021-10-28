@@ -50,8 +50,10 @@ func WithRequestIdCtxKey(key string) func(*Options) {
 	}
 }
 
-func WithAutoRequestId(options *Options) {
-	getOptionsOrSetDefault(options).autoRequestId = true
+func WithAutoRequestId(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).autoRequestId = flag
+	}
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {

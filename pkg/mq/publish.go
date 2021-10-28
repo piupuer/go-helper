@@ -63,20 +63,20 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 		f(ops)
 	}
 	ctx := pu.ops.ctx
-	if len(ops.RouteKeys) == 0 {
+	if len(ops.routeKeys) == 0 {
 		ex.rb.ops.logger.Error(ctx, "route key is empty")
 		pu.Error = fmt.Errorf("route key is empty")
 		return &pu
 	}
-	if ops.DeliveryMode <= 0 || ops.DeliveryMode > amqp.Persistent {
-		ops.DeliveryMode = amqp.Persistent
+	if ops.deliveryMode <= 0 || ops.deliveryMode > amqp.Persistent {
+		ops.deliveryMode = amqp.Persistent
 	}
 	pu.ops = *ops
 	msg := amqp.Publishing{
-		DeliveryMode: ops.DeliveryMode,
+		DeliveryMode: ops.deliveryMode,
 		Timestamp:    time.Now(),
-		ContentType:  ops.ContentType,
-		Headers:      ops.Headers,
+		ContentType:  ops.contentType,
+		Headers:      ops.headers,
 	}
 	pu.msg = msg
 	pu.ex = ex
@@ -90,7 +90,7 @@ func (pu *Publish) publish() error {
 		return err
 	}
 	defer ch.Close()
-	count := len(pu.ops.RouteKeys)
+	count := len(pu.ops.routeKeys)
 
 	// set publisher confirm
 	if err := ch.Confirm(false); err != nil {
@@ -102,10 +102,10 @@ func (pu *Publish) publish() error {
 
 	for i := 0; i < count; i++ {
 		err := ch.Publish(
-			pu.ex.ops.Name,
-			pu.ops.RouteKeys[i],
-			pu.ops.Mandatory,
-			pu.ops.Immediate,
+			pu.ex.ops.name,
+			pu.ops.routeKeys[i],
+			pu.ops.mandatory,
+			pu.ops.immediate,
 			pu.msg,
 		)
 		if err != nil {

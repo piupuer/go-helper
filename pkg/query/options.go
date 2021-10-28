@@ -94,18 +94,20 @@ type MysqlReadOptions struct {
 
 func WithMySqlReadPreload(preloads ...string) func(*MysqlReadOptions) {
 	return func(options *MysqlReadOptions) {
-		options.preloads = append(options.preloads, preloads...)
+		getMysqlReadOptionsOrSetDefault(options).preloads = append(getMysqlReadOptionsOrSetDefault(options).preloads, preloads...)
 	}
 }
 
-func WithMySqlReadCache(options *MysqlReadOptions) {
-	options.cache = true
+func WithMySqlReadCache(flag bool) func(*MysqlReadOptions) {
+	return func(options *MysqlReadOptions) {
+		getMysqlReadOptionsOrSetDefault(options).cache = flag
+	}
 }
 
 func WithMySqlReadCacheExpire(seconds int) func(*MysqlReadOptions) {
 	return func(options *MysqlReadOptions) {
 		if seconds > 0 {
-			options.cacheExpire = seconds
+			getMysqlReadOptionsOrSetDefault(options).cacheExpire = seconds
 		}
 	}
 }
@@ -113,7 +115,7 @@ func WithMySqlReadCacheExpire(seconds int) func(*MysqlReadOptions) {
 func WithMySqlReadColumn(column string) func(*MysqlReadOptions) {
 	return func(options *MysqlReadOptions) {
 		if column != "" {
-			options.column = column
+			getMysqlReadOptionsOrSetDefault(options).column = column
 		}
 	}
 }

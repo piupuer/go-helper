@@ -160,7 +160,7 @@ func (rb *Rabbit) Exchange(options ...func(*ExchangeOptions)) *Exchange {
 		return ex
 	}
 	// the exchange will be declared
-	if ex.ops.Declare {
+	if ex.ops.declare {
 		err := ex.declare()
 		if err != nil {
 			ex.Error = err
@@ -182,26 +182,26 @@ func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	for _, f := range options {
 		f(ops)
 	}
-	if ops.Name == "" {
+	if ops.name == "" {
 		ex.Error = fmt.Errorf("exchange name is empty")
 		rb.ops.logger.Error(ctx, "exchange name is empty")
 		return &ex
 	}
-	switch ops.Kind {
+	switch ops.kind {
 	case amqp.ExchangeDirect:
 	case amqp.ExchangeFanout:
 	case amqp.ExchangeTopic:
 	case amqp.ExchangeHeaders:
 	default:
-		ex.Error = fmt.Errorf("invalid exchange kind: %s", ops.Kind)
-		rb.ops.logger.Error(ctx, "invalid exchange kind: %s", ops.Kind)
+		ex.Error = fmt.Errorf("invalid exchange kind: %s", ops.kind)
+		rb.ops.logger.Error(ctx, "invalid exchange kind: %s", ops.kind)
 		return &ex
 	}
 	prefix := ""
-	if ops.NamePrefix != "" {
-		prefix = ops.NamePrefix
+	if ops.namePrefix != "" {
+		prefix = ops.namePrefix
 	}
-	ops.Name = prefix + ops.Name
+	ops.name = prefix + ops.name
 	ex.ops = *ops
 	ex.rb = rb
 	return &ex
@@ -213,14 +213,14 @@ func (ex *Exchange) Queue(options ...func(*QueueOptions)) *Queue {
 	if qu.Error != nil {
 		return qu
 	}
-	if qu.ops.Declare {
+	if qu.ops.declare {
 		err := qu.declare()
 		if err != nil {
 			qu.Error = err
 			return qu
 		}
 	}
-	if qu.ops.Bind {
+	if qu.ops.bind {
 		err := qu.bind()
 		if err != nil {
 			qu.Error = err
@@ -238,21 +238,21 @@ func (ex *Exchange) QueueWithDeadLetter(options ...func(*QueueOptions)) *Queue {
 		f(ops)
 	}
 	args := make(amqp.Table)
-	if ops.Args != nil {
-		args = ops.Args
+	if ops.args != nil {
+		args = ops.args
 	}
 
-	if ops.DeadLetterName == "" {
+	if ops.deadLetterName == "" {
 		var qu Queue
 		ex.rb.ops.logger.Error(ctx, "dead letter name is empty")
 		qu.Error = fmt.Errorf("dead letter name is empty")
 		return &qu
 	}
-	args["x-dead-letter-exchange"] = ops.DeadLetterName
-	if ops.DeadLetterKey != "" {
-		args["x-dead-letter-routing-key"] = ops.DeadLetterKey
+	args["x-dead-letter-exchange"] = ops.deadLetterName
+	if ops.deadLetterKey != "" {
+		args["x-dead-letter-routing-key"] = ops.deadLetterKey
 	}
-	ops.Args = args
+	ops.args = args
 	return ex.Queue(func(options *QueueOptions) {
 		*options = *ops
 	})
@@ -271,23 +271,23 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 		f(ops)
 	}
 	args := make(amqp.Table)
-	if ops.Args != nil {
-		args = ops.Args
+	if ops.args != nil {
+		args = ops.args
 	}
-	if ops.MessageTTL > 0 {
-		args["x-message-ttl"] = ops.MessageTTL
-		ops.Args = args
+	if ops.messageTTL > 0 {
+		args["x-message-ttl"] = ops.messageTTL
+		ops.args = args
 	}
-	if ops.Name == "" {
+	if ops.name == "" {
 		ex.rb.ops.logger.Error(ctx, "queue name is empty")
 		qu.Error = fmt.Errorf("queue name is empty")
 		return &qu
 	}
 	prefix := ""
-	if ops.NamePrefix != "" {
-		prefix = ops.NamePrefix
+	if ops.namePrefix != "" {
+		prefix = ops.namePrefix
 	}
-	ops.Name = prefix + ops.Name
+	ops.name = prefix + ops.name
 	qu.ops = *ops
 	qu.ex = ex
 	return &qu
@@ -302,16 +302,16 @@ func (ex *Exchange) declare() error {
 	}
 	defer ch.Close()
 	if err := ch.ExchangeDeclare(
-		ex.ops.Name,
-		ex.ops.Kind,
-		ex.ops.Durable,
-		ex.ops.AutoDelete,
-		ex.ops.Internal,
-		ex.ops.NoWait,
-		ex.ops.Args,
+		ex.ops.name,
+		ex.ops.kind,
+		ex.ops.durable,
+		ex.ops.autoDelete,
+		ex.ops.internal,
+		ex.ops.noWait,
+		ex.ops.args,
 	); err != nil {
-		ex.rb.ops.logger.Error(ctx, "failed declare exchange %s(%s): %v", ex.ops.Name, ex.ops.Kind, err)
-		return fmt.Errorf("failed declare exchange %s(%s)", ex.ops.Name, ex.ops.Kind)
+		ex.rb.ops.logger.Error(ctx, "failed declare exchange %s(%s): %v", ex.ops.name, ex.ops.kind, err)
+		return fmt.Errorf("failed declare exchange %s(%s)", ex.ops.name, ex.ops.kind)
 	}
 	return nil
 }
@@ -325,15 +325,15 @@ func (qu *Queue) declare() error {
 	}
 	defer ch.Close()
 	if _, err := ch.QueueDeclare(
-		qu.ops.Name,
-		qu.ops.Durable,
-		qu.ops.AutoDelete,
-		qu.ops.Exclusive,
-		qu.ops.NoWait,
-		qu.ops.Args,
+		qu.ops.name,
+		qu.ops.durable,
+		qu.ops.autoDelete,
+		qu.ops.exclusive,
+		qu.ops.noWait,
+		qu.ops.args,
 	); err != nil {
-		qu.ex.rb.ops.logger.Error(ctx, "failed to declare %s: %v", qu.ops.Name, err)
-		return fmt.Errorf("failed to declare %s", qu.ops.Name)
+		qu.ex.rb.ops.logger.Error(ctx, "failed to declare %s: %v", qu.ops.name, err)
+		return fmt.Errorf("failed to declare %s", qu.ops.name)
 	}
 	return nil
 }
@@ -346,16 +346,16 @@ func (qu *Queue) bind() error {
 		return err
 	}
 	defer ch.Close()
-	for _, key := range qu.ops.RouteKeys {
+	for _, key := range qu.ops.routeKeys {
 		if err := ch.QueueBind(
-			qu.ops.Name,
+			qu.ops.name,
 			key,
-			qu.ex.ops.Name,
-			qu.ops.NoWait,
-			qu.ops.Args,
+			qu.ex.ops.name,
+			qu.ops.noWait,
+			qu.ops.args,
 		); err != nil {
-			qu.ex.rb.ops.logger.Error(ctx, "failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.Name, key, qu.ex.ops.Name, err)
-			return fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s", qu.ops.Name, key, qu.ex.ops.Name)
+			qu.ex.rb.ops.logger.Error(ctx, "failed to declare bind queue, queue: %s, key: %s, exchange: %s, err: %v", qu.ops.name, key, qu.ex.ops.name, err)
+			return fmt.Errorf("failed to declare bind queue, queue: %s, key: %s, exchange: %s", qu.ops.name, key, qu.ex.ops.name)
 		}
 	}
 	return nil

@@ -68,10 +68,10 @@ func (gr Grpc) Conn() (*grpc.ClientConn, error) {
 		client := grpc_health_v1.NewHealthClient(conn)
 		h, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
-			return nil, fmt.Errorf("[grpc]health check %s err: %v", gr.uri, err)
+			return nil, fmt.Errorf("grpc health check %s err: %v", gr.uri, err)
 		}
 		if h.Status != grpc_health_v1.HealthCheckResponse_SERVING {
-			return nil, fmt.Errorf("[grpc]health check %s not SERVING: %v", gr.uri, h.Status)
+			return nil, fmt.Errorf("grpc health check %s not SERVING: %v", gr.uri, h.Status)
 		}
 	}
 	return conn, nil
