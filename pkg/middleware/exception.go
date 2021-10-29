@@ -44,14 +44,16 @@ func ExceptionWithNoTransaction(options ...func(*ExceptionOptions)) gin.HandlerF
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
+				rid := c.GetString(ops.requestIdCtxKey)
 				rp := resp.Resp{
 					Code:      resp.InternalServerError,
 					Data:      map[string]interface{}{},
 					Msg:       resp.CustomError[resp.InternalServerError],
-					RequestId: c.GetString(ops.requestIdCtxKey),
+					RequestId: rid,
 				}
 				if item, ok := err.(resp.Resp); ok {
 					rp = item
+					rp.RequestId = rid
 				} else {
 					ops.logger.Error(c, "[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
 				}
