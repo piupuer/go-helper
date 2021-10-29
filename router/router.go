@@ -70,8 +70,8 @@ func (rt Router) Casbin(path string) gin.IRoutes {
 // get idempotence middleware router
 func (rt Router) Idempotence(path string) gin.IRoutes {
 	r := rt.Group(path)
-	if rt.ops.casbin {
-		r.Use(middleware.Casbin(rt.ops.casbinOps...))
+	if rt.ops.idempotence {
+		r.Use(middleware.Idempotence(rt.ops.idempotenceOps...))
 	}
 	return r
 }
@@ -79,6 +79,12 @@ func (rt Router) Idempotence(path string) gin.IRoutes {
 // get casbin and idempotence middleware router
 func (rt Router) CasbinAndIdempotence(path string) gin.IRoutes {
 	r := rt.Casbin(path)
+	if rt.ops.jwt {
+		r.Use(middleware.Jwt(rt.ops.jwtOps...))
+	}
+	if rt.ops.casbin {
+		r.Use(middleware.Casbin(rt.ops.casbinOps...))
+	}
 	if rt.ops.idempotence {
 		r.Use(middleware.Idempotence(rt.ops.idempotenceOps...))
 	}
