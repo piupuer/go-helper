@@ -35,3 +35,36 @@ func Exception(options ...func(*ExceptionOptions)) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func ExceptionWithNoTransaction(options ...func(*ExceptionOptions)) gin.HandlerFunc {
+	ops := getExceptionOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				rp := resp.Resp{
+					Code:      resp.InternalServerError,
+					Data:      map[string]interface{}{},
+					Msg:       resp.CustomError[resp.InternalServerError],
+					RequestId: c.GetString(ops.requestIdCtxKey),
+				}
+				if item, ok := err.(resp.Resp); ok {
+					rp = item
+				} else {
+					ops.logger.Error(c, "[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+				}
+				// set json data
+				c.JSON(http.StatusOK, rp)
+				if ops.operationLogCtxKey != "" {
+					// set operation log key to context, It may be used OperationLog
+					c.Set(ops.operationLogCtxKey, rp)
+				}
+				c.Abort()
+				return
+			}
+		}()
+		c.Next()
+	}
+}
