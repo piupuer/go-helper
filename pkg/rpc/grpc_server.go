@@ -18,7 +18,6 @@ import (
 
 type GrpcServer struct {
 	ops   GrpcServerOptions
-	Error error
 }
 
 func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {

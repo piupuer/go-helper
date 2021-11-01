@@ -223,6 +223,7 @@ func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOpt
 			requestId:   true,
 			tag:         true,
 			opentracing: true,
+			transaction: true,
 		}
 	}
 	return options
