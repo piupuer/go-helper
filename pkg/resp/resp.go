@@ -3,6 +3,7 @@ package resp
 import (
 	"fmt"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
@@ -44,14 +45,14 @@ func (s *Page) GetLimit() (int, int) {
 	var pageNum int64
 	total := s.Total
 	// PageSize must be greater than 0
-	if s.PageSize < 1 {
-		pageSize = 10
+	if s.PageSize < constant.MinPageSize || s.PageSize > constant.MaxPageSize {
+		pageSize = constant.PageSize
 	} else {
 		pageSize = int64(s.PageSize)
 	}
 	// PageNum must be greater than 0
-	if s.PageNum < 1 {
-		pageNum = 1
+	if s.PageNum < constant.MinPageNum {
+		pageNum = constant.MinPageNum
 	} else {
 		pageNum = int64(s.PageNum)
 	}
@@ -62,8 +63,8 @@ func (s *Page) GetLimit() (int, int) {
 		maxPageNum = total / pageSize
 	}
 	// maxPageNum must be greater than 0
-	if maxPageNum < 1 {
-		maxPageNum = 1
+	if maxPageNum < constant.MinPageNum {
+		maxPageNum = constant.MinPageNum
 	}
 	// pageNum must be less than or equal to total
 	if total > 0 && pageNum > total {

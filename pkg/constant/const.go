@@ -10,7 +10,8 @@ const (
 )
 
 const (
-	PageNum     = 1
+	MinPageNum  = 1
+	MinPageSize = 1
 	PageSize    = 10
 	MaxPageSize = 5000
 )
