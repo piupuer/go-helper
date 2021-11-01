@@ -129,6 +129,90 @@ func WithGrpcServerCtx(ctx context.Context) func(*GrpcServerOptions) {
 	}
 }
 
+func WithGrpcServerTls(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).tls = flag
+	}
+}
+
+func WithGrpcServerTlsOps(ops ...func(*GrpcServerTlsOptions)) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).tlsOps = append(getGrpcServerOptionsOrSetDefault(options).tlsOps, ops...)
+	}
+}
+
+func WithGrpcServerException(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).exception = flag
+	}
+}
+
+func WithGrpcServerExceptionOps(ops ...func(*interceptor.ExceptionOptions)) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).exceptionOps = append(getGrpcServerOptionsOrSetDefault(options).exceptionOps, ops...)
+	}
+}
+
+func WithGrpcServerRequestId(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).requestId = flag
+	}
+}
+
+func WithGrpcServerRequestIdOps(ops ...func(*interceptor.RequestIdOptions)) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).requestIdOps = append(getGrpcServerOptionsOrSetDefault(options).requestIdOps, ops...)
+	}
+}
+
+func WithGrpcServerTransaction(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).transaction = flag
+	}
+}
+
+func WithGrpcServerTransactionOps(ops ...func(*interceptor.TransactionOptions)) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).transactionOps = append(getGrpcServerOptionsOrSetDefault(options).transactionOps, ops...)
+	}
+}
+
+func WithGrpcServerTag(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).tag = flag
+	}
+}
+
+func WithGrpcServerTagOps(ops ...grpc_ctxtags.Option) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).tagOps = append(getGrpcServerOptionsOrSetDefault(options).tagOps, ops...)
+	}
+}
+
+func WithGrpcServerOpentracing(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).opentracing = flag
+	}
+}
+
+func WithGrpcServerOpentracingOps(ops ...grpc_opentracing.Option) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).opentracingOps = append(getGrpcServerOptionsOrSetDefault(options).opentracingOps, ops...)
+	}
+}
+
+func WithGrpcServerHealthCheck(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).healthCheck = flag
+	}
+}
+
+func WithGrpcServerReflection(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).reflection = flag
+	}
+}
+
 func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOptions {
 	if options == nil {
 		return &GrpcServerOptions{
@@ -148,6 +232,24 @@ type GrpcServerTlsOptions struct {
 	caPem     []byte
 	serverPem []byte
 	serverKey []byte
+}
+
+func WithGrpcServerTlsCaPem(bs []byte) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		getGrpcServerTlsOptionsOrSetDefault(options).caPem = bs
+	}
+}
+
+func WithGrpcServerTlsServerPem(bs []byte) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		getGrpcServerTlsOptionsOrSetDefault(options).serverPem = bs
+	}
+}
+
+func WithGrpcServerTlsServerKey(bs []byte) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		getGrpcServerTlsOptionsOrSetDefault(options).serverKey = bs
+	}
 }
 
 func getGrpcServerTlsOptionsOrSetDefault(options *GrpcServerTlsOptions) *GrpcServerTlsOptions {
