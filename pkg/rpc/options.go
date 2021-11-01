@@ -224,6 +224,7 @@ func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOpt
 			tag:         true,
 			opentracing: true,
 			transaction: true,
+			healthCheck: true,
 		}
 	}
 	return options
