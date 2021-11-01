@@ -1,7 +1,13 @@
 package rpc
 
 import (
+	"context"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
+	"github.com/piupuer/go-helper/pkg/utils"
 	"io/ioutil"
 )
 
@@ -84,6 +90,69 @@ func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 		return &GrpcOptions{
 			timeout: constant.GrpcTimeout,
 		}
+	}
+	return options
+}
+
+type GrpcServerOptions struct {
+	logger         logger.Interface
+	ctx            context.Context
+	tls            bool
+	tlsOps         []func(*GrpcServerTlsOptions)
+	exception      bool
+	exceptionOps   []func(*interceptor.ExceptionOptions)
+	requestId      bool
+	requestIdOps   []func(*interceptor.RequestIdOptions)
+	transaction    bool
+	transactionOps []func(*interceptor.TransactionOptions)
+	tag            bool
+	tagOps         []grpc_ctxtags.Option
+	opentracing    bool
+	opentracingOps []grpc_opentracing.Option
+	healthCheck    bool
+	reflection     bool
+}
+
+func WithGrpcServerLogger(l logger.Interface) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		if l != nil {
+			getGrpcServerOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithGrpcServerCtx(ctx context.Context) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		if !utils.InterfaceIsNil(ctx) {
+			getGrpcServerOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOptions {
+	if options == nil {
+		return &GrpcServerOptions{
+			logger:      logger.DefaultLogger(),
+			ctx:         context.Background(),
+			tls:         true,
+			exception:   true,
+			requestId:   true,
+			tag:         true,
+			opentracing: true,
+		}
+	}
+	return options
+}
+
+type GrpcServerTlsOptions struct {
+	caPem     []byte
+	serverPem []byte
+	serverKey []byte
+}
+
+func getGrpcServerTlsOptionsOrSetDefault(options *GrpcServerTlsOptions) *GrpcServerTlsOptions {
+	if options == nil {
+		return &GrpcServerTlsOptions{}
 	}
 	return options
 }

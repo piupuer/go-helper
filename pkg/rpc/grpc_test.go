@@ -10,7 +10,7 @@ func TestNewGrpc(t *testing.T) {
 		NewGrpc(
 			"127.0.0.1:9004",
 			WithGrpcTimeout(20),
-			WithGrpcHealthCheck,
+			WithGrpcHealthCheck(true),
 			WithGrpcServerName("grpc.com"),
 			WithGrpcCaPemFile("ca.pem"),
 			WithGrpcClientKeyFile("client.key"),

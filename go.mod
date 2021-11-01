@@ -16,6 +16,7 @@ require (
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/websocket v1.4.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hibiken/asynq v0.18.6
 	github.com/libi/dcron v0.2.2
 	github.com/looplab/fsm v0.3.0
@@ -33,7 +34,7 @@ require (
 	go.uber.org/zap v1.18.1
 	golang.org/x/crypto v0.0.0-20201216223049-8b5274cf687f
 	golang.org/x/text v0.3.6
-	google.golang.org/grpc v1.27.0
+	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gorm.io/driver/mysql v1.1.2
@@ -65,6 +66,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20201126102027-b0a155152ca3 // indirect
 	github.com/pingcap/log v0.0.0-20210317133921-96f4fcab92a4 // indirect
 	github.com/pingcap/parser v0.0.0-20210415081931-48e7f467fd74 // indirect
