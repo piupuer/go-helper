@@ -26,45 +26,45 @@ func WithGrpcServerName(name string) func(*GrpcOptions) {
 	}
 }
 
-func WithGrpcCaPem(caPem []byte) func(*GrpcOptions) {
+func WithGrpcCaPem(bs []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).caPem = caPem
+		getGrpcOptionsOrSetDefault(options).caPem = bs
 	}
 }
 
-func WithGrpcClientPem(clientPem []byte) func(*GrpcOptions) {
+func WithGrpcClientPem(bs []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).clientPem = clientPem
+		getGrpcOptionsOrSetDefault(options).clientPem = bs
 	}
 }
 
-func WithGrpcClientKey(clientKey []byte) func(*GrpcOptions) {
+func WithGrpcClientKey(bs []byte) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).clientKey = clientKey
+		getGrpcOptionsOrSetDefault(options).clientKey = bs
 	}
 }
 
-func WithGrpcCaPemFile(caPem string) func(*GrpcOptions) {
+func WithGrpcCaPemFile(f string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		bs, err := ioutil.ReadFile(caPem)
+		bs, err := ioutil.ReadFile(f)
 		if err == nil {
 			getGrpcOptionsOrSetDefault(options).caPem = bs
 		}
 	}
 }
 
-func WithGrpcClientPemFile(clientPem string) func(*GrpcOptions) {
+func WithGrpcClientPemFile(f string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		bs, err := ioutil.ReadFile(clientPem)
+		bs, err := ioutil.ReadFile(f)
 		if err == nil {
 			getGrpcOptionsOrSetDefault(options).clientPem = bs
 		}
 	}
 }
 
-func WithGrpcClientKeyFile(clientKey string) func(*GrpcOptions) {
+func WithGrpcClientKeyFile(f string) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
-		bs, err := ioutil.ReadFile(clientKey)
+		bs, err := ioutil.ReadFile(f)
 		if err == nil {
 			getGrpcOptionsOrSetDefault(options).clientKey = bs
 		}
@@ -251,6 +251,33 @@ func WithGrpcServerTlsServerPem(bs []byte) func(*GrpcServerTlsOptions) {
 func WithGrpcServerTlsServerKey(bs []byte) func(*GrpcServerTlsOptions) {
 	return func(options *GrpcServerTlsOptions) {
 		getGrpcServerTlsOptionsOrSetDefault(options).serverKey = bs
+	}
+}
+
+func WithGrpcServerTlsCaPemFile(f string) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		bs, err := ioutil.ReadFile(f)
+		if err == nil {
+			getGrpcServerTlsOptionsOrSetDefault(options).caPem = bs
+		}
+	}
+}
+
+func WithGrpcServerTlsServerPemFile(f string) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		bs, err := ioutil.ReadFile(f)
+		if err == nil {
+			getGrpcServerTlsOptionsOrSetDefault(options).serverPem = bs
+		}
+	}
+}
+
+func WithGrpcServerTlsServerKeyFile(f string) func(*GrpcServerTlsOptions) {
+	return func(options *GrpcServerTlsOptions) {
+		bs, err := ioutil.ReadFile(f)
+		if err == nil {
+			getGrpcServerTlsOptionsOrSetDefault(options).serverKey = bs
+		}
 	}
 }
 
