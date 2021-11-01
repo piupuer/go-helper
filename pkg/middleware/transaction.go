@@ -12,6 +12,9 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 	for _, f := range options {
 		f(ops)
 	}
+	if ops.dbNoTx == nil {
+		panic("dbNoTx is empty")
+	}
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		noTransaction := false

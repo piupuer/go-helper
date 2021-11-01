@@ -12,9 +12,9 @@ import (
 )
 
 type Grpc struct {
+	ops   GrpcOptions
 	uri   string
 	ctl   credentials.TransportCredentials
-	ops   GrpcOptions
 	Error error
 }
 
@@ -47,6 +47,9 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 }
 
 func (gr Grpc) Conn() (*grpc.ClientConn, error) {
+	if gr.Error != nil {
+		return nil, gr.Error
+	}
 	var option grpc.DialOption
 	if gr.ctl != nil {
 		option = grpc.WithTransportCredentials(gr.ctl)
