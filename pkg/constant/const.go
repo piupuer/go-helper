@@ -15,3 +15,10 @@ const (
 	PageSize    = 10
 	MaxPageSize = 5000
 )
+
+// mode
+const (
+	Dev   = "development"
+	Stage = "staging"
+	Prod  = "production"
+)
