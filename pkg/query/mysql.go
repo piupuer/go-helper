@@ -35,6 +35,7 @@ func NewMySql(options ...func(*MysqlOptions)) MySql {
 	tx := getTx(ops.db, *ops)
 	my.Tx = tx.WithContext(rc)
 	my.Db = ops.db.WithContext(rc)
+	my.ops = *ops
 	return my
 }
 
