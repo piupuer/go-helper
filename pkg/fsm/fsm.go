@@ -339,31 +339,51 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 }
 
 // find machines
-func (fs Fsm) FindMachine(req req.FsmMachine) ([]resp.FsmMachine, error) {
+func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
-	machines := make([]Machine, 0)
-	query := fs.session
-	name := strings.TrimSpace(req.Name)
+	list := make([]Machine, 0)
+	q := fs.session
+	name := strings.TrimSpace(r.Name)
 	if name != "" {
-		query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
+		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}
-	submitterName := strings.TrimSpace(req.SubmitterName)
+	submitterName := strings.TrimSpace(r.SubmitterName)
 	if submitterName != "" {
-		query.Where("submitter_name LIKE ?", fmt.Sprintf("%%%s%%", submitterName))
+		q.Where("submitter_name LIKE ?", fmt.Sprintf("%%%s%%", submitterName))
 	}
-	if req.SubmitterConfirm != nil {
-		query.Where("submitter_confirm = ?", *req.SubmitterConfirm)
+	if r.SubmitterConfirm != nil {
+		q.Where("submitter_confirm = ?", *r.SubmitterConfirm)
 	}
-	err := query.Find(&machines).Error
-	list := make([]resp.FsmMachine, 0)
-	utils.Struct2StructByJson(machines, &list)
-	return list, err
+	page := r.Page
+	countCache := false
+	if page.CountCache != nil {
+		countCache = *page.CountCache
+	}
+	if !page.NoPagination {
+		if !page.SkipCount {
+			q.Count(&page.Total)
+		}
+		if page.Total > 0 || page.SkipCount {
+			limit, offset := page.GetLimit()
+			q.Limit(limit).Offset(offset).Find(&list)
+		}
+	} else {
+		// no pagination
+		q.Find(&list)
+		page.Total = int64(len(list))
+		page.GetLimit()
+	}
+	page.CountCache = &countCache
+	err := q.Find(&list).Error
+	newList := make([]resp.FsmMachine, 0)
+	utils.Struct2StructByJson(list, &newList)
+	return newList, err
 }
 
 // find logs
-func (fs Fsm) FindLog(req req.FsmLog) ([]Log, error) {
+func (fs Fsm) FindLog(r req.FsmLog) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -377,8 +397,8 @@ func (fs Fsm) FindLog(req req.FsmLog) ([]Log, error) {
 		Preload("NextEvent.Users").
 		Preload("CanApprovalRoles").
 		Preload("CanApprovalUsers").
-		Where("category = ?", req.Category).
-		Where("uuid = ?", req.Uuid).
+		Where("category = ?", r.Category).
+		Where("uuid = ?", r.Uuid).
 		Find(&logs).Error
 	if err != nil {
 		return nil, err
@@ -437,38 +457,32 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 }
 
 // get the pending approval list of a approver
-func (fs Fsm) FindPendingLogByApprover(req req.FsmPendingLog) ([]Log, error) {
+func (fs Fsm) FindPendingLogByApprover(r req.FsmPendingLog) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
 	// get user relation
 	logIds1 := make([]uint, 0)
-	err := fs.session.
+	fs.session.
 		Model(&LogApprovalUserRelation{}).
-		Where("user_id = ?", req.ApprovalUserId).
-		Pluck("log_id", &logIds1).Error
-	if err != nil {
-		return nil, err
-	}
+		Where("user_id = ?", r.ApprovalUserId).
+		Pluck("log_id", &logIds1)
 	// get role relation
 	logIds2 := make([]uint, 0)
-	err = fs.session.
+	fs.session.
 		Model(&LogApprovalRoleRelation{}).
-		Where("role_id = ?", req.ApprovalRoleId).
-		Pluck("log_id", &logIds2).Error
-	if err != nil {
-		return nil, err
-	}
+		Where("role_id = ?", r.ApprovalRoleId).
+		Pluck("log_id", &logIds2)
 	logs := make([]Log, 0)
-	query := fs.session.
-		Where("approved = ?", constant.FsmLogStatusWaiting).
-		Where("id IN (?)", append(logIds1, logIds2...))
-	if uint(req.Category) > constant.Zero {
-		query.Where("category = ?", req.Category)
-	}
-	err = query.Find(&logs).Error
-	if err != nil {
-		return nil, err
+	ids := append(logIds1, logIds2...)
+	if len(ids) > 0 {
+		q := fs.session.
+			Where("approved = ?", constant.FsmLogStatusWaiting).
+			Where("id IN (?)", ids)
+		if uint(r.Category) > constant.Zero {
+			q.Where("category = ?", r.Category)
+		}
+		q.Find(&logs)
 	}
 	return logs, nil
 }
@@ -478,7 +492,7 @@ func (fs Fsm) FindPendingLogByApprover(req req.FsmPendingLog) ([]Log, error) {
 // =======================================================
 // get last pending log, err will be returned when it does not exist
 // 获取最后一条待审批日志
-func (fs Fsm) getLastPendingLog(req req.FsmLog) (*Log, error) {
+func (fs Fsm) getLastPendingLog(r req.FsmLog) (*Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -488,8 +502,8 @@ func (fs Fsm) getLastPendingLog(req req.FsmLog) (*Log, error) {
 		Preload("CanApprovalUsers").
 		Preload("Progress").
 		Preload("NextEvent").
-		Where("category = ?", req.Category).
-		Where("uuid = ?", req.Uuid).
+		Where("category = ?", r.Category).
+		Where("uuid = ?", r.Uuid).
 		Where("approved = ?", constant.FsmLogStatusWaiting).
 		First(&log).Error
 	if err != nil {
@@ -666,7 +680,7 @@ func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 // L2 waiting approve / L1 approved               / L2 approved
 // L2 waiting refuse  / L1 approved               / L2 refused
 // end
-// 
+//
 // Machine.SubmitConfirm = true
 // Current            / Source                    / Destination
 // L0 waiting submit  / L1 refused                / L0 submitted

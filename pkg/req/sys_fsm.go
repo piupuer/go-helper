@@ -1,5 +1,7 @@
 package req
 
+import "github.com/piupuer/go-helper/pkg/resp"
+
 type FsmCreateMachine struct {
 	Name                       string           `json:"name"`
 	SubmitterName              string           `json:"submitterName"`
@@ -59,4 +61,5 @@ type FsmMachine struct {
 	Name             string    `json:"name" form:"name"`
 	SubmitterName    string    `json:"submitterName" form:"submitterName"`
 	SubmitterConfirm *NullUint `json:"submitterConfirm" form:"submitterConfirm"`
+	resp.Page
 }
