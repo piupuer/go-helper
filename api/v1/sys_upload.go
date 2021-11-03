@@ -18,7 +18,7 @@ import (
 func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.FilePartInfoReq
+		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
 		r.SingleMaxSize = ops.uploadSingleMaxSize
@@ -38,7 +38,7 @@ func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 		for _, file := range unzipFiles {
 			files = append(files, strings.TrimPrefix(file, pwd))
 		}
-		var rp resp.UploadUnZipResp
+		var rp resp.UploadUnZip
 		rp.Files = files
 		resp.SuccessWithData(files)
 	}
@@ -47,11 +47,11 @@ func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 func UploadFileChunkExists(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.FilePartInfoReq
+		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
 		r.SingleMaxSize = ops.uploadSingleMaxSize
-		err := r.ValidateReq()
+		err := r.Validate()
 		resp.CheckErr(err)
 		r.Complete, r.Uploaded = findUploadedChunkNumber(r)
 		resp.SuccessWithData(r)
@@ -61,7 +61,7 @@ func UploadFileChunkExists(options ...func(*Options)) gin.HandlerFunc {
 func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.FilePartInfoReq
+		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
 		r.SingleMaxSize = ops.uploadSingleMaxSize
@@ -133,7 +133,7 @@ func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 		// remove all chunk files
 		os.RemoveAll(r.GetChunkRootPath())
 
-		var res resp.UploadMergeResp
+		var res resp.UploadMerge
 		res.Filename = mergeFileName
 		res.PreviewUrl = previewUrl
 		resp.SuccessWithData(res)
@@ -154,7 +154,7 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 		}
 
 		// read file part
-		var filePart req.FilePartInfoReq
+		var filePart req.FilePartInfo
 		filePart.SaveDir = ops.uploadSaveDir
 		filePart.SingleMaxSize = ops.uploadSingleMaxSize
 		currentSize := uint(header.Size)
@@ -165,7 +165,7 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 		filePart.Identifier = strings.TrimSpace(c.Request.FormValue("identifier"))
 		filePart.Filename = strings.TrimSpace(c.Request.FormValue("filename"))
 
-		err = filePart.ValidateReq()
+		err = filePart.Validate()
 		resp.CheckErr(err)
 
 		chunkName := filePart.GetChunkFilename(filePart.ChunkNumber)
@@ -187,7 +187,7 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 }
 
 // check file is complete
-func checkChunkComplete(filePart req.FilePartInfoReq) bool {
+func checkChunkComplete(filePart req.FilePartInfo) bool {
 	currentChunkName := filePart.GetChunkFilename(filePart.CurrentCheckChunkNumber)
 	exists := ioutil2.FileExists(currentChunkName)
 	if exists {
@@ -201,7 +201,7 @@ func checkChunkComplete(filePart req.FilePartInfoReq) bool {
 }
 
 // find uploaded chunk files number array
-func findUploadedChunkNumber(filePart req.FilePartInfoReq) (bool, []uint) {
+func findUploadedChunkNumber(filePart req.FilePartInfo) (bool, []uint) {
 	totalChunk := filePart.GetTotalChunk()
 	var currentChunkNumber uint = 1
 	uploadedChunkNumbers := make([]uint, 0)

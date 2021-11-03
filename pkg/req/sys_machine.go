@@ -2,7 +2,7 @@ package req
 
 import "github.com/piupuer/go-helper/pkg/resp"
 
-type MachineReq struct {
+type Machine struct {
 	Id        uint   `json:"id" form:"id"`
 	Host      string `json:"host" form:"host"`
 	SshPort   int    `json:"sshPort" form:"sshPort"`
@@ -19,7 +19,7 @@ type MachineReq struct {
 	resp.Page
 }
 
-type CreateMachineReq struct {
+type CreateMachine struct {
 	Host      string   `json:"host" validate:"required"`
 	SshPort   NullUint `json:"sshPort" validate:"required"`
 	Version   string   `json:"version"`
@@ -34,7 +34,7 @@ type CreateMachineReq struct {
 	Remark    string   `json:"remark"`
 }
 
-type MachineShellWsReq struct {
+type MachineShellWs struct {
 	Host      string   `json:"host" form:"host"`
 	SshPort   NullUint `json:"sshPort" form:"sshPort"`
 	LoginName string   `json:"loginName" form:"loginName"`
@@ -44,7 +44,7 @@ type MachineShellWsReq struct {
 	Rows      NullUint `json:"rows" form:"rows"`
 }
 
-func (s CreateMachineReq) FieldTrans() map[string]string {
+func (s CreateMachine) FieldTrans() map[string]string {
 	m := make(map[string]string, 0)
 	m["Host"] = "host ip/address"
 	m["SshPort"] = "ssh port"
@@ -53,7 +53,7 @@ func (s CreateMachineReq) FieldTrans() map[string]string {
 	return m
 }
 
-type UpdateMachineReq struct {
+type UpdateMachine struct {
 	Host      *string   `json:"host"`
 	SshPort   *NullUint `json:"sshPort"`
 	Version   *string   `json:"version"`

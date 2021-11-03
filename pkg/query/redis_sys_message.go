@@ -9,7 +9,7 @@ import (
 )
 
 // find status!=ms.SysMessageLogStatusDeleted messages
-func (rd Redis) FindUnDeleteMessage(req *req.MessageReq) []resp.MessageResp {
+func (rd Redis) FindUnDeleteMessage(req *req.Message) []resp.Message {
 	currentUserAllLogs := make([]ms.SysMessageLog, 0)
 	rd.
 		Table("sys_message_log").
@@ -39,10 +39,10 @@ func (rd Redis) FindUnDeleteMessage(req *req.MessageReq) []resp.MessageResp {
 		query = query.Where("status", "=", *req.Status)
 	}
 	rd.FindWithPage(query, &req.Page, &messageLogs)
-	// convert to MessageResp
-	list := make([]resp.MessageResp, 0)
+	// convert to Message
+	list := make([]resp.Message, 0)
 	for _, log := range messageLogs {
-		res := resp.MessageResp{
+		res := resp.Message{
 			Base: resp.Base{
 				Id:        log.Id,
 				CreatedAt: log.CreatedAt,

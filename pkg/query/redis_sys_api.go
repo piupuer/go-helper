@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindApi(req *req.ApiReq) []ms.SysApi {
+func (rd Redis) FindApi(req *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
 	query := rd.
 		Table("sys_api").
@@ -31,8 +31,8 @@ func (rd Redis) FindApi(req *req.ApiReq) []ms.SysApi {
 }
 
 // find all api group by api category
-func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategoryResp, []uint, error) {
-	tree := make([]resp.ApiGroupByCategoryResp, 0)
+func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+	tree := make([]resp.ApiGroupByCategory, 0)
 	accessIds := make([]uint, 0)
 	allApi := make([]ms.SysApi, 0)
 	rd.
@@ -73,7 +73,7 @@ func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 			accessIds = append(accessIds, api.Id)
 		}
 		existIndex := -1
-		children := make([]resp.ApiResp, 0)
+		children := make([]resp.Api, 0)
 		for index, leaf := range tree {
 			if leaf.Category == category {
 				children = leaf.Children
@@ -81,14 +81,14 @@ func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 				break
 			}
 		}
-		var item resp.ApiResp
+		var item resp.Api
 		utils.Struct2StructByJson(api, &item)
 		item.Title = fmt.Sprintf("%s %s[%s]", item.Desc, item.Path, item.Method)
 		children = append(children, item)
 		if existIndex != -1 {
 			tree[existIndex].Children = children
 		} else {
-			tree = append(tree, resp.ApiGroupByCategoryResp{
+			tree = append(tree, resp.ApiGroupByCategory{
 				Title:    category + " group",
 				Category: category,
 				Children: children,

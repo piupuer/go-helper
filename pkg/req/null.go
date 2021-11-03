@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// request param uint 
+// request param uint
 type NullUint uint
 
 func (r *NullUint) UnmarshalJSON(data []byte) (err error) {

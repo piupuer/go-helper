@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindDict(req *req.DictReq) []ms.SysDict {
+func (rd Redis) FindDict(req *req.Dict) []ms.SysDict {
 	list := make([]ms.SysDict, 0)
 	query := rd.
 		Table("sys_dict").
@@ -27,7 +27,7 @@ func (rd Redis) FindDict(req *req.DictReq) []ms.SysDict {
 	return list
 }
 
-func (rd Redis) FindDictData(req *req.DictDataReq) []ms.SysDictData {
+func (rd Redis) FindDictData(req *req.DictData) []ms.SysDictData {
 	list := make([]ms.SysDictData, 0)
 	query := rd.
 		Table("sys_dict_data").

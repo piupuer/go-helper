@@ -108,7 +108,7 @@ func FindChildrenId(parentId uint, allMenu []ms.SysMenu) []uint {
 	return childrenIds
 }
 
-func FindIncrementalMenu(req req.UpdateMenuIncrementalIdsReq, oldMenuIds []uint, allMenu []ms.SysMenu) []uint {
+func FindIncrementalMenu(req req.UpdateMenuIncrementalIds, oldMenuIds []uint, allMenu []ms.SysMenu) []uint {
 	createIds := FindCheckedMenuId(req.Create, allMenu)
 	deleteIds := FindCheckedMenuId(req.Delete, allMenu)
 	newList := make([]uint, 0)
@@ -122,18 +122,18 @@ func FindIncrementalMenu(req req.UpdateMenuIncrementalIdsReq, oldMenuIds []uint,
 	return append(newList, createIds...)
 }
 
-func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMenuReq) (err error) {
+func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMenu) (err error) {
 	var menu ms.SysMenu
 	utils.Struct2StructByJson(r, &menu)
 	err = my.Tx.Create(&menu).Error
-	menuReq := req.UpdateMenuIncrementalIdsReq{
+	menuReq := req.UpdateMenuIncrementalIds{
 		Create: []uint{menu.Id},
 	}
 	err = my.UpdateMenuByRoleId(currentRoleId, currentRoleSort, currentRoleId, menuReq)
 	return
 }
 
-func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, req req.UpdateMenuIncrementalIdsReq) (err error) {
+func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, req req.UpdateMenuIncrementalIds) (err error) {
 	allMenu := my.FindMenu(currentRoleId, currentRoleSort)
 	roleMenus := my.findMenuByRoleId(targetRoleId)
 	menuIds := make([]uint, 0)

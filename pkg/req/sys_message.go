@@ -2,7 +2,7 @@ package req
 
 import "github.com/piupuer/go-helper/pkg/resp"
 
-type MessageReq struct {
+type Message struct {
 	ToUserId uint   `json:"toUserId"`
 	Title    string `json:"title" form:"title"`
 	Content  string `json:"content" form:"content"`
@@ -11,7 +11,7 @@ type MessageReq struct {
 	resp.Page
 }
 
-type PushMessageReq struct {
+type PushMessage struct {
 	FromUserId       uint
 	Type             *NullUint `json:"type" form:"type" validate:"required"`
 	ToUserIds        []uint    `json:"toUserIds" form:"toUserIds"`
@@ -21,7 +21,7 @@ type PushMessageReq struct {
 	IdempotenceToken string    `json:"idempotenceToken" form:"idempotenceToken"`
 }
 
-func (s PushMessageReq) FieldTrans() map[string]string {
+func (s PushMessage) FieldTrans() map[string]string {
 	m := make(map[string]string, 0)
 	m["Type"] = "type"
 	m["Title"] = "title"
@@ -29,7 +29,7 @@ func (s PushMessageReq) FieldTrans() map[string]string {
 	return m
 }
 
-type MessageWsReq struct {
+type MessageWs struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }

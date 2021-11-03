@@ -11,7 +11,7 @@ const (
 	ChunkTmpPath = "chunks"
 )
 
-type FilePartInfoReq struct {
+type FilePartInfo struct {
 	SaveDir                 string `json:"-"`
 	SingleMaxSize           int64  `json:"-"`
 	CurrentSize             *uint  `json:"-"`
@@ -28,12 +28,12 @@ type FilePartInfoReq struct {
 }
 
 // Remove special characters
-func (pt *FilePartInfoReq) CleanIdentifier() string {
+func (pt *FilePartInfo) CleanIdentifier() string {
 	re, _ := regexp.Compile("[^0-9A-Za-z_-]")
 	return re.ReplaceAllString(pt.Identifier, "")
 }
 
-func (pt *FilePartInfoReq) GetTotalChunk() uint {
+func (pt *FilePartInfo) GetTotalChunk() uint {
 	// The remainder will be merged with the last block instead of + 1
 	// 105 / 25 => 4 chunk
 	// 100 / 25 => 4 chunk
@@ -45,7 +45,7 @@ func (pt *FilePartInfoReq) GetTotalChunk() uint {
 	return 1
 }
 
-func (pt *FilePartInfoReq) GetChunkFilename(chunkNumber uint) string {
+func (pt *FilePartInfo) GetChunkFilename(chunkNumber uint) string {
 	identifier := pt.CleanIdentifier()
 	return fmt.Sprintf(
 		"%s/%s/%s/uploader-%s/chunk%d",
@@ -57,7 +57,7 @@ func (pt *FilePartInfoReq) GetChunkFilename(chunkNumber uint) string {
 	)
 }
 
-func (pt *FilePartInfoReq) GetChunkFilenameWithoutChunkNumber() string {
+func (pt *FilePartInfo) GetChunkFilenameWithoutChunkNumber() string {
 	identifier := pt.CleanIdentifier()
 	return fmt.Sprintf(
 		"%s/%s/%s/uploader-%s/chunk",
@@ -68,7 +68,7 @@ func (pt *FilePartInfoReq) GetChunkFilenameWithoutChunkNumber() string {
 	)
 }
 
-func (pt *FilePartInfoReq) GetUploadRootPath() string {
+func (pt *FilePartInfo) GetUploadRootPath() string {
 	return fmt.Sprintf(
 		"%s/%s",
 		pt.SaveDir,
@@ -76,7 +76,7 @@ func (pt *FilePartInfoReq) GetUploadRootPath() string {
 	)
 }
 
-func (pt *FilePartInfoReq) GetChunkRootPath() string {
+func (pt *FilePartInfo) GetChunkRootPath() string {
 	identifier := pt.CleanIdentifier()
 	return fmt.Sprintf(
 		"%s/%s/%s/uploader-%s",
@@ -87,7 +87,7 @@ func (pt *FilePartInfoReq) GetChunkRootPath() string {
 	)
 }
 
-func (pt *FilePartInfoReq) ValidateReq() error {
+func (pt *FilePartInfo) Validate() error {
 	filePart := pt
 	if filePart == nil {
 		return fmt.Errorf("file params invalid")

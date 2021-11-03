@@ -13,11 +13,11 @@ const (
 )
 
 // get menu tree from cache by uid
-func CacheGetMenuTree(c context.Context, uid uint, ops Options) ([]resp.MenuTreeResp, bool) {
+func CacheGetMenuTree(c context.Context, uid uint, ops Options) ([]resp.MenuTree, bool) {
 	if ops.redis != nil {
 		res, err := ops.redis.HGet(c, fmt.Sprintf("%s_%s", CacheSuffix, CacheSuffixMenuTree), fmt.Sprintf("%d", uid)).Result()
 		if err == nil && res != "" {
-			list := make([]resp.MenuTreeResp, 0)
+			list := make([]resp.MenuTree, 0)
 			utils.Json2Struct(res, &list)
 			return list, true
 		}
@@ -26,7 +26,7 @@ func CacheGetMenuTree(c context.Context, uid uint, ops Options) ([]resp.MenuTree
 }
 
 // set menu tree to cache by uid
-func CacheSetMenuTree(c context.Context, uid uint, data []resp.MenuTreeResp, ops Options) {
+func CacheSetMenuTree(c context.Context, uid uint, data []resp.MenuTree, ops Options) {
 	if ops.redis != nil {
 		ops.redis.HSet(c, fmt.Sprintf("%s_%s", CacheSuffix, CacheSuffixMenuTree), fmt.Sprintf("%d", uid), utils.Struct2Json(data))
 	}

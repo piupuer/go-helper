@@ -23,7 +23,7 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 			noTransaction = true
 		}
 		defer func() {
-			// get db transaction 
+			// get db transaction
 			tx := getTx(c, *ops)
 			if err := recover(); err != nil {
 				if rp, ok := err.(resp.Resp); ok {

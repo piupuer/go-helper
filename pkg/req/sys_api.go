@@ -2,14 +2,14 @@ package req
 
 import "github.com/piupuer/go-helper/pkg/resp"
 
-type ApiReq struct {
+type Api struct {
 	Method   string `json:"method" form:"method"`
 	Path     string `json:"path" form:"path"`
 	Category string `json:"category" form:"category"`
 	resp.Page
 }
 
-type CreateApiReq struct {
+type CreateApi struct {
 	Method       string   `json:"method" validate:"required"`
 	Path         string   `json:"path" validate:"required"`
 	Category     string   `json:"category" validate:"required"`
@@ -19,7 +19,7 @@ type CreateApiReq struct {
 	RoleKeywords []string `json:"roleKeywords"`
 }
 
-func (s CreateApiReq) FieldTrans() map[string]string {
+func (s CreateApi) FieldTrans() map[string]string {
 	m := make(map[string]string, 0)
 	m["Method"] = "method"
 	m["Path"] = "path"
@@ -27,7 +27,7 @@ func (s CreateApiReq) FieldTrans() map[string]string {
 	return m
 }
 
-type UpdateApiReq struct {
+type UpdateApi struct {
 	Method   *string `json:"method"`
 	Path     *string `json:"path"`
 	Category *string `json:"category"`

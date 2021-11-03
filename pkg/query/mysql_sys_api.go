@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func (my MySql) FindApi(req *req.ApiReq) []ms.SysApi {
+func (my MySql) FindApi(req *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
 	query := my.Tx.
 		Model(&ms.SysApi{}).
@@ -32,8 +32,8 @@ func (my MySql) FindApi(req *req.ApiReq) []ms.SysApi {
 }
 
 // find all api group by api category
-func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategoryResp, []uint, error) {
-	tree := make([]resp.ApiGroupByCategoryResp, 0)
+func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+	tree := make([]resp.ApiGroupByCategory, 0)
 	accessIds := make([]uint, 0)
 	allApi := make([]ms.SysApi, 0)
 	// find all api
@@ -78,7 +78,7 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 		}
 		// generate api tree
 		existIndex := -1
-		children := make([]resp.ApiResp, 0)
+		children := make([]resp.Api, 0)
 		for index, leaf := range tree {
 			if leaf.Category == category {
 				children = leaf.Children
@@ -86,14 +86,14 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 				break
 			}
 		}
-		var item resp.ApiResp
+		var item resp.Api
 		utils.Struct2StructByJson(api, &item)
 		item.Title = fmt.Sprintf("%s %s[%s]", item.Desc, item.Path, item.Method)
 		children = append(children, item)
 		if existIndex != -1 {
 			tree[existIndex].Children = children
 		} else {
-			tree = append(tree, resp.ApiGroupByCategoryResp{
+			tree = append(tree, resp.ApiGroupByCategory{
 				Title:    category + " group",
 				Category: category,
 				Children: children,
@@ -103,7 +103,7 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 	return tree, accessIds, err
 }
 
-func (my MySql) CreateApi(req *req.CreateApiReq) (err error) {
+func (my MySql) CreateApi(req *req.CreateApi) (err error) {
 	api := new(ms.SysApi)
 	err = my.Create(req, new(ms.SysApi))
 	if err != nil {
@@ -124,7 +124,7 @@ func (my MySql) CreateApi(req *req.CreateApiReq) (err error) {
 	return
 }
 
-func (my MySql) UpdateApiById(id uint, req req.UpdateApiReq) (err error) {
+func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	var api ms.SysApi
 	query := my.Tx.Model(&api).Where("id = ?", id).First(&api)
 	if query.Error == gorm.ErrRecordNotFound {
@@ -171,7 +171,7 @@ func (my MySql) UpdateApiById(id uint, req req.UpdateApiReq) (err error) {
 	return
 }
 
-func (my MySql) UpdateApiByRoleKeyword(keyword string, req req.UpdateMenuIncrementalIdsReq) (err error) {
+func (my MySql) UpdateApiByRoleKeyword(keyword string, req req.UpdateMenuIncrementalIds) (err error) {
 	if len(req.Delete) > 0 {
 		deleteApis := make([]ms.SysApi, 0)
 		my.Tx.

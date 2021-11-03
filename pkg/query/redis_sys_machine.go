@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindMachine(req *req.MachineReq) []ms.SysMachine {
+func (rd Redis) FindMachine(req *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
 	query := rd.
 		Table("sys_machine").

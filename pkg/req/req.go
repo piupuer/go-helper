@@ -67,7 +67,7 @@ func Validate(c context.Context, req interface{}, trans map[string]string, optio
 }
 
 // validate request param return err
-func ValidateReturnErr(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
+func ValidateWithErr(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)

@@ -1,10 +1,10 @@
 package resp
 
-type UploadMergeResp struct {
+type UploadMerge struct {
 	Filename   string `json:"filename"`
 	PreviewUrl string `json:"previewUrl"`
 }
 
-type UploadUnZipResp struct {
+type UploadUnZip struct {
 	Files []string `json:"files"`
 }

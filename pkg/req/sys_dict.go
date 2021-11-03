@@ -2,35 +2,35 @@ package req
 
 import "github.com/piupuer/go-helper/pkg/resp"
 
-type DictReq struct {
+type Dict struct {
 	Name   string    `json:"name" form:"name"`
 	Desc   string    `json:"desc" form:"desc"`
 	Status *NullUint `json:"status" form:"status"`
 	resp.Page
 }
 
-type CreateDictReq struct {
+type CreateDict struct {
 	Name   string    `json:"name" validate:"required"`
 	Desc   string    `json:"desc" validate:"required"`
 	Status *NullUint `json:"status"`
 	Remark string    `json:"remark"`
 }
 
-func (s CreateDictReq) FieldTrans() map[string]string {
+func (s CreateDict) FieldTrans() map[string]string {
 	m := make(map[string]string, 0)
 	m["Name"] = "dict name"
 	m["Desc"] = "dict description"
 	return m
 }
 
-type UpdateDictReq struct {
+type UpdateDict struct {
 	Name   *string   `json:"name"`
 	Desc   *string   `json:"desc"`
 	Status *NullUint `json:"status"`
 	Remark *string   `json:"remark"`
 }
 
-type DictDataReq struct {
+type DictData struct {
 	DictId *NullUint `json:"dictId" form:"dictId"`
 	Key    string    `json:"key" form:"key"`
 	Attr   string    `json:"attr" form:"attr"`
@@ -39,7 +39,7 @@ type DictDataReq struct {
 	resp.Page
 }
 
-type CreateDictDataReq struct {
+type CreateDictData struct {
 	Key      string `json:"key" validate:"required"`
 	Val      string `json:"val" validate:"required"`
 	Attr     string `json:"attr"`
@@ -50,7 +50,7 @@ type CreateDictDataReq struct {
 	DictId   uint   `json:"dictId" validate:"required"`
 }
 
-func (s CreateDictDataReq) FieldTrans() map[string]string {
+func (s CreateDictData) FieldTrans() map[string]string {
 	m := make(map[string]string, 0)
 	m["Key"] = "key"
 	m["Val"] = "value"
@@ -58,7 +58,7 @@ func (s CreateDictDataReq) FieldTrans() map[string]string {
 	return m
 }
 
-type UpdateDictDataReq struct {
+type UpdateDictData struct {
 	Key      *string   `json:"key"`
 	Val      *string   `json:"val"`
 	Attr     *string   `json:"attr"`

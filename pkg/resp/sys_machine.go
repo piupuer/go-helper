@@ -1,6 +1,6 @@
 package resp
 
-type MachineResp struct {
+type Machine struct {
 	Base
 	Host      string `json:"host"`
 	SshPort   int    `json:"sshPort"`

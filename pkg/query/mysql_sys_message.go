@@ -12,10 +12,10 @@ import (
 )
 
 // find status!=ms.SysMessageLogStatusDeleted messages
-func (my MySql) FindUnDeleteMessage(req *req.MessageReq) []resp.MessageResp {
+func (my MySql) FindUnDeleteMessage(req *req.Message) []resp.Message {
 	sysMessageLogTableName := my.Tx.NamingStrategy.TableName("sys_message_log")
 	sysMessageTableName := my.Tx.NamingStrategy.TableName("sys_message")
-	list := make([]resp.MessageResp, 0)
+	list := make([]resp.Message, 0)
 	fields := []string{
 		fmt.Sprintf("%s.id AS id", sysMessageLogTableName),
 		fmt.Sprintf("%s.to_user_id AS to_user_id", sysMessageLogTableName),
@@ -142,7 +142,7 @@ func (my MySql) SyncMessageByUserIds(users []ms.User) error {
 	return nil
 }
 
-func (my MySql) CreateMessage(req *req.PushMessageReq) error {
+func (my MySql) CreateMessage(req *req.PushMessage) error {
 	if req.Type != nil {
 		message := ms.SysMessage{
 			FromUserId: req.FromUserId,

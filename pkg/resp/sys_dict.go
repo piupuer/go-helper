@@ -1,23 +1,23 @@
 package resp
 
-type DictResp struct {
+type Dict struct {
 	Base
-	Name      string         `json:"name"`
-	Desc      string         `json:"desc"`
-	Status    uint           `json:"status"`
-	Remark    string         `json:"remark"`
-	DictDatas []DictDataResp `json:"dictDatas"`
+	Name      string     `json:"name"`
+	Desc      string     `json:"desc"`
+	Status    uint       `json:"status"`
+	Remark    string     `json:"remark"`
+	DictDatas []DictData `json:"dictDatas"`
 }
 
-type DictDataResp struct {
+type DictData struct {
 	Base
-	Key      string   `json:"key"`
-	Val      string   `json:"val"`
-	Attr     string   `json:"attr"`
-	Addition string   `json:"addition"`
-	Sort     uint     `json:"sort"`
-	Status   uint     `json:"status"`
-	Remark   string   `json:"remark"`
-	DictId   uint     `json:"dictId"`
-	Dict     DictResp `json:"dict"`
+	Key      string `json:"key"`
+	Val      string `json:"val"`
+	Attr     string `json:"attr"`
+	Addition string `json:"addition"`
+	Sort     uint   `json:"sort"`
+	Status   uint   `json:"status"`
+	Remark   string `json:"remark"`
+	DictId   uint   `json:"dictId"`
+	Dict     Dict   `json:"dict"`
 }

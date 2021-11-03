@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type OperationLogReq struct {
+type OperationLog struct {
 	Method   string `json:"method" form:"method"`
 	Path     string `json:"path" form:"path"`
 	Username string `json:"username" form:"username"`
@@ -14,7 +14,7 @@ type OperationLogReq struct {
 	resp.Page
 }
 
-type CreateOperationLogReq struct {
+type CreateOperationLog struct {
 	ApiDesc    string        `json:"apiDesc"`
 	Path       string        `json:"path"`
 	Method     string        `json:"method"`

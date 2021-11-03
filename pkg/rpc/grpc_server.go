@@ -17,7 +17,7 @@ import (
 )
 
 type GrpcServer struct {
-	ops   GrpcServerOptions
+	ops GrpcServerOptions
 }
 
 func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {

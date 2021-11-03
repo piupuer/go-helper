@@ -26,7 +26,7 @@ type ptyRequestMsg struct {
 func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.MachineShellWsReq
+		var r req.MachineShellWs
 		err := c.ShouldBind(&r)
 
 		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, nil)
@@ -64,7 +64,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		go func() {
 			for item := range incomingRequests {
 				if item.WantReply {
-					// reply 
+					// reply
 					item.Reply(false, nil)
 				}
 			}

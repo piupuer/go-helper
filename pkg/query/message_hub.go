@@ -44,7 +44,7 @@ const (
 	// first number: request/response
 	// second number: message type
 	// third number: same message type's sort
-	// 
+	//
 	// request message type(first number=1)
 	MessageReqHeartBeat    string = "1-1-1"
 	MessageReqPush         string = "1-2-1"
@@ -96,7 +96,7 @@ type MessageClient struct {
 
 // The message broadcast is used to store users who need to broadcast
 type MessageBroadcast struct {
-	resp.MessageWsResp
+	resp.MessageWs
 	UserIds []uint `json:"-"`
 }
 
@@ -142,7 +142,7 @@ func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key strin
 	go client.heartBeat()
 }
 
-func (h *MessageHub) SendToUserIds(userIds []uint, msg resp.MessageWsResp) {
+func (h *MessageHub) SendToUserIds(userIds []uint, msg resp.MessageWs) {
 	for _, client := range h.getClients() {
 		// Notify the specified user
 		if utils.ContainsUint(userIds, client.User.Id) {
@@ -168,7 +168,7 @@ func (h *MessageHub) run() {
 						} else {
 							total, _ = h.ops.dbNoTx.GetUnReadMessageCount(id)
 						}
-						msg := resp.MessageWsResp{
+						msg := resp.MessageWs{
 							Type: MessageRespUnRead,
 							Detail: resp.GetSuccessWithData(map[string]int64{
 								"unReadCount": total,
@@ -228,20 +228,20 @@ func (c *MessageClient) receive() {
 		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
 		c.hub.ops.logger.Debug(c.ctx, "[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
-		var r req.MessageWsReq
+		var r req.MessageWs
 		utils.Json2Struct(data, &r)
 		switch r.Type {
 		case MessageReqHeartBeat:
 			if _, ok := r.Data.(float64); ok {
-				c.Send.SafeSend(resp.MessageWsResp{
+				c.Send.SafeSend(resp.MessageWs{
 					Type:   MessageRespHeartBeat,
 					Detail: resp.GetSuccess(),
 				})
 			}
 		case MessageReqPush:
-			var data req.PushMessageReq
+			var data req.PushMessage
 			utils.Struct2StructByJson(r.Data, &data)
-			err = req.ValidateReturnErr(c.ctx, data, data.FieldTrans())
+			err = req.ValidateWithErr(c.ctx, data, data.FieldTrans())
 			detail := resp.GetSuccess()
 			if err == nil {
 				ops := middleware.ParseIdempotenceOptions(c.hub.ops.idempotenceOps...)
@@ -257,7 +257,7 @@ func (c *MessageClient) receive() {
 			} else {
 				c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			}
-			c.Send.SafeSend(resp.MessageWsResp{
+			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
@@ -270,7 +270,7 @@ func (c *MessageClient) receive() {
 				detail = resp.GetFailWithMsg(err.Error())
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
-			c.Send.SafeSend(resp.MessageWsResp{
+			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
@@ -283,7 +283,7 @@ func (c *MessageClient) receive() {
 				detail = resp.GetFailWithMsg(err.Error())
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
-			c.Send.SafeSend(resp.MessageWsResp{
+			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
@@ -294,7 +294,7 @@ func (c *MessageClient) receive() {
 				detail = resp.GetFailWithMsg(err.Error())
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
-			c.Send.SafeSend(resp.MessageWsResp{
+			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
@@ -305,12 +305,12 @@ func (c *MessageClient) receive() {
 				detail = resp.GetFailWithMsg(err.Error())
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
-			c.Send.SafeSend(resp.MessageWsResp{
+			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
 		default:
-			// 
+			//
 		}
 	}
 }
@@ -374,7 +374,7 @@ func (c *MessageClient) heartBeat() {
 				panic(fmt.Sprintf("[Message][heartbeat]retry sending heartbeat for %d times without response", c.RetryCount))
 			}
 			if last > heartBeatPeriod {
-				c.Send.SafeSend(resp.MessageWsResp{
+				c.Send.SafeSend(resp.MessageWs{
 					Type:   MessageRespHeartBeat,
 					Detail: resp.GetSuccessWithData(c.RetryCount),
 				})
@@ -404,7 +404,7 @@ func (c *MessageClient) register() {
 			c.hub.refreshUserMessage.SafeSend([]uint{c.User.Id})
 		}()
 
-		msg := resp.MessageWsResp{
+		msg := resp.MessageWs{
 			Type: MessageRespOnline,
 			Detail: resp.GetSuccessWithData(map[string]interface{}{
 				"user": c.User,

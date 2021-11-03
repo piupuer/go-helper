@@ -11,7 +11,7 @@ import (
 func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.MachineReq
+		var r req.Machine
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysMachine, 0)
@@ -23,14 +23,14 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindMachine(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.MachineResp{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.Machine{}, r.Page)
 	}
 }
 
 func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.CreateMachineReq
+		var r req.CreateMachine
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
 		ops.addCtx(c)
@@ -44,7 +44,7 @@ func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.UpdateMachineReq
+		var r req.UpdateMachine
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
 		ops.addCtx(c)

@@ -52,7 +52,7 @@ func Zip(src, dst string) error {
 			return err
 		}
 
-		// check mode 
+		// check mode
 		if !fh.Mode().IsRegular() {
 			return nil
 		}

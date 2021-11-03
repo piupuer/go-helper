@@ -11,7 +11,7 @@ import (
 func FindDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.DictReq
+		var r req.Dict
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysDict, 0)
@@ -23,14 +23,14 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindDict(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.DictResp{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.Dict{}, r.Page)
 	}
 }
 
 func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.CreateDictReq
+		var r req.CreateDict
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
 		ops.addCtx(c)
@@ -44,7 +44,7 @@ func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 func UpdateDictById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.UpdateDictReq
+		var r req.UpdateDict
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
 		ops.addCtx(c)
@@ -71,7 +71,7 @@ func BatchDeleteDictByIds(options ...func(*Options)) gin.HandlerFunc {
 func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.DictDataReq
+		var r req.DictData
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysDictData, 0)
@@ -83,14 +83,14 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindDictData(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.DictDataResp{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.DictData{}, r.Page)
 	}
 }
 
 func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.CreateDictDataReq
+		var r req.CreateDictData
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
 		ops.addCtx(c)
@@ -104,7 +104,7 @@ func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 func UpdateDictDataById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.UpdateDictDataReq
+		var r req.UpdateDictData
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
 		ops.addCtx(c)

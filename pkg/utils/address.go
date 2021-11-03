@@ -6,12 +6,6 @@ import (
 	"net/http"
 )
 
-type IpResp struct {
-	Status   string `json:"status"`
-	Province string `json:"province"`
-	City     string `json:"city"`
-}
-
 // get real ip location by amap
 func GetIpRealLocation(ip, key string) string {
 	resp, err := http.Get(fmt.Sprintf("https://restapi.amap.com/v3/ip?ip=%s&key=%s", ip, key))
@@ -24,12 +18,12 @@ func GetIpRealLocation(ip, key string) string {
 	if err != nil {
 		return address
 	}
-	var result IpResp
+	var result map[string]string
 	Json2Struct(string(data), &result)
-	if result.Status == "1" {
-		address = result.Province
-		if result.City != "" && result.Province != result.City {
-			address += result.City
+	if result["status"] == "1" {
+		address = result["province"]
+		if result["city"] != "" && address != result["city"] {
+			address += result["province"]
 		}
 	}
 	return address

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (my MySql) FindOperationLog(req *req.OperationLogReq) []ms.SysOperationLog {
+func (my MySql) FindOperationLog(req *req.OperationLog) []ms.SysOperationLog {
 	list := make([]ms.SysOperationLog, 0)
 	query := my.Tx.
 		Model(&ms.SysOperationLog{}).

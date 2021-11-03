@@ -27,7 +27,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 		q := query.NewMySql(ops.dbOps...)
 		list, err := q.GetMenuTree(u.RoleId)
 		resp.CheckErr(err)
-		var rp []resp.MenuTreeResp
+		var rp []resp.MenuTree
 		utils.Struct2StructByJson(list, &rp)
 		CacheSetMenuTree(c, u.Id, rp, *ops)
 		resp.SuccessWithData(rp)
@@ -55,7 +55,7 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 			list, ids, err = my.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
 		}
 		resp.CheckErr(err)
-		var rp resp.MenuTreeWithAccessResp
+		var rp resp.MenuTreeWithAccess
 		rp.AccessIds = ids
 		utils.Struct2StructByJson(list, &rp.List)
 		resp.SuccessWithData(rp)
@@ -79,7 +79,7 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindMenu(u.RoleId, u.RoleSort)
 		}
-		var rp []resp.MenuTreeResp
+		var rp []resp.MenuTree
 		utils.Struct2StructByJson(list, &rp)
 		resp.SuccessWithData(rp)
 	}
@@ -92,7 +92,7 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		u := ops.getCurrentUser(c)
-		var r req.CreateMenuReq
+		var r req.CreateMenu
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
 		ops.addCtx(c)
@@ -106,7 +106,7 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.UpdateMenuReq
+		var r req.UpdateMenu
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
 		ops.addCtx(c)
@@ -123,7 +123,7 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.UpdateMenuIncrementalIdsReq
+		var r req.UpdateMenuIncrementalIds
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		if u.RoleId == u.PathRoleId {

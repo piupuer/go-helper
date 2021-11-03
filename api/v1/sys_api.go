@@ -13,7 +13,7 @@ import (
 func FindApi(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.ApiReq
+		var r req.Api
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		list := make([]ms.SysApi, 0)
@@ -25,7 +25,7 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindApi(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.ApiResp{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.Api{}, r.Page)
 	}
 }
 
@@ -35,11 +35,11 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.ApiReq
+		var r req.Api
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
-		list := make([]resp.ApiGroupByCategoryResp, 0)
+		list := make([]resp.ApiGroupByCategory, 0)
 		ids := make([]uint, 0)
 		var err error
 		switch ops.binlog {
@@ -51,7 +51,7 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 			list, ids, err = my.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
 		}
 		resp.CheckErr(err)
-		var rp resp.ApiTreeWithAccessResp
+		var rp resp.ApiTreeWithAccess
 		rp.AccessIds = ids
 		utils.Struct2StructByJson(list, &rp.List)
 		resp.SuccessWithData(rp)
@@ -64,7 +64,7 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 		panic("findRoleKeywordByRoleIds is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.CreateApiReq
+		var r req.CreateApi
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
 		r.RoleKeywords = ops.findRoleKeywordByRoleIds(c, r.RoleIds)
@@ -79,7 +79,7 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 func UpdateApiById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
-		var r req.UpdateApiReq
+		var r req.UpdateApi
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
 		ops.addCtx(c)
@@ -96,7 +96,7 @@ func UpdateApiByRoleKeyword(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.UpdateMenuIncrementalIdsReq
+		var r req.UpdateMenuIncrementalIds
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		if u.RoleId == u.PathRoleId {

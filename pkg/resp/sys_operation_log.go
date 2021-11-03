@@ -2,7 +2,7 @@ package resp
 
 import "time"
 
-type OperationLogResp struct {
+type OperationLog struct {
 	Base
 	ApiDesc    string        `json:"apiDesc"`
 	Path       string        `json:"path"`

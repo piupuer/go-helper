@@ -57,7 +57,7 @@ func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
 	return newList, nil
 }
 
-func (my MySql) FindDict(req *req.DictReq) []ms.SysDict {
+func (my MySql) FindDict(req *req.Dict) []ms.SysDict {
 	list := make([]ms.SysDict, 0)
 	query := my.Tx.
 		Model(&ms.SysDict{}).
@@ -78,7 +78,7 @@ func (my MySql) FindDict(req *req.DictReq) []ms.SysDict {
 	return list
 }
 
-func (my MySql) FindDictData(req *req.DictDataReq) []ms.SysDictData {
+func (my MySql) FindDictData(req *req.DictData) []ms.SysDictData {
 	list := make([]ms.SysDictData, 0)
 	query := my.Tx.
 		Model(&ms.SysDictData{}).
@@ -106,14 +106,14 @@ func (my MySql) FindDictData(req *req.DictDataReq) []ms.SysDictData {
 	return list
 }
 
-func (my MySql) CreateDict(req *req.CreateDictReq) (err error) {
+func (my MySql) CreateDict(req *req.CreateDict) (err error) {
 	err = my.Create(req, new(ms.SysDict))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return
 }
 
-func (my MySql) UpdateDictById(id uint, req req.UpdateDictReq) (err error) {
+func (my MySql) UpdateDictById(id uint, req req.UpdateDict) (err error) {
 	err = my.UpdateById(id, req, new(ms.SysDict))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
@@ -127,14 +127,14 @@ func (my MySql) DeleteDictByIds(ids []uint) (err error) {
 	return
 }
 
-func (my MySql) CreateDictData(req *req.CreateDictDataReq) (err error) {
+func (my MySql) CreateDictData(req *req.CreateDictData) (err error) {
 	err = my.Create(req, new(ms.SysDictData))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return
 }
 
-func (my MySql) UpdateDictDataById(id uint, req req.UpdateDictDataReq) (err error) {
+func (my MySql) UpdateDictDataById(id uint, req req.UpdateDictData) (err error) {
 	err = my.UpdateById(id, req, new(ms.SysDictData))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)

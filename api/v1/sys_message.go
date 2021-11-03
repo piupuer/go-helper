@@ -17,12 +17,12 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 		panic("findUserByIds is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.MessageReq
+		var r req.Message
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		r.ToUserId = u.Id
 		ops.addCtx(c)
-		list := make([]resp.MessageResp, 0)
+		list := make([]resp.Message, 0)
 		switch ops.binlog {
 		case true:
 			rd := query.NewRedis(ops.binlogOps...)
@@ -57,7 +57,7 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 				}
 			}
 		}
-		resp.SuccessWithPageData(list, []resp.MessageResp{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.Message{}, r.Page)
 	}
 }
 
@@ -90,7 +90,7 @@ func PushMessage(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
-		var r req.PushMessageReq
+		var r req.PushMessage
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)

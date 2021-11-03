@@ -1,6 +1,6 @@
 package resp
 
-type ApiResp struct {
+type Api struct {
 	Base
 	Method   string `json:"method"`
 	Path     string `json:"path"`
@@ -9,13 +9,13 @@ type ApiResp struct {
 	Title    string `json:"title"`
 }
 
-type ApiGroupByCategoryResp struct {
-	Title    string    `json:"title"`
-	Category string    `json:"category"`
-	Children []ApiResp `json:"children"`
+type ApiGroupByCategory struct {
+	Title    string `json:"title"`
+	Category string `json:"category"`
+	Children []Api  `json:"children"`
 }
 
-type ApiTreeWithAccessResp struct {
-	List      []ApiGroupByCategoryResp `json:"list"`
-	AccessIds []uint                   `json:"accessIds"`
+type ApiTreeWithAccess struct {
+	List      []ApiGroupByCategory `json:"list"`
+	AccessIds []uint               `json:"accessIds"`
 }

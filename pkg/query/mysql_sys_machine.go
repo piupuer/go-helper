@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (my MySql) FindMachine(req *req.MachineReq) []ms.SysMachine {
+func (my MySql) FindMachine(req *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
 	query := my.Tx.
 		Model(&ms.SysMachine{}).

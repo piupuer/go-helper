@@ -1,6 +1,6 @@
 package resp
 
-type MessageResp struct {
+type Message struct {
 	Base
 	Status       uint   `json:"status"`
 	ToUserId     uint   `json:"toUserId"`
@@ -14,7 +14,7 @@ type MessageResp struct {
 	FromNickname string `json:"fromNickname"`
 }
 
-type MessageWsResp struct {
+type MessageWs struct {
 	Type   string `json:"type"`
 	Detail Resp   `json:"detail"`
 }
