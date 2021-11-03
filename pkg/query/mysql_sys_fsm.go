@@ -12,6 +12,12 @@ func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	return f.FindMachine(r)
 }
 
+// find waiting approve log
+func (my MySql) FindFsmApprovingLog(r req.FsmPendingLog) ([]fsm.Log, error) {
+	f := fsm.New(my.Tx)
+	return f.FindPendingLogByApprover(r)
+}
+
 // create finite state machine
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	f := fsm.New(my.Tx)
@@ -19,8 +25,8 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	return err
 }
 
-// find waiting approve log
-func (my MySql) FindFsmApprovingLog(r req.FsmPendingLog) ([]fsm.Log, error) {
+// delete finite state machine
+func (my MySql) DeleteFsmByIds(ids []uint) error {
 	f := fsm.New(my.Tx)
-	return f.FindPendingLogByApprover(r)
+	return f.DeleteMachineByIds(ids)
 }

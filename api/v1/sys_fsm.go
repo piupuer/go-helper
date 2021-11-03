@@ -20,19 +20,6 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
-func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
-	ops := ParseOptions(options...)
-	return func(c *gin.Context) {
-		var r req.FsmCreateMachine
-		req.ShouldBind(c, &r)
-		ops.addCtx(c)
-		q := query.NewMySql(ops.dbOps...)
-		err := q.CreateFsm(r)
-		resp.CheckErr(err)
-		resp.Success()
-	}
-}
-
 func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -51,3 +38,30 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		resp.SuccessWithData(list)
 	}
 }
+
+func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.FsmCreateMachine
+		req.ShouldBind(c, &r)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		err := q.CreateFsm(r)
+		resp.CheckErr(err)
+		resp.Success()
+	}
+}
+
+func DeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.Ids
+		req.ShouldBind(c, &r)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		err := q.DeleteFsmByIds(r.Uints())
+		resp.CheckErr(err)
+		resp.Success()
+	}
+}
+

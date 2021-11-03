@@ -53,6 +53,37 @@ func New(tx *gorm.DB, options ...func(*Options)) *Fsm {
 	return fs
 }
 
+func (fs Fsm) DeleteMachineByIds(ids []uint) error {
+	if fs.Error != nil {
+		return fs.Error
+	}
+	machines := make([]Machine, 0)
+	fs.session.
+		Model(&Machine{}).
+		Where("id IN (?)", ids).
+		Preload("Events").
+		Find(&machines)
+	eventIds := make([]uint, 0)
+	for _, machine := range machines {
+		for _, event := range machine.Events {
+			eventIds = append(eventIds, event.Id)
+		}
+	}
+	if len(eventIds) > 0 {
+		logs := make([]Log, 0)
+		fs.session.
+			Model(&Log{}).
+			Where("next_event_id IN (?)", eventIds).
+			Find(&logs)
+		if len(logs) > 0 {
+			return fmt.Errorf("remove machine so that old approve log cannot be displayed normally")
+		}
+	}
+	return fs.session.
+		Where("id IN (?)", ids).
+		Delete(&Machine{}).Error
+}
+
 func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
