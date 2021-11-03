@@ -18,8 +18,8 @@ func TestQueue_Consume(t *testing.T) {
 	}
 	qu := ex.Queue(
 		WithQueueName("q1"),
-		WithQueueSkipDeclare,
-		WithQueueSkipBind,
+		WithQueueDeclare(false),
+		WithQueueBind(false),
 	)
 	if qu.Error != nil {
 		panic(qu.Error)
@@ -27,7 +27,7 @@ func TestQueue_Consume(t *testing.T) {
 
 	err := qu.Consume(
 		handler,
-		WithConsumeAutoRequestId,
+		WithConsumeAutoRequestId(true),
 	)
 	if err != nil {
 		panic(err)
@@ -54,8 +54,8 @@ func TestQueue_ConsumeOne(t *testing.T) {
 				WithExchangeName("ex1"),
 			).Queue(
 			WithQueueName("q1"),
-			WithQueueSkipDeclare,
-			WithQueueSkipBind,
+			WithQueueDeclare(false),
+			WithQueueBind(false),
 		).ConsumeOne(
 			handler,
 		)
