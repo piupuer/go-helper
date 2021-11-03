@@ -909,8 +909,8 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 			editFields = r[index].EditFields
 			refuse = uint(r[index].Refuse)
 			// mock roles/users
-			roles = fs.getRoles(r[index].Roles)
-			users = fs.getUsers(r[index].Users)
+			roles = fs.getRoles(r[index].Roles.Uints())
+			users = fs.getUsers(r[index].Users.Uints())
 		} else if i == len(desc)-1 && machine.SubmitterConfirm == constant.One {
 			// save submitter confirm edit fields
 			edit = constant.One

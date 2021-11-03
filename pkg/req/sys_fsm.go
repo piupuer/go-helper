@@ -16,8 +16,8 @@ type FsmCreateEvent struct {
 	Edit       NullUint `json:"edit" form:"edit"`
 	Refuse     NullUint `json:"refuse" form:"refuse"`
 	EditFields string   `json:"editFields" form:"editFields"`
-	Roles      []uint   `json:"roles" form:"roles"`
-	Users      []uint   `json:"users" form:"users"`
+	Roles      IdsStr   `json:"roles" form:"roles"`
+	Users      IdsStr   `json:"users" form:"users"`
 }
 
 type FsmCreateLog struct {

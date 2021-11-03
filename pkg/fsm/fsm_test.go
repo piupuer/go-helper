@@ -49,28 +49,20 @@ func TestFsm_CreateMachine(t *testing.T) {
 				Edit:       1,
 				Refuse:     1,
 				EditFields: "status",
-				Users: []uint{
-					4, 5, 6,
-				},
+				Users:      "4,5,6",
 			},
 			{
 				Name:   "L2",
 				Edit:   0,
 				Refuse: 1,
-				Roles: []uint{
-					4,
-				},
-				Users: []uint{
-					8,
-				},
+				Roles:  "4",
+				Users:  "8",
 			},
 			{
 				Name:   "L3",
 				Edit:   0,
 				Refuse: 1,
-				Roles: []uint{
-					5,
-				},
+				Roles:  "5",
 			},
 		},
 	})

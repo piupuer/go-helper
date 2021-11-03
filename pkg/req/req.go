@@ -38,22 +38,6 @@ func UintIdWithErr(c *gin.Context) (uint, error) {
 	return id, nil
 }
 
-type Ids struct {
-	Ids string `json:"ids" form:"ids"`
-}
-
-func (id Ids) Uints() []uint {
-	return utils.Str2UintArr(id.Ids)
-}
-
-func (id Ids) Ints() []int {
-	return utils.Str2IntArr(id.Ids)
-}
-
-func (id Ids) Int64s() []int64 {
-	return utils.Str2Int64Arr(id.Ids)
-}
-
 // validate request param
 func Validate(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
