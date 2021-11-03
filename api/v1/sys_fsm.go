@@ -14,7 +14,7 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.FindFsm(r)
+		list, err := q.FindFsm(&r)
 		resp.CheckErr(err)
 		resp.SuccessWithPageData(list, []resp.FsmMachine{}, r.Page)
 	}

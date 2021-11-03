@@ -339,7 +339,7 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 }
 
 // find machines
-func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
+func (fs Fsm) FindMachine(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}

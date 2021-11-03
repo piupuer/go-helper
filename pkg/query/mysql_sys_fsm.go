@@ -7,7 +7,7 @@ import (
 )
 
 // find finite state machine
-func (my MySql) FindFsm(r req.FsmMachine) ([]resp.FsmMachine, error) {
+func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	f := fsm.New(my.Tx)
 	return f.FindMachine(r)
 }
