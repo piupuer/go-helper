@@ -11,33 +11,33 @@ import (
 
 func (my MySql) FindMachine(req *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
-	query := my.Tx.
+	q := my.Tx.
 		Model(&ms.SysMachine{}).
 		Order("created_at DESC")
 	host := strings.TrimSpace(req.Host)
 	if host != "" {
-		query = query.Where("host LIKE ?", fmt.Sprintf("%%%s%%", host))
+		q.Where("host LIKE ?", fmt.Sprintf("%%%s%%", host))
 	}
 	loginName := strings.TrimSpace(req.LoginName)
 	if loginName != "" {
-		query = query.Where("login_name LIKE ?", fmt.Sprintf("%%%s%%", loginName))
+		q.Where("login_name LIKE ?", fmt.Sprintf("%%%s%%", loginName))
 	}
 	if req.Status != nil {
 		if *req.Status > 0 {
-			query = query.Where("status = ?", 1)
+			q.Where("status = ?", 1)
 		} else {
-			query = query.Where("status = ?", 0)
+			q.Where("status = ?", 0)
 		}
 	}
-	my.FindWithPage(query, &req.Page, &list)
+	my.FindWithPage(q, &req.Page, &list)
 	return list
 }
 
 // connect machine
 func (my MySql) ConnectMachine(id uint) error {
 	var oldMachine ms.SysMachine
-	query := my.Tx.Model(&oldMachine).Where("id = ?", id).First(&oldMachine)
-	if query.Error == gorm.ErrRecordNotFound {
+	q := my.Tx.Model(&oldMachine).Where("id = ?", id).First(&oldMachine)
+	if q.Error == gorm.ErrRecordNotFound {
 		return gorm.ErrRecordNotFound
 	}
 
@@ -47,7 +47,7 @@ func (my MySql) ConnectMachine(id uint) error {
 	normalStatus := ms.SysMachineStatusHealthy
 	if err != nil {
 		newMachine.Status = &unConnectedStatus
-		query.Updates(newMachine)
+		q.Updates(newMachine)
 		return err
 	}
 	newMachine.Status = &normalStatus
@@ -57,7 +57,7 @@ func (my MySql) ConnectMachine(id uint) error {
 	newMachine.Cpu = oldMachine.Cpu
 	newMachine.Memory = oldMachine.Memory
 	newMachine.Disk = oldMachine.Disk
-	query.Updates(newMachine)
+	q.Updates(newMachine)
 	return nil
 }
 

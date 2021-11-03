@@ -26,34 +26,34 @@ func (my MySql) FindUnDeleteMessage(req *req.Message) []resp.Message {
 		fmt.Sprintf("%s.created_at AS created_at", sysMessageTableName),
 		fmt.Sprintf("%s.from_user_id AS from_user_id", sysMessageTableName),
 	}
-	query := my.Tx.
+	q := my.Tx.
 		Model(&ms.SysMessageLog{}).
 		Select(fields).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.message_id = %s.id", sysMessageTableName, sysMessageLogTableName, sysMessageTableName))
 
-	query = query.
+	q.
 		Order(fmt.Sprintf("%s.created_at DESC", sysMessageLogTableName)).
 		Where(fmt.Sprintf("%s.to_user_id = ?", sysMessageLogTableName), req.ToUserId)
 	title := strings.TrimSpace(req.Title)
 	if title != "" {
-		query = query.Where(fmt.Sprintf("%s.title LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", title))
+		q.Where(fmt.Sprintf("%s.title LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", title))
 	}
 	content := strings.TrimSpace(req.Title)
 	if content != "" {
-		query = query.Where(fmt.Sprintf("%s.content LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", content))
+		q.Where(fmt.Sprintf("%s.content LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", content))
 	}
 	if req.Type != nil {
-		query = query.Where("type = ?", *req.Type)
+		q.Where("type = ?", *req.Type)
 	}
 	if req.Status != nil {
-		query = query.Where(fmt.Sprintf("%s.status = ?", sysMessageLogTableName), *req.Status)
+		q.Where(fmt.Sprintf("%s.status = ?", sysMessageLogTableName), *req.Status)
 	} else {
 		// un delete
-		query = query.Where(fmt.Sprintf("%s.status != ?", sysMessageLogTableName), ms.SysMessageLogStatusDeleted)
+		q.Where(fmt.Sprintf("%s.status != ?", sysMessageLogTableName), ms.SysMessageLogStatusDeleted)
 	}
 
 	// multi tables use ScanWithPage not FindWithPage
-	my.ScanWithPage(query, &req.Page, &list)
+	my.ScanWithPage(q, &req.Page, &list)
 	return list
 }
 

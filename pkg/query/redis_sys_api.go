@@ -11,22 +11,22 @@ import (
 
 func (rd Redis) FindApi(req *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
-	query := rd.
+	q := rd.
 		Table("sys_api").
 		Order("created_at DESC")
 	method := strings.TrimSpace(req.Method)
 	if method != "" {
-		query = query.Where("method", "contains", method)
+		q.Where("method", "contains", method)
 	}
 	path := strings.TrimSpace(req.Path)
 	if path != "" {
-		query = query.Where("path", "contains", path)
+		q.Where("path", "contains", path)
 	}
 	category := strings.TrimSpace(req.Category)
 	if category != "" {
-		query = query.Where("category", "contains", category)
+		q.Where("category", "contains", category)
 	}
-	rd.FindWithPage(query, &req.Page, &list)
+	rd.FindWithPage(q, &req.Page, &list)
 	return list
 }
 

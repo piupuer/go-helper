@@ -10,7 +10,7 @@ import (
 // get menu tree by role id
 func (my MySql) GetMenuTree(roleId uint) ([]ms.SysMenu, error) {
 	tree := make([]ms.SysMenu, 0)
-	// query all menus
+	// q all menus
 	allMenu := make([]ms.SysMenu, 0)
 	my.Tx.
 		Model(&ms.SysMenu{}).
@@ -164,7 +164,7 @@ func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId 
 
 // find all menus by role id(not menu tree)
 func (my MySql) findMenuByRoleId(roleId uint) []ms.SysMenu {
-	// query current role menu relation
+	// q current role menu relation
 	menuIds := make([]uint, 0)
 	my.Tx.
 		Model(&ms.SysMenuRoleRelation{}).

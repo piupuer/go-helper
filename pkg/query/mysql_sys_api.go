@@ -12,22 +12,22 @@ import (
 
 func (my MySql) FindApi(req *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
-	query := my.Tx.
+	q := my.Tx.
 		Model(&ms.SysApi{}).
 		Order("created_at DESC")
 	method := strings.TrimSpace(req.Method)
 	if method != "" {
-		query = query.Where("method LIKE ?", fmt.Sprintf("%%%s%%", method))
+		q.Where("method LIKE ?", fmt.Sprintf("%%%s%%", method))
 	}
 	path := strings.TrimSpace(req.Path)
 	if path != "" {
-		query = query.Where("path LIKE ?", fmt.Sprintf("%%%s%%", path))
+		q.Where("path LIKE ?", fmt.Sprintf("%%%s%%", path))
 	}
 	category := strings.TrimSpace(req.Category)
 	if category != "" {
-		query = query.Where("category LIKE ?", fmt.Sprintf("%%%s%%", category))
+		q.Where("category LIKE ?", fmt.Sprintf("%%%s%%", category))
 	}
-	my.FindWithPage(query, &req.Page, &list)
+	my.FindWithPage(q, &req.Page, &list)
 	return list
 }
 
@@ -126,8 +126,8 @@ func (my MySql) CreateApi(req *req.CreateApi) (err error) {
 
 func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	var api ms.SysApi
-	query := my.Tx.Model(&api).Where("id = ?", id).First(&api)
-	if query.Error == gorm.ErrRecordNotFound {
+	q := my.Tx.Model(&api).Where("id = ?", id).First(&api)
+	if q.Error == gorm.ErrRecordNotFound {
 		return gorm.ErrRecordNotFound
 	}
 
@@ -135,7 +135,7 @@ func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	utils.CompareDiff2SnakeKey(api, req, &m)
 
 	oldApi := api
-	err = query.Updates(m).Error
+	err = q.Updates(m).Error
 
 	// get diff fields
 	diff := make(map[string]interface{}, 0)
@@ -208,7 +208,7 @@ func (my MySql) UpdateApiByRoleKeyword(keyword string, req req.UpdateMenuIncreme
 
 func (my MySql) DeleteApiByIds(ids []uint) (err error) {
 	var list []ms.SysApi
-	query := my.Tx.Where("id IN (?)", ids).Find(&list)
+	q := my.Tx.Where("id IN (?)", ids).Find(&list)
 	casbins := make([]ms.SysRoleCasbin, 0)
 	for _, api := range list {
 		casbins = append(casbins, my.FindRoleCasbin(ms.SysRoleCasbin{
@@ -218,5 +218,5 @@ func (my MySql) DeleteApiByIds(ids []uint) (err error) {
 	}
 	// delete old rules
 	my.BatchDeleteRoleCasbin(casbins)
-	return query.Delete(&ms.SysApi{}).Error
+	return q.Delete(&ms.SysApi{}).Error
 }

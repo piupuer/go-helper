@@ -40,7 +40,7 @@ func (rd Redis) Count(count *int64) *Redis {
 	return ins
 }
 
-func (rd Redis) FindWithPage(query *Redis, page *resp.Page, model interface{}) {
+func (rd Redis) FindWithPage(q *Redis, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
 		rd.ops.logger.Warn(rd.ops.ctx, "model must be a pointer")
@@ -48,13 +48,13 @@ func (rd Redis) FindWithPage(query *Redis, page *resp.Page, model interface{}) {
 	}
 
 	if !page.NoPagination {
-		query.Count(&page.Total)
+		q.Count(&page.Total)
 		if page.Total > 0 {
 			limit, offset := page.GetLimit()
-			query.Limit(limit).Offset(offset).Find(model)
+			q.Limit(limit).Offset(offset).Find(model)
 		}
 	} else {
-		query.Find(model)
+		q.Find(model)
 		page.Total = int64(rv.Elem().Len())
 		page.GetLimit()
 	}

@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-// query redis json value like gorm v2
+// q redis json value like gorm v2
 type Redis struct {
 	ops        RedisOptions
 	Ctx        context.Context
@@ -132,9 +132,9 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		cacheKey := fmt.Sprintf("%s_%s", rd.ops.database, tableName)
 		var err error
 		str, err := rd.ops.redis.Get(rd.Ctx, cacheKey).Result()
-		rd.ops.logger.Debug(rd.Ctx, "[query redis]read %s", tableName)
+		rd.ops.logger.Debug(rd.Ctx, "[q redis]read %s", tableName)
 		if err != nil {
-			rd.ops.logger.Debug(rd.Ctx, "[query redis]read %s err: %v", tableName, err)
+			rd.ops.logger.Debug(rd.Ctx, "[q redis]read %s err: %v", tableName, err)
 		} else {
 			// decompress
 			jsonStr = utils.DeCompressStrByZlib(str)
@@ -145,9 +145,9 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 	} else {
 		jsonStr = rd.Statement.jsonStr
 	}
-	query := rd.jsonQuery(jsonStr)
+	q := rd.jsonQuery(jsonStr)
 	var nullList interface{}
-	list := query.Get()
+	list := q.Get()
 	if rd.Statement.first {
 		// get first data
 		switch list.(type) {
@@ -161,7 +161,7 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 			}
 		}
 	}
-	// select count if dest is int64, skip query struct and preload
+	// select count if dest is int64, skip q struct and preload
 	if _, ok := rd.Statement.Dest.(*int64); !ok {
 		utils.Struct2StructByJson(list, rd.Statement.Dest)
 		if list != nil {
@@ -171,26 +171,26 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		}
 	}
 
-	return query
+	return q
 }
 
-// new jsonq query
+// new jsonq q
 func (rd Redis) jsonQuery(str string) *gojsonq.JSONQ {
-	query := gojsonq.New().FromString(str)
+	q := gojsonq.New().FromString(str)
 	// add where
 	for _, condition := range rd.Statement.whereConditions {
-		query = query.Where(condition.key, condition.cond, condition.val)
+		q.Where(condition.key, condition.cond, condition.val)
 	}
 	// add order
 	for _, condition := range rd.Statement.orderConditions {
 		if condition.asc {
-			query = query.SortBy(condition.property)
+			q.SortBy(condition.property)
 		} else {
-			query = query.SortBy(condition.property, "desc")
+			q.SortBy(condition.property, "desc")
 		}
 	}
 	// add limit/offset
-	query.Limit(rd.Statement.limit)
-	query.Offset(rd.Statement.offset)
-	return query
+	q.Limit(rd.Statement.limit)
+	q.Offset(rd.Statement.offset)
+	return q
 }

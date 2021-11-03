@@ -180,22 +180,22 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 			return
 		}
 	}
-	query := my.Tx
+	q := my.Tx
 	for _, preload := range ops.preloads {
-		query = query.Preload(preload)
+		q.Preload(preload)
 	}
 	if !newIdsIsArr {
-		query.
+		q.
 			Where(fmt.Sprintf("`%s` = ?", ops.column), newIds).
 			First(model)
 	} else {
 		if newIdsIsArr && newIdsRv.Kind() != reflect.Slice {
 			// column not primary, value maybe array
-			query.
+			q.
 				Where(fmt.Sprintf("`%s` = ?", ops.column), firstId).
 				Find(model)
 		} else {
-			query.
+			q.
 				Where(fmt.Sprintf("`%s` IN (?)", ops.column), newIds).
 				Find(model)
 		}
@@ -214,8 +214,8 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 	return
 }
 
-// find data by query condition
-func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) {
+// find data by q condition
+func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -237,7 +237,7 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 		if !page.SkipCount {
 			fromCache := false
 			// get sql by DryRun
-			stmt := query.Session(&gorm.Session{DryRun: true}).Count(&page.Total).Statement
+			stmt := q.Session(&gorm.Session{DryRun: true}).Count(&page.Total).Statement
 			// SQL statement as cache key
 			cacheKey := my.Tx.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
 			if ops.cache && countCache {
@@ -249,7 +249,7 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 				}
 			}
 			if !fromCache {
-				query.Count(&page.Total)
+				q.Count(&page.Total)
 				if ops.cache && page.Total > 0 {
 					my.ops.redis.Set(my.ops.ctx, cacheKey, page.Total, time.Duration(ops.cacheExpire)*time.Second)
 				}
@@ -260,27 +260,27 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 		if page.Total > 0 || page.SkipCount {
 			limit, offset := page.GetLimit()
 			if page.LimitPrimary == "" {
-				query.Limit(limit).Offset(offset).Find(model)
+				q.Limit(limit).Offset(offset).Find(model)
 			} else {
 				// parse model
-				if query.Statement.Model != nil {
-					err := query.Statement.Parse(query.Statement.Model)
+				if q.Statement.Model != nil {
+					err := q.Statement.Parse(q.Statement.Model)
 					if err != nil {
 						my.ops.logger.Warn(my.ops.ctx, "parse model err: %v", err)
 						return
 					}
 				}
-				query.Joins(
-					// add LimitPrimary index before join, improve query efficiency
+				q.Joins(
+					// add LimitPrimary index before join, improve q efficiency
 					fmt.Sprintf(
 						"JOIN (?) AS `OFFSET_T` ON `%s`.`id` = `OFFSET_T`.`%s`",
-						query.Statement.Table,
+						q.Statement.Table,
 						page.LimitPrimary,
 					),
-					query.
+					q.
 						Session(&gorm.Session{}).
 						Select(
-							fmt.Sprintf("`%s`.`%s`", query.Statement.Table, page.LimitPrimary),
+							fmt.Sprintf("`%s`.`%s`", q.Statement.Table, page.LimitPrimary),
 						).
 						Limit(limit).
 						Offset(offset),
@@ -289,7 +289,7 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 		}
 	} else {
 		// no pagination
-		query.Find(model)
+		q.Find(model)
 		page.Total = int64(rv.Elem().Len())
 		page.GetLimit()
 	}
@@ -297,8 +297,8 @@ func (my MySql) FindWithPage(query *gorm.DB, page *resp.Page, model interface{},
 	return
 }
 
-// scan data  query condition(often used to JOIN)
-func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{}) {
+// scan data  q condition(often used to JOIN)
+func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
 		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
@@ -306,13 +306,13 @@ func (my MySql) ScanWithPage(query *gorm.DB, page *resp.Page, model interface{})
 	}
 
 	if !page.NoPagination {
-		query.Count(&page.Total)
+		q.Count(&page.Total)
 		if page.Total > 0 {
 			limit, offset := page.GetLimit()
-			query.Limit(limit).Offset(offset).Scan(model)
+			q.Limit(limit).Offset(offset).Scan(model)
 		}
 	} else {
-		query.Scan(model)
+		q.Scan(model)
 		page.Total = int64(rv.Elem().Len())
 		page.GetLimit()
 	}
@@ -346,15 +346,15 @@ func (my MySql) UpdateById(id uint, req interface{}, model interface{}) error {
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Struct) {
 		return fmt.Errorf("model must be a pointer")
 	}
-	query := my.Tx.Model(rv.Interface()).Where("id = ?", id).First(rv.Interface())
-	if query.Error == gorm.ErrRecordNotFound {
+	q := my.Tx.Model(rv.Interface()).Where("id = ?", id).First(rv.Interface())
+	if q.Error == gorm.ErrRecordNotFound {
 		return fmt.Errorf("can not get old record")
 	}
 
 	m := make(map[string]interface{}, 0)
 	utils.CompareDiff2SnakeKey(rv.Elem().Interface(), req, &m)
 
-	return query.Updates(&m).Error
+	return q.Updates(&m).Error
 }
 
 // batch delete by ids

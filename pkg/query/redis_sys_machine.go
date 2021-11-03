@@ -8,20 +8,20 @@ import (
 
 func (rd Redis) FindMachine(req *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
-	query := rd.
+	q := rd.
 		Table("sys_machine").
 		Order("created_at DESC")
 	host := strings.TrimSpace(req.Host)
 	if host != "" {
-		query = query.Where("host", "contains", host)
+		q.Where("host", "contains", host)
 	}
 	loginName := strings.TrimSpace(req.LoginName)
 	if loginName != "" {
-		query = query.Where("login_name", "contains", loginName)
+		q.Where("login_name", "contains", loginName)
 	}
 	if req.Status != nil {
-		query = query.Where("status", "=", *req.Status)
+		q.Where("status", "=", *req.Status)
 	}
-	rd.FindWithPage(query, &req.Page, &list)
+	rd.FindWithPage(q, &req.Page, &list)
 	return list
 }

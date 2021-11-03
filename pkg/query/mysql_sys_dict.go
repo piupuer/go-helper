@@ -59,50 +59,50 @@ func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
 
 func (my MySql) FindDict(req *req.Dict) []ms.SysDict {
 	list := make([]ms.SysDict, 0)
-	query := my.Tx.
+	q := my.Tx.
 		Model(&ms.SysDict{}).
 		Preload("DictDatas").
 		Order("created_at DESC")
 	name := strings.TrimSpace(req.Name)
 	if name != "" {
-		query = query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
+		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}
 	desc := strings.TrimSpace(req.Desc)
 	if desc != "" {
-		query = query.Where("desc = ?", desc)
+		q.Where("desc = ?", desc)
 	}
 	if req.Status != nil {
-		query = query.Where("status = ?", *req.Status)
+		q.Where("status = ?", *req.Status)
 	}
-	my.FindWithPage(query, &req.Page, &list)
+	my.FindWithPage(q, &req.Page, &list)
 	return list
 }
 
 func (my MySql) FindDictData(req *req.DictData) []ms.SysDictData {
 	list := make([]ms.SysDictData, 0)
-	query := my.Tx.
+	q := my.Tx.
 		Model(&ms.SysDictData{}).
 		Preload("Dict").
 		Order("created_at DESC")
 	key := strings.TrimSpace(req.Key)
 	if key != "" {
-		query = query.Where("key LIKE ?", fmt.Sprintf("%%%s%%", key))
+		q.Where("key LIKE ?", fmt.Sprintf("%%%s%%", key))
 	}
 	val := strings.TrimSpace(req.Val)
 	if val != "" {
-		query = query.Where("val LIKE ?", fmt.Sprintf("%%%s%%", val))
+		q.Where("val LIKE ?", fmt.Sprintf("%%%s%%", val))
 	}
 	attr := strings.TrimSpace(req.Attr)
 	if attr != "" {
-		query = query.Where("attr = ?", attr)
+		q.Where("attr = ?", attr)
 	}
 	if req.Status != nil {
-		query = query.Where("status = ?", *req.Status)
+		q.Where("status = ?", *req.Status)
 	}
 	if req.DictId != nil {
-		query = query.Where("dict_id = ?", *req.DictId)
+		q.Where("dict_id = ?", *req.DictId)
 	}
-	my.FindWithPage(query, &req.Page, &list)
+	my.FindWithPage(q, &req.Page, &list)
 	return list
 }
 

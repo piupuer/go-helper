@@ -8,7 +8,7 @@ import (
 var tableRegexp = regexp.MustCompile(`(?i).+? AS (\w+)\s*(?:$|,)`)
 
 // set json str
-func (rd Redis) FromString(str string) *Redis {
+func (rd *Redis) FromString(str string) *Redis {
 	ins := rd.getInstance()
 	ins.Statement.FromString(str)
 	ins.Statement.Dest = nil
@@ -16,7 +16,7 @@ func (rd Redis) FromString(str string) *Redis {
 }
 
 // set table name
-func (rd Redis) Table(name string, args ...interface{}) (ins *Redis) {
+func (rd *Redis) Table(name string, args ...interface{}) (ins *Redis) {
 	ins = rd.getInstance()
 	if strings.Contains(name, " ") || strings.Contains(name, "`") || len(args) > 0 {
 		if results := tableRegexp.FindStringSubmatch(name); len(results) == 2 {
@@ -30,29 +30,29 @@ func (rd Redis) Table(name string, args ...interface{}) (ins *Redis) {
 }
 
 // preload column
-func (rd Redis) Preload(column string) *Redis {
+func (rd *Redis) Preload(column string) *Redis {
 	return rd.getInstance().Statement.Preload(column).DB
 }
 
 // where condition
-func (rd Redis) Where(key, cond string, val interface{}) *Redis {
+func (rd *Redis) Where(key, cond string, val interface{}) *Redis {
 	return rd.getInstance().Statement.Where(key, cond, val).DB
 }
 
 // sort condition
-func (rd Redis) Order(key string) *Redis {
+func (rd *Redis) Order(key string) *Redis {
 	return rd.getInstance().Statement.Order(key).DB
 }
 
 // limit condition
-func (rd Redis) Limit(limit int) *Redis {
+func (rd *Redis) Limit(limit int) *Redis {
 	ins := rd.getInstance()
 	ins.Statement.limit = limit
 	return ins
 }
 
 // offset condition
-func (rd Redis) Offset(offset int) *Redis {
+func (rd *Redis) Offset(offset int) *Redis {
 	ins := rd.getInstance()
 	ins.Statement.offset = offset
 	return ins

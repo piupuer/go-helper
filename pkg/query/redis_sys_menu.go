@@ -45,7 +45,7 @@ func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 
 // find all menus by role id(not menu tree)
 func (rd Redis) findMenuByRoleId(roleId uint) []ms.SysMenu {
-	// query current role menu relation
+	// q current role menu relation
 	relations := make([]ms.SysMenuRoleRelation, 0)
 	menuIds := make([]uint, 0)
 	rd.

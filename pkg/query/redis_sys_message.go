@@ -21,24 +21,24 @@ func (rd Redis) FindUnDeleteMessage(req *req.Message) []resp.Message {
 
 	messageLogs := make([]ms.SysMessageLog, 0)
 	// all log json
-	query := rd.
+	q := rd.
 		FromString(utils.Struct2Json(currentUserAllLogs)).
 		Order("created_at DESC")
 	title := strings.TrimSpace(req.Title)
 	if title != "" {
-		query = query.Where("message.title", "contains", title)
+		q.Where("message.title", "contains", title)
 	}
 	content := strings.TrimSpace(req.Content)
 	if content != "" {
-		query = query.Where("message.content", "contains", content)
+		q.Where("message.content", "contains", content)
 	}
 	if req.Type != nil {
-		query = query.Where("type", "=", *req.Type)
+		q.Where("type", "=", *req.Type)
 	}
 	if req.Status != nil {
-		query = query.Where("status", "=", *req.Status)
+		q.Where("status", "=", *req.Status)
 	}
-	rd.FindWithPage(query, &req.Page, &messageLogs)
+	rd.FindWithPage(q, &req.Page, &messageLogs)
 	// convert to Message
 	list := make([]resp.Message, 0)
 	for _, log := range messageLogs {
