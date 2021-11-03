@@ -344,7 +344,7 @@ func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
 		return nil, fs.Error
 	}
 	list := make([]Machine, 0)
-	q := fs.session
+	q := fs.session.Model(&Machine{})
 	name := strings.TrimSpace(r.Name)
 	if name != "" {
 		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
@@ -376,10 +376,10 @@ func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
 		page.GetLimit()
 	}
 	page.CountCache = &countCache
-	err := q.Find(&list).Error
+	q.Find(&list)
 	newList := make([]resp.FsmMachine, 0)
 	utils.Struct2StructByJson(list, &newList)
-	return newList, err
+	return newList, nil
 }
 
 // find logs
