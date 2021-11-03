@@ -356,7 +356,7 @@ func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
 	if r.SubmitterConfirm != nil {
 		q.Where("submitter_confirm = ?", *r.SubmitterConfirm)
 	}
-	page := r.Page
+	page := &r.Page
 	countCache := false
 	if page.CountCache != nil {
 		countCache = *page.CountCache
@@ -376,7 +376,6 @@ func (fs Fsm) FindMachine(r req.FsmMachine) ([]resp.FsmMachine, error) {
 		page.GetLimit()
 	}
 	page.CountCache = &countCache
-	q.Find(&list)
 	newList := make([]resp.FsmMachine, 0)
 	utils.Struct2StructByJson(list, &newList)
 	return newList, nil
