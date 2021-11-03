@@ -38,6 +38,26 @@ func UintIdWithErr(c *gin.Context) (uint, error) {
 	return id, nil
 }
 
+// get uint path ids
+func UintIds(c *gin.Context) []uint {
+	i := c.Param("ids")
+	arr := utils.Str2UintArr(i)
+	if len(arr) == 0 {
+		resp.CheckErr("invalid path ids: %s", i)
+	}
+	return arr
+}
+
+// get uint path ids
+func UintIdsWithErr(c *gin.Context) ([]uint, error) {
+	i := c.Param("ids")
+	arr := utils.Str2UintArr(i)
+	if len(arr) == 0 {
+		return nil, fmt.Errorf("invalid path ids: %s", i)
+	}
+	return arr, nil
+}
+
 // validate request param
 func Validate(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
