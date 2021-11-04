@@ -52,6 +52,20 @@ func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.FsmUpdateMachine
+		req.ShouldBind(c, &r)
+		id := req.UintId(c)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		err := q.UpdateFsmById(id, r)
+		resp.CheckErr(err)
+		resp.Success()
+	}
+}
+
 func DeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -64,4 +78,3 @@ func DeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
 		resp.Success()
 	}
 }
-

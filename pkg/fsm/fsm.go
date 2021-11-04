@@ -97,7 +97,7 @@ func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 		return nil, err
 	}
 	// batch fsm event
-	err = fs.batchCreateEvents(machine.Id, r.Levels)
+	err = fs.batchCreateEvent(machine.Id, r.Levels)
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +106,46 @@ func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 		return nil, err
 	}
 	return &machine, nil
+}
+
+func (fs Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (*Machine, error) {
+	if fs.Error != nil {
+		return nil, fs.Error
+	}
+	var oldMachine Machine
+	err := fs.session.
+		Model(&Machine{}).
+		Where("id = ?", id).
+		First(&oldMachine).Error
+	if err != nil {
+		return nil, err
+	}
+	levels := make([]req.FsmCreateEvent, len(r.Levels))
+	copy(levels, r.Levels)
+	r.Levels = make([]req.FsmCreateEvent, 0)
+	eventsJson := utils.Struct2Json(levels)
+	m := make(map[string]interface{}, 0)
+	utils.CompareDiff2SnakeKey(oldMachine, r, &m)
+	if oldMachine.EventsJson != eventsJson {
+		m["events_json"] = eventsJson
+	}
+	err = fs.session.
+		Model(&Machine{}).
+		Where("id = ?", id).
+		Updates(&m).Error
+	if err != nil {
+		return nil, err
+	}
+	// batch fsm event
+	err = fs.batchCreateEvent(oldMachine.Id, levels)
+	if err != nil {
+		return nil, err
+	}
+	_, err = fs.findEventDesc(oldMachine.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &oldMachine, nil
 }
 
 // =======================================================
@@ -684,7 +724,7 @@ func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 			Dst:  event.Dst.Name,
 		})
 	}
-	err = checkEvents(desc)
+	err = checkEvent(desc)
 	if err != nil {
 		return nil, err
 	}
@@ -720,7 +760,7 @@ func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 // L2 waiting refuse  / L1 approved               / L2 refused
 // L0 waiting confirm / L2 approved               / L0 confirmed
 // end
-func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err error) {
+func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err error) {
 	if fs.Error != nil {
 		return fs.Error
 	}
@@ -729,6 +769,7 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 	}
 	// clear old machine
 	err = fs.session.
+		Unscoped().
 		Where("machine_id = ?", machineId).
 		Delete(&Event{}).Error
 	if err != nil {
@@ -909,8 +950,8 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 			editFields = r[index].EditFields
 			refuse = uint(r[index].Refuse)
 			// mock roles/users
-			roles = fs.getRoles(r[index].Roles.Uints())
-			users = fs.getUsers(r[index].Users.Uints())
+			roles = fs.findRole(r[index].Roles.Uints())
+			users = fs.findUser(r[index].Users.Uints())
 		} else if i == len(desc)-1 && machine.SubmitterConfirm == constant.One {
 			// save submitter confirm edit fields
 			edit = constant.One
@@ -940,7 +981,7 @@ func (fs Fsm) batchCreateEvents(machineId uint, r []req.FsmCreateEvent) (err err
 	return
 }
 
-func (fs Fsm) getUsers(ids []uint) []User {
+func (fs Fsm) findUser(ids []uint) []User {
 	users := make([]User, 0)
 	fs.session.
 		Model(&User{}).
@@ -963,7 +1004,7 @@ func (fs Fsm) getUsers(ids []uint) []User {
 	return users
 }
 
-func (fs Fsm) getRoles(ids []uint) []Role {
+func (fs Fsm) findRole(ids []uint) []Role {
 	roles := make([]Role, 0)
 	fs.session.
 		Model(&Role{}).
@@ -1015,7 +1056,7 @@ func initSession(db *gorm.DB, prefix string) *gorm.DB {
 }
 
 // check that the state machine is valid(traverse each event, only one end position)
-func checkEvents(desc []fsm.EventDesc) error {
+func checkEvent(desc []fsm.EventDesc) error {
 	names := make([]string, 0)
 	for _, item := range desc {
 		names = append(names, item.Dst)

@@ -25,6 +25,13 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	return err
 }
 
+// update finite state machine
+func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
+	f := fsm.New(my.Tx)
+	_, err := f.UpdateMachineById(id, r)
+	return err
+}
+
 // delete finite state machine
 func (my MySql) DeleteFsmByIds(ids []uint) error {
 	f := fsm.New(my.Tx)

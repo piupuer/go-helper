@@ -20,6 +20,15 @@ type FsmCreateEvent struct {
 	Users      IdsStr   `json:"users" form:"users"`
 }
 
+type FsmUpdateMachine struct {
+	Name                       *string          `json:"name"`
+	SubmitterName              *string          `json:"submitterName"`
+	SubmitterEditFields        *string          `json:"submitterEditFields"`
+	SubmitterConfirm           *NullUint        `json:"submitterConfirm"`
+	SubmitterConfirmEditFields *string          `json:"submitterConfirmEditFields"`
+	Levels                     []FsmCreateEvent `json:"levels"`
+}
+
 type FsmCreateLog struct {
 	Category        NullUint `json:"category" form:"category"`
 	Uuid            string   `json:"uuid" form:"uuid"`
