@@ -538,11 +538,13 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 	}
 	l := len(logs)
 	for i, log := range logs {
+		prevApproved := constant.FsmLogStatusWaiting
 		prevCancel := false
 		prevOpinion := ""
 		end := false
 		cancel := log.Approved == constant.FsmLogStatusCancelled
 		if i > 0 {
+			prevApproved = logs[i-1].Approved
 			prevCancel = logs[i-1].Approved == constant.FsmLogStatusCancelled
 			prevOpinion = logs[i-1].ApprovalOpinion
 		}
@@ -555,7 +557,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 				UpdatedAt: log.UpdatedAt,
 				Name:      log.PrevDetail,
 				Opinion:   prevOpinion,
-				Status:    log.Approved,
+				Status:    prevApproved,
 				Cancel:    prevCancel,
 			}, resp.FsmLogTrack{
 				CreatedAt: log.CreatedAt,
@@ -572,7 +574,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 				UpdatedAt: log.UpdatedAt,
 				Name:      log.PrevDetail,
 				Opinion:   prevOpinion,
-				Status:    log.Approved,
+				Status:    prevApproved,
 				End:       end,
 				Cancel:    cancel,
 			})
