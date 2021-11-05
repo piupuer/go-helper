@@ -165,15 +165,19 @@ func (fs Fsm) SubmitLog(r req.FsmCreateLog) ([]EventItem, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
+	machine, err := fs.GetMachineByCategory(uint(r.Category))
+	if err != nil {
+		return nil, err
+	}
 	// check whether approval is pending
-	_, err := fs.getLastPendingLog(req.FsmLog{
+	_, err = fs.getLastPendingLog(req.FsmLog{
 		Category: r.Category,
 		Uuid:     r.Uuid,
 	})
 	if err != gorm.ErrRecordNotFound {
 		return nil, ErrRepeatSubmit
 	}
-	startEvent, err := fs.getStartEvent(r.MachineId)
+	startEvent, err := fs.getStartEvent(machine.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +186,7 @@ func (fs Fsm) SubmitLog(r req.FsmCreateLog) ([]EventItem, error) {
 	var log Log
 	log.Category = uint(r.Category)
 	log.Uuid = r.Uuid
-	nextEvent, err := fs.getNextEvent(r.MachineId, startEvent.Level)
+	nextEvent, err := fs.getNextEvent(machine.Id, startEvent.Level)
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +214,10 @@ func (fs Fsm) SubmitLog(r req.FsmCreateLog) ([]EventItem, error) {
 func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
+	}
+	machine, err := fs.GetMachineByCategory(uint(r.Category))
+	if err != nil {
+		return nil, err
 	}
 	approved := uint(r.Approved)
 	var rp resp.FsmApprovalLog
@@ -245,7 +253,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		return &rp, nil
 	}
 
-	desc, err := fs.findEventDesc(r.MachineId)
+	desc, err := fs.findEventDesc(machine.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +285,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	}
 	nextName := getNextItemName(approved, eventName)
 	f.SetState(nextName)
-	event, err := fs.getEvent(r.MachineId, eventName)
+	event, err := fs.getEvent(machine.Id, eventName)
 	if err != nil {
 		return nil, err
 	}
@@ -296,9 +304,9 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		// bind next approver
 		var nextEvent *Event
 		if approved == constant.FsmLogStatusApproved {
-			nextEvent, err = fs.getNextEvent(r.MachineId, event.Level)
+			nextEvent, err = fs.getNextEvent(machine.Id, event.Level)
 		} else {
-			nextEvent, err = fs.getPrevEvent(r.MachineId, event.Level)
+			nextEvent, err = fs.getPrevEvent(machine.Id, event.Level)
 		}
 		if err != nil {
 			return nil, err
@@ -416,6 +424,22 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 		return nil, ErrNoPermissionRefuse
 	}
 	return log, nil
+}
+
+// get machine by category
+func (fs Fsm) GetMachineByCategory(category uint) (*Machine, error) {
+	if fs.Error != nil {
+		return nil, fs.Error
+	}
+	var machine Machine
+	err := fs.session.
+		Model(&Machine{}).
+		Where("category = ?", category).
+		First(&machine).Error
+	if err != nil {
+		return nil, err
+	}
+	return &machine, nil
 }
 
 // find machines
@@ -573,7 +597,6 @@ func (fs Fsm) FindPendingLogByApprover(r req.FsmPendingLog) ([]Log, error) {
 // private function
 // =======================================================
 // get last pending log, err will be returned when it does not exist
-// 获取最后一条待审批日志
 func (fs Fsm) getLastPendingLog(r req.FsmLog) (*Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error

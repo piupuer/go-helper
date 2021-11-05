@@ -33,7 +33,6 @@ type FsmUpdateMachine struct {
 type FsmCreateLog struct {
 	Category        NullUint `json:"category" form:"category"`
 	Uuid            string   `json:"uuid" form:"uuid"`
-	MachineId       uint     `json:"machineId" form:"machineId"`
 	SubmitterRoleId uint     `json:"submitterRoleId" form:"submitterRoleId"`
 	SubmitterUserId uint     `json:"submitterUserId" form:"submitterUserId"`
 }
@@ -43,7 +42,6 @@ type FsmApproveLog struct {
 	Uuid            string   `json:"uuid" form:"uuid"`
 	ApprovalRoleId  uint     `json:"approvalRoleId" form:"approvalRoleId"`
 	ApprovalUserId  uint     `json:"approvalUserId" form:"approvalUserId"`
-	MachineId       uint     `json:"machineId" form:"machineId"`
 	ApprovalOpinion string   `json:"approvalOpinion" form:"approvalOpinion"`
 	Approved        NullUint `json:"approved" form:"approved"`
 }
