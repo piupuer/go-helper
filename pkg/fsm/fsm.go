@@ -220,7 +220,10 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		return nil, err
 	}
 	approved := uint(r.Approved)
-	var rp resp.FsmApprovalLog
+	rp := resp.FsmApprovalLog{
+		Uuid:     r.Uuid,
+		Category: uint(r.Category),
+	}
 	// check current user/role permission
 	oldLog, err := fs.CheckLogPermission(req.FsmPermissionLog{
 		Category:       r.Category,
