@@ -68,7 +68,7 @@ type FsmLog struct {
 }
 
 type FsmMachine struct {
-	Category         *NullUint `json:"category"`
+	Category         *NullUint `json:"category" form:"category"`
 	Name             string    `json:"name" form:"name"`
 	SubmitterName    string    `json:"submitterName" form:"submitterName"`
 	SubmitterConfirm *NullUint `json:"submitterConfirm" form:"submitterConfirm"`
