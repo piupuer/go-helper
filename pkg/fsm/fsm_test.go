@@ -75,7 +75,6 @@ func TestFsm_SubmitLog(t *testing.T) {
 	tx := db.Begin()
 	f := New(tx)
 	_, err := f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,   // CreateMachine generate Id
 		Category:        1,   // custom category
 		Uuid:            uid, // unique str
 		SubmitterUserId: 123, // submitter Id
@@ -94,7 +93,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	var err error
 	// approved
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 4,
@@ -105,7 +103,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// refused
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  4,
@@ -117,7 +114,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// refused
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		ApprovalUserId:  4,
@@ -129,7 +125,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// resubmit
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 123,
@@ -140,7 +135,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// approved
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		ApprovalUserId:  5,
@@ -152,7 +146,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// approved
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  4,
@@ -164,7 +157,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// approved
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  5,
@@ -176,7 +168,6 @@ func TestFsm_ApproveLog(t *testing.T) {
 	}
 	// submitter confirmed
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 123,
@@ -195,7 +186,6 @@ func TestFsm_ApproveLog1(t *testing.T) {
 	f := New(tx)
 	var err error
 	_, err = f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		SubmitterUserId: 234,
@@ -206,7 +196,6 @@ func TestFsm_ApproveLog1(t *testing.T) {
 
 	// other people cancel
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 5,
@@ -217,7 +206,6 @@ func TestFsm_ApproveLog1(t *testing.T) {
 	}
 	// submitter cancel
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 234,
@@ -228,7 +216,6 @@ func TestFsm_ApproveLog1(t *testing.T) {
 	}
 
 	_, err = f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            uid,
 		SubmitterRoleId: 567,
@@ -240,7 +227,6 @@ func TestFsm_ApproveLog1(t *testing.T) {
 
 	// submitter role cancel
 	_, err = f.ApproveLog(req.FsmApproveLog{
-		MachineId:      1,
 		Category:       1,
 		Uuid:           uid,
 		ApprovalRoleId: 567,
@@ -258,7 +244,6 @@ func TestFsm_CancelLogs(t *testing.T) {
 	f := New(tx)
 	var err error
 	_, err = f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            "log3",
 		SubmitterUserId: 123,
@@ -267,7 +252,6 @@ func TestFsm_CancelLogs(t *testing.T) {
 		fmt.Println(err)
 	}
 	_, err = f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            "log4",
 		SubmitterUserId: 234,
@@ -276,7 +260,6 @@ func TestFsm_CancelLogs(t *testing.T) {
 		fmt.Println(err)
 	}
 	_, err = f.SubmitLog(req.FsmCreateLog{
-		MachineId:       1,
 		Category:        1,
 		Uuid:            "log5",
 		SubmitterUserId: 345,
@@ -292,7 +275,7 @@ func TestFsm_CancelLogs(t *testing.T) {
 func TestFsm_FindPendingLogsByApprover(t *testing.T) {
 	tx := db.Begin()
 	f := New(tx)
-	fmt.Println(f.FindPendingLogByApprover(req.FsmPendingLog{
+	fmt.Println(f.FindPendingLogByApprover(&req.FsmPendingLog{
 		ApprovalRoleId: 1,
 		ApprovalUserId: 2,
 		Category:       1,

@@ -33,9 +33,9 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		r.ApprovalUserId = u.RoleId
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.FindFsmApprovingLog(r)
+		list, err := q.FindFsmApprovingLog(&r)
 		resp.CheckErr(err)
-		resp.SuccessWithData(list)
+		resp.SuccessWithPageData(list, []resp.FsmApprovalLog{}, r.Page)
 	}
 }
 

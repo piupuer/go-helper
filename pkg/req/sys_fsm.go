@@ -58,6 +58,7 @@ type FsmPendingLog struct {
 	ApprovalRoleId uint     `json:"approvalRoleId" form:"approvalRoleId"`
 	ApprovalUserId uint     `json:"approvalUserId" form:"approvalUserId"`
 	Category       NullUint `json:"category" form:"category"`
+	resp.Page
 }
 
 type FsmLog struct {

@@ -9,6 +9,20 @@ type FsmApprovalLog struct {
 	Cancel          bool `json:"cancel"`          // is submitter canceled?
 }
 
+type FsmApprovingLog struct {
+	Base
+	Uuid            string `json:"uuid"`
+	Category        uint   `json:"category"`
+	Approved        uint   `json:"approved"`
+	SubmitterRoleId uint   `json:"submitterRoleId"`
+	SubmitterUserId uint   `json:"submitterUserId"`
+	ApprovalRoleId  uint   `json:"approvalRoleId"`
+	ApprovalUserId  uint   `json:"approvalUserId"`
+	ApprovalOpinion string `json:"approvalOpinion"`
+	PrevDetail      string `json:"prevDetail"`
+	Detail          string `json:"detail"`
+}
+
 type FsmLogTrack struct {
 	CreatedAt carbon.ToDateTimeString `json:"createdAt"`
 	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"`

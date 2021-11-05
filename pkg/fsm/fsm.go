@@ -587,7 +587,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 }
 
 // get the pending approval list of a approver
-func (fs Fsm) FindPendingLogByApprover(r req.FsmPendingLog) ([]Log, error) {
+func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]Log, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -603,7 +603,7 @@ func (fs Fsm) FindPendingLogByApprover(r req.FsmPendingLog) ([]Log, error) {
 		Model(&LogApprovalRoleRelation{}).
 		Where("role_id = ?", r.ApprovalRoleId).
 		Pluck("log_id", &logIds2)
-	logs := make([]Log, 0)
+	list := make([]Log, 0)
 	ids := append(logIds1, logIds2...)
 	if len(ids) > 0 {
 		q := fs.session.
@@ -612,9 +612,28 @@ func (fs Fsm) FindPendingLogByApprover(r req.FsmPendingLog) ([]Log, error) {
 		if uint(r.Category) > constant.Zero {
 			q.Where("category = ?", r.Category)
 		}
-		q.Find(&logs)
+		page := &r.Page
+		countCache := false
+		if page.CountCache != nil {
+			countCache = *page.CountCache
+		}
+		if !page.NoPagination {
+			if !page.SkipCount {
+				q.Count(&page.Total)
+			}
+			if page.Total > 0 || page.SkipCount {
+				limit, offset := page.GetLimit()
+				q.Limit(limit).Offset(offset).Find(&list)
+			}
+		} else {
+			// no pagination
+			q.Find(&list)
+			page.Total = int64(len(list))
+			page.GetLimit()
+		}
+		page.CountCache = &countCache
 	}
-	return logs, nil
+	return list, nil
 }
 
 // =======================================================

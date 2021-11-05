@@ -13,7 +13,7 @@ func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 }
 
 // find waiting approve log
-func (my MySql) FindFsmApprovingLog(r req.FsmPendingLog) ([]fsm.Log, error) {
+func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]fsm.Log, error) {
 	f := fsm.New(my.Tx)
 	return f.FindPendingLogByApprover(r)
 }
