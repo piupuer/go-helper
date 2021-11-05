@@ -90,6 +90,22 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.FsmApproveLog
+		req.ShouldBind(c, &r)
+		u := ops.getCurrentUser(c)
+		r.ApprovalRoleId = u.Id
+		r.ApprovalUserId = u.RoleId
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		item, err := q.FsmApproveLog(r)
+		resp.CheckErr(err)
+		resp.SuccessWithData(item)
+	}
+}
+
 func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

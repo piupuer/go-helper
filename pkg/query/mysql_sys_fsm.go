@@ -18,6 +18,12 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLo
 	return f.FindPendingLogByApprover(r)
 }
 
+// find waiting approve log
+func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
+	f := fsm.New(my.Tx)
+	return f.ApproveLog(r)
+}
+
 // create finite state machine
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	f := fsm.New(my.Tx)
