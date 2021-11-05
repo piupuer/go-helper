@@ -92,6 +92,9 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 
 func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
+	if ops.fsmTransition == nil {
+		panic("fsmTransition is empty")
+	}
 	return func(c *gin.Context) {
 		var r req.FsmApproveLog
 		req.ShouldBind(c, &r)
@@ -101,6 +104,8 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		item, err := q.FsmApproveLog(r)
+		resp.CheckErr(err)
+		err = ops.fsmTransition(c, *item)
 		resp.CheckErr(err)
 		resp.SuccessWithData(item)
 	}

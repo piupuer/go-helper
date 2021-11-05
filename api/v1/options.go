@@ -8,6 +8,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/oss"
 	"github.com/piupuer/go-helper/pkg/query"
+	"github.com/piupuer/go-helper/pkg/resp"
 )
 
 type Options struct {
@@ -21,6 +22,7 @@ type Options struct {
 	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
+	fsmTransition              func(c *gin.Context, logs ...resp.FsmApprovalLog) error
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64
 	uploadMergeConcurrentCount int

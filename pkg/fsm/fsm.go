@@ -316,9 +316,9 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		if len(nextEvent.Roles) == 0 && len(nextEvent.Users) == 0 {
 			noUser = true
 			if strings.HasSuffix(nextEvent.Name.Name, constant.FsmSuffixConfirm) {
-				rp.WaitingConfirm = true
+				rp.Confirm = true
 			} else {
-				rp.WaitingResubmit = true
+				rp.Resubmit = true
 			}
 		}
 		newLog.ProgressId = progressItem.Id
@@ -368,34 +368,54 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 }
 
 // cancel log by category(it is applicable to the automatic cancellation of records to be approved when the approval configuration changes)
-func (fs Fsm) CancelLog(category uint) error {
+func (fs Fsm) CancelLog(category uint) ([]resp.FsmApprovalLog, error) {
 	if fs.Error != nil {
-		return fs.Error
+		return nil, fs.Error
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
 	m["next_event_id"] = constant.Zero
 	m["detail"] = constant.FsmMsgConfigChanged
-	return fs.session.
+	q := fs.session.
 		Model(&Log{}).
 		Where("category = ?", category).
-		Where("approved = ?", constant.FsmLogStatusWaiting).
-		Updates(&m).Error
+		Where("approved = ?", constant.FsmLogStatusWaiting)
+	oldLogs := make([]Log, 0)
+	q.Pluck("uuid", &oldLogs)
+	list := make([]resp.FsmApprovalLog, 0)
+	for i, l := 0, len(oldLogs); i < l; i++ {
+		list = append(list, resp.FsmApprovalLog{
+			Uuid:     oldLogs[i].Uuid,
+			Category: oldLogs[i].Category,
+			Cancel:   true,
+		})
+	}
+	return list, q.Updates(&m).Error
 }
 
-func (fs Fsm) CancelLogByUuids(ids []string) error {
+func (fs Fsm) CancelLogByUuids(ids []string) ([]resp.FsmApprovalLog, error) {
 	if fs.Error != nil {
-		return fs.Error
+		return nil, fs.Error
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
 	m["next_event_id"] = constant.Zero
 	m["detail"] = constant.FsmMsgManualCancel
-	return fs.session.
+	q := fs.session.
 		Model(&Log{}).
 		Where("uuid IN (?)", ids).
-		Where("approved = ?", constant.FsmLogStatusWaiting).
-		Updates(&m).Error
+		Where("approved = ?", constant.FsmLogStatusWaiting)
+	oldLogs := make([]Log, 0)
+	q.Pluck("uuid", &oldLogs)
+	list := make([]resp.FsmApprovalLog, 0)
+	for i, l := 0, len(oldLogs); i < l; i++ {
+		list = append(list, resp.FsmApprovalLog{
+			Uuid:     oldLogs[i].Uuid,
+			Category: oldLogs[i].Category,
+			Cancel:   true,
+		})
+	}
+	return list, q.Updates(&m).Error
 }
 
 // =======================================================
@@ -581,18 +601,18 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 			})
 		}
 		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {
-			var waitingConfirm, waitingResubmit bool
+			var confirm, resubmit bool
 			if len(log.NextEvent.Roles) == 0 && len(log.NextEvent.Users) == 0 {
 				if strings.HasSuffix(log.NextEvent.Name.Name, constant.FsmSuffixConfirm) {
-					waitingConfirm = true
+					confirm = true
 				} else {
-					waitingResubmit = true
+					resubmit = true
 				}
 			}
 			track = append(track, resp.FsmLogTrack{
 				Name:     logs[i].Detail,
-				Resubmit: waitingResubmit,
-				Confirm:  waitingConfirm,
+				Resubmit: resubmit,
+				Confirm:  confirm,
 			})
 		}
 	}

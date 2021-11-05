@@ -3,10 +3,12 @@ package resp
 import "github.com/golang-module/carbon"
 
 type FsmApprovalLog struct {
-	End             bool `json:"end"`             // is ended?
-	WaitingConfirm  bool `json:"waitingConfirm"`  // is waiting submitter confirm?
-	WaitingResubmit bool `json:"waitingResubmit"` // is waiting submitter resubmit?
-	Cancel          bool `json:"cancel"`          // is submitter canceled?
+	Uuid     string `json:"uuid"`
+	Category uint   `json:"category"`
+	End      bool   `json:"end"`      // is ended?
+	Confirm  bool   `json:"confirm"`  // is waiting submitter confirm?
+	Resubmit bool   `json:"resubmit"` // is waiting submitter resubmit?
+	Cancel   bool   `json:"cancel"`   // is submitter canceled?
 }
 
 type FsmApprovingLog struct {
