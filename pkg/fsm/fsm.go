@@ -587,7 +587,7 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 }
 
 // get the pending approval list of a approver
-func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]Log, error) {
+func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]resp.FsmApprovingLog, error) {
 	if fs.Error != nil {
 		return nil, fs.Error
 	}
@@ -604,10 +604,13 @@ func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]Log, error) {
 		Where("role_id = ?", r.ApprovalRoleId).
 		Pluck("log_id", &logIds2)
 	list := make([]Log, 0)
+	newList := make([]resp.FsmApprovingLog, 0)
 	ids := append(logIds1, logIds2...)
 	if len(ids) > 0 {
 		q := fs.session.
 			Model(&Log{}).
+			Preload("CanApprovalRoles").
+			Preload("CanApprovalUsers").
 			Where("approved = ?", constant.FsmLogStatusWaiting).
 			Where("id IN (?)", ids)
 		if uint(r.Category) > constant.Zero {
@@ -634,7 +637,8 @@ func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]Log, error) {
 		}
 		page.CountCache = &countCache
 	}
-	return list, nil
+	utils.Struct2StructByJson(list, &newList)
+	return newList, nil
 }
 
 // =======================================================

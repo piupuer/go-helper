@@ -19,6 +19,7 @@ type Options struct {
 	operationAllowedToDelete   bool
 	getCurrentUser             func(c *gin.Context) ms.User
 	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
+	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64

@@ -11,16 +11,16 @@ type FsmApprovalLog struct {
 
 type FsmApprovingLog struct {
 	Base
-	Uuid            string `json:"uuid"`
-	Category        uint   `json:"category"`
-	Approved        uint   `json:"approved"`
-	SubmitterRoleId uint   `json:"submitterRoleId"`
-	SubmitterUserId uint   `json:"submitterUserId"`
-	ApprovalRoleId  uint   `json:"approvalRoleId"`
-	ApprovalUserId  uint   `json:"approvalUserId"`
-	ApprovalOpinion string `json:"approvalOpinion"`
-	PrevDetail      string `json:"prevDetail"`
-	Detail          string `json:"detail"`
+	Uuid             string `json:"uuid"`
+	Category         uint   `json:"category"`
+	SubmitterRoleId  uint   `json:"submitterRoleId"`
+	SubmitterRole    Role   `json:"submitterRole"`
+	SubmitterUserId  uint   `json:"submitterUserId"`
+	SubmitterUser    User   `json:"submitterUser"`
+	PrevDetail       string `json:"prevDetail"`
+	Detail           string `json:"detail"`
+	CanApprovalRoles []Role `json:"canApprovalRoles"`
+	CanApprovalUsers []User `json:"canApprovalUsers"`
 }
 
 type FsmLogTrack struct {

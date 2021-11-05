@@ -11,3 +11,9 @@ type User struct {
 	PathRoleId      uint   `json:"pathRoleId"`
 	PathRoleKeyword string `json:"pathRoleKeyword"`
 }
+
+type Role struct {
+	M
+	Name    string `json:"name"`
+	Keyword string `json:"keyword"`
+}
