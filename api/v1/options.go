@@ -96,6 +96,14 @@ func WithFindRoleKeywordByRoleIds(fun func(c *gin.Context, roleIds []uint) []str
 	}
 }
 
+func WithFindRoleByIds(fun func(c *gin.Context, roleIds []uint) []ms.Role) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).findRoleByIds = fun
+		}
+	}
+}
+
 func WithFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.User) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
