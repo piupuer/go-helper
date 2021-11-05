@@ -516,6 +516,7 @@ func (fs Fsm) FindLog(r req.FsmLog) ([]Log, error) {
 		Preload("NextEvent").
 		Preload("NextEvent.Roles").
 		Preload("NextEvent.Users").
+		Preload("NextEvent.Name").
 		Preload("CanApprovalRoles").
 		Preload("CanApprovalUsers").
 		Where("category = ?", r.Category).
