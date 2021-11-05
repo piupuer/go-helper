@@ -23,7 +23,7 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindMachine(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.Machine{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.Machine{}, r.Page)
 	}
 }
 

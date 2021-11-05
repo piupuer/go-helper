@@ -117,7 +117,7 @@ func GetSuccessWithData(data interface{}) Resp {
 }
 
 func GetSuccessWithPageData(real, brief interface{}, page Page) Resp {
-	utils.Struct2StructByJson(real, &brief)
+	utils.Struct2StructByJson(real, brief)
 	var rp PageData
 	rp.Page = page
 	rp.List = brief

@@ -57,7 +57,7 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 				}
 			}
 		}
-		resp.SuccessWithPageData(list, []resp.Message{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.Message{}, r.Page)
 	}
 }
 

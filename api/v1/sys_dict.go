@@ -23,7 +23,7 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindDict(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.Dict{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.Dict{}, r.Page)
 	}
 }
 
@@ -83,7 +83,7 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindDictData(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.DictData{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.DictData{}, r.Page)
 	}
 }
 

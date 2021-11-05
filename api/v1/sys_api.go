@@ -25,7 +25,7 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 			my := query.NewMySql(ops.dbOps...)
 			list = my.FindApi(&r)
 		}
-		resp.SuccessWithPageData(list, []resp.Api{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.Api{}, r.Page)
 	}
 }
 

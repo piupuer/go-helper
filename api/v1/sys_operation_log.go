@@ -16,7 +16,7 @@ func FindOperationLog(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		list := q.FindOperationLog(&r)
-		resp.SuccessWithPageData(list, []resp.OperationLog{}, r.Page)
+		resp.SuccessWithPageData(list, &[]resp.OperationLog{}, r.Page)
 	}
 }
 
