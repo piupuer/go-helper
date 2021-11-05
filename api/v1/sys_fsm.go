@@ -35,7 +35,7 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		q := query.NewMySql(ops.dbOps...)
 		list, err := q.FindFsmApprovingLog(&r)
 		resp.CheckErr(err)
-		resp.SuccessWithPageData(list, []resp.FsmApprovalLog{}, r.Page)
+		resp.SuccessWithPageData(list, []resp.FsmApprovingLog{}, r.Page)
 	}
 }
 
