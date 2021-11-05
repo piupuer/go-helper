@@ -580,8 +580,18 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 			})
 		}
 		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {
+			var waitingConfirm, waitingResubmit bool
+			if len(log.NextEvent.Roles) == 0 && len(log.NextEvent.Users) == 0 {
+				if strings.HasSuffix(log.NextEvent.Name.Name, constant.FsmSuffixConfirm) {
+					waitingConfirm = true
+				} else {
+					waitingResubmit = true
+				}
+			}
 			track = append(track, resp.FsmLogTrack{
-				Name: logs[i].Detail,
+				Name:     logs[i].Detail,
+				Resubmit: waitingResubmit,
+				Confirm:  waitingConfirm,
 			})
 		}
 	}

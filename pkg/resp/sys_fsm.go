@@ -31,6 +31,8 @@ type FsmLogTrack struct {
 	Status    uint                    `json:"status"`
 	End       bool                    `json:"end"`
 	Cancel    bool                    `json:"cancel"`
+	Resubmit  bool                    `json:"resubmit"`
+	Confirm   bool                    `json:"confirm"`
 }
 
 type FsmMachine struct {
