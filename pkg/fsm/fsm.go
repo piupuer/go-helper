@@ -551,21 +551,30 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 		}
 		if end || cancel {
 			track = append(track, resp.FsmLogTrack{
-				Name:    log.PrevDetail,
-				Opinion: prevOpinion,
-				Cancel:  prevCancel,
+				CreatedAt: log.CreatedAt,
+				UpdatedAt: log.UpdatedAt,
+				Name:      log.PrevDetail,
+				Opinion:   prevOpinion,
+				Status:    log.Approved,
+				Cancel:    prevCancel,
 			}, resp.FsmLogTrack{
-				Name:    log.Detail,
-				Opinion: log.ApprovalOpinion,
-				End:     end,
-				Cancel:  cancel,
+				CreatedAt: log.CreatedAt,
+				UpdatedAt: log.UpdatedAt,
+				Name:      log.Detail,
+				Opinion:   log.ApprovalOpinion,
+				Status:    log.Approved,
+				End:       end,
+				Cancel:    cancel,
 			})
 		} else {
 			track = append(track, resp.FsmLogTrack{
-				Name:    log.PrevDetail,
-				Opinion: prevOpinion,
-				End:     end,
-				Cancel:  cancel,
+				CreatedAt: log.CreatedAt,
+				UpdatedAt: log.UpdatedAt,
+				Name:      log.PrevDetail,
+				Opinion:   prevOpinion,
+				Status:    log.Approved,
+				End:       end,
+				Cancel:    cancel,
 			})
 		}
 		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {

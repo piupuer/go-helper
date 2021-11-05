@@ -1,5 +1,7 @@
 package resp
 
+import "github.com/golang-module/carbon"
+
 type FsmApprovalLog struct {
 	End             bool `json:"end"`             // is ended?
 	WaitingConfirm  bool `json:"waitingConfirm"`  // is waiting submitter confirm?
@@ -8,10 +10,13 @@ type FsmApprovalLog struct {
 }
 
 type FsmLogTrack struct {
-	Name    string `json:"name"`
-	Opinion string `json:"opinion"`
-	End     bool   `json:"end"`
-	Cancel  bool   `json:"cancel"`
+	CreatedAt carbon.ToDateTimeString `json:"createdAt"`
+	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"`
+	Name      string                  `json:"name"`
+	Opinion   string                  `json:"opinion"`
+	Status    uint                    `json:"status"`
+	End       bool                    `json:"end"`
+	Cancel    bool                    `json:"cancel"`
 }
 
 type FsmMachine struct {
