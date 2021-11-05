@@ -16,6 +16,7 @@ type FsmLogTrack struct {
 
 type FsmMachine struct {
 	Base
+	Category                   uint   `json:"category"`
 	Name                       string `json:"name"`
 	SubmitterName              string `json:"submitterName"`
 	SubmitterEditFields        string `json:"submitterEditFields"`

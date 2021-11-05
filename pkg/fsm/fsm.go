@@ -90,6 +90,15 @@ func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 	}
 	var machine Machine
 	utils.Struct2StructByJson(r, &machine)
+	// category is unique
+	var count int64
+	fs.session.
+		Model(&machine).
+		Where("category = ?", machine.Category).
+		Count(&count)
+	if count > 0 {
+		return nil, fmt.Errorf("fsm category %d already exists", machine.Category)
+	}
 	// save json for query
 	machine.EventsJson = utils.Struct2Json(r.Levels)
 	err := fs.session.Create(&machine).Error
@@ -417,6 +426,9 @@ func (fs Fsm) FindMachine(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	list := make([]Machine, 0)
 	q := fs.session.Model(&Machine{})
 	name := strings.TrimSpace(r.Name)
+	if r.Category != nil {
+		q.Where("category = ?", *r.Category)
+	}
 	if name != "" {
 		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}

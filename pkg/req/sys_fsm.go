@@ -3,6 +3,7 @@ package req
 import "github.com/piupuer/go-helper/pkg/resp"
 
 type FsmCreateMachine struct {
+	Category                   NullUint         `json:"category"`
 	Name                       string           `json:"name"`
 	SubmitterName              string           `json:"submitterName"`
 	SubmitterEditFields        string           `json:"submitterEditFields"`
@@ -67,6 +68,7 @@ type FsmLog struct {
 }
 
 type FsmMachine struct {
+	Category         *NullUint `json:"category"`
 	Name             string    `json:"name" form:"name"`
 	SubmitterName    string    `json:"submitterName" form:"submitterName"`
 	SubmitterConfirm *NullUint `json:"submitterConfirm" form:"submitterConfirm"`

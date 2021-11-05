@@ -5,6 +5,7 @@ import "github.com/piupuer/go-helper/ms"
 // finite state machine
 type Machine struct {
 	ms.M
+	Category                   uint    `gorm:"default:1;comment:'custom category(>0)'" json:"category"`
 	Name                       string  `gorm:"comment:'fsm name'" json:"name"`
 	SubmitterName              string  `gorm:"comment:'submitter username or role name'" json:"submitterName"`
 	SubmitterEditFields        string  `gorm:"comment:'submitter can edit fields'" json:"submitterEditFields"`
