@@ -114,6 +114,14 @@ func WithFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.User) func(
 	}
 }
 
+func WithFsmTransition(fun func(c *gin.Context, logs ...resp.FsmApprovalLog) error) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).fsmTransition = fun
+		}
+	}
+}
+
 func WithUploadSaveDir(dir string) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).uploadSaveDir = dir
