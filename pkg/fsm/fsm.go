@@ -607,6 +607,7 @@ func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]Log, error) {
 	ids := append(logIds1, logIds2...)
 	if len(ids) > 0 {
 		q := fs.session.
+			Model(&Log{}).
 			Where("approved = ?", constant.FsmLogStatusWaiting).
 			Where("id IN (?)", ids)
 		if uint(r.Category) > constant.Zero {
