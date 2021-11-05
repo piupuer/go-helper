@@ -383,6 +383,21 @@ func (fs Fsm) CancelLog(category uint) error {
 		Updates(&m).Error
 }
 
+func (fs Fsm) CancelLogByUuids(ids []string) error {
+	if fs.Error != nil {
+		return fs.Error
+	}
+	m := make(map[string]interface{}, 0)
+	m["approved"] = constant.FsmLogStatusCancelled
+	m["next_event_id"] = constant.Zero
+	m["detail"] = constant.FsmMsgManualCancel
+	return fs.session.
+		Model(&Log{}).
+		Where("uuid IN (?)", ids).
+		Where("approved = ?", constant.FsmLogStatusWaiting).
+		Updates(&m).Error
+}
+
 // =======================================================
 // query function
 // =======================================================

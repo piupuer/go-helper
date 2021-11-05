@@ -15,6 +15,7 @@ const (
 	FsmMsgSubmitterCancel = "submitter cancelled"
 	FsmMsgEnded           = "process ended"
 	FsmMsgConfigChanged   = "configuration changes"
+	FsmMsgManualCancel    = "manual cancelled"
 )
 
 const (
