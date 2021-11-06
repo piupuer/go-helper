@@ -21,6 +21,8 @@ type FsmApprovingLog struct {
 	SubmitterUser    User   `json:"submitterUser"`
 	PrevDetail       string `json:"prevDetail"`
 	Detail           string `json:"detail"`
+	Confirm          uint   `json:"confirm"`
+	Resubmit         uint   `json:"resubmit"`
 	CanApprovalRoles []Role `json:"canApprovalRoles"`
 	CanApprovalUsers []User `json:"canApprovalUsers"`
 }
