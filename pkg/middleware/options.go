@@ -136,7 +136,7 @@ type IdempotenceOptions struct {
 	prefix          string
 	expire          int
 	tokenName       string
-	successWithData func(interface{})
+	successWithData func(...interface{})
 	failWithMsg     func(format interface{}, a ...interface{})
 }
 
@@ -176,7 +176,7 @@ func WithIdempotenceTokenName(name string) func(*IdempotenceOptions) {
 	}
 }
 
-func WithIdempotenceSuccessWithData(fun func(interface{})) func(*IdempotenceOptions) {
+func WithIdempotenceSuccessWithData(fun func(...interface{})) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
 		if fun != nil {
 			getIdempotenceOptionsOrSetDefault(options).successWithData = fun
@@ -226,7 +226,7 @@ type JwtOptions struct {
 	cookieName         string
 	privateBytes       []byte
 	success            func()
-	successWithData    func(interface{})
+	successWithData    func(...interface{})
 	failWithMsg        func(format interface{}, a ...interface{})
 	failWithCodeAndMsg func(code int, format interface{}, a ...interface{})
 	loginPwdCheck      func(c *gin.Context, username, password string) (userId int64, pass bool)
@@ -302,7 +302,7 @@ func WithJwtSuccess(fun func()) func(*JwtOptions) {
 	}
 }
 
-func WithJwtSuccessWithData(fun func(interface{})) func(*JwtOptions) {
+func WithJwtSuccessWithData(fun func(...interface{})) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
 			getJwtOptionsOrSetDefault(options).successWithData = fun
