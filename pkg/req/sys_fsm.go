@@ -66,9 +66,9 @@ type UpdateFsmSubmitterDetail struct {
 func (d *UpdateFsmSubmitterDetail) Parse() {
 	k := make([]string, len(d.Fields))
 	v := make([]string, len(d.Fields))
-	for _, field := range d.Fields {
-		k = append(k, field.Key)
-		v = append(v, field.Key)
+	for i, field := range d.Fields {
+		k[i] = field.Key
+		v[i] = field.Val
 	}
 	d.Keys = k
 	d.Vals = v
