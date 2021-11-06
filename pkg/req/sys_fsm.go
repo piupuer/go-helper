@@ -49,7 +49,7 @@ type FsmApproveLog struct {
 type FsmCheckEditLogDetailPermission struct {
 	Category       NullUint `json:"category"`
 	Uuid           string   `json:"uuid"`
-	Submitter      bool     `json:"submitter"`
+	Approver       bool     `json:"approver"`
 	ApprovalRoleId uint     `json:"approvalRoleId"`
 	ApprovalUserId uint     `json:"approvalUserId"`
 	Fields         []string `json:"fields"`

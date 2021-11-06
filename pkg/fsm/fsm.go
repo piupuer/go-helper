@@ -479,8 +479,11 @@ func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission
 	}
 	submitter := false
 	confirm := false
-	if log.SubmitterRoleId == r.ApprovalRoleId && log.SubmitterUserId == r.ApprovalUserId && r.Submitter {
+	if log.SubmitterRoleId == r.ApprovalRoleId && log.SubmitterUserId == r.ApprovalUserId {
 		submitter = true
+	}
+	if r.Approver {
+		submitter = false
 	}
 	if submitter && log.NextEventId == 0 {
 		confirm = true

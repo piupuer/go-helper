@@ -112,11 +112,14 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
+		r.Parse()
 		err := q.FsmCheckEditLogDetailPermission(req.FsmCheckEditLogDetailPermission{
-			Category: r.Category,
-			Uuid: r.Uuid,
+			Category:       r.Category,
+			Uuid:           r.Uuid,
 			ApprovalRoleId: u.RoleId,
 			ApprovalUserId: u.Id,
+			Fields:         r.Keys,
+			Approver:       true,
 		})
 		resp.CheckErr(err)
 		err = ops.updateFsmSubmitterDetail(c, r)
