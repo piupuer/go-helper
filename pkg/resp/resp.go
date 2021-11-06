@@ -114,11 +114,13 @@ func GetSuccess() Resp {
 
 func GetSuccessWithData(data ...interface{}) Resp {
 	switch len(data) {
+	case 1:
+		return GetResult(Ok, data[0], CustomError[Ok])
 	case 2:
 		utils.Struct2StructByJson(data[0], data[1])
 		return GetResult(Ok, data[1], CustomError[Ok])
 	}
-	return GetResult(Ok, data, CustomError[Ok])
+	return GetSuccess()
 }
 
 func GetSuccessWithPageData(real, brief interface{}, page Page) Resp {
