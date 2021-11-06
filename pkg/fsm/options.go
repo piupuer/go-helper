@@ -48,6 +48,7 @@ func WithTransition(fun func(ctx context.Context, logs ...resp.FsmApprovalLog) e
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
+			logger: logger.DefaultLogger(),
 			prefix: constant.FsmPrefix,
 		}
 	}
