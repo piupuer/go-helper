@@ -290,7 +290,7 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 func loginResponse(c *gin.Context, code int, token string, expires time.Time, ops JwtOptions) {
 	ops.successWithData(map[string]interface{}{
 		"token":   token,
-		"expires": carbon.Time2Carbon(expires),
+		"expires": carbon.Time2Carbon(expires).ToDateTimeString(),
 	})
 }
 
@@ -303,7 +303,7 @@ func logoutResponse(c *gin.Context, code int, ops JwtOptions) {
 func refreshResponse(c *gin.Context, code int, token string, expires time.Time, ops JwtOptions) {
 	ops.successWithData(map[string]interface{}{
 		"token":   token,
-		"expires": carbon.Time2Carbon(expires),
+		"expires": carbon.Time2Carbon(expires).ToDateTimeString(),
 	})
 }
 
