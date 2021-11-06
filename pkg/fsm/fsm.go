@@ -129,6 +129,11 @@ func (fs Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (*Machine, erro
 	if err != nil {
 		return nil, err
 	}
+	// cancel log when machine config change
+	_, err = fs.CancelLog(oldMachine.Category)
+	if err != nil {
+		return nil, err
+	}
 	levels := make([]req.FsmCreateEvent, len(r.Levels))
 	copy(levels, r.Levels)
 	r.Levels = make([]req.FsmCreateEvent, 0)
