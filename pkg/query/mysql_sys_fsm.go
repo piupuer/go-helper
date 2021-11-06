@@ -24,6 +24,11 @@ func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error)
 	return f.ApproveLog(r)
 }
 
+func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
+	f := fsm.New(my.Tx)
+	return f.CheckEditLogDetailPermission(r)
+}
+
 // create finite state machine
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	f := fsm.New(my.Tx)

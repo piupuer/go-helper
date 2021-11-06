@@ -40,10 +40,19 @@ type FsmCreateLog struct {
 type FsmApproveLog struct {
 	Category        NullUint `json:"category" form:"category"`
 	Uuid            string   `json:"uuid" form:"uuid"`
-	ApprovalRoleId  uint     `json:"approvalRoleId" form:"approvalRoleId"`
-	ApprovalUserId  uint     `json:"approvalUserId" form:"approvalUserId"`
+	ApprovalRoleId  uint     `json:"approvalRoleId"`
+	ApprovalUserId  uint     `json:"approvalUserId"`
 	ApprovalOpinion string   `json:"approvalOpinion" form:"approvalOpinion"`
 	Approved        NullUint `json:"approved" form:"approved"`
+}
+
+type FsmCheckEditLogDetailPermission struct {
+	Category       NullUint `json:"category"`
+	Uuid           string   `json:"uuid"`
+	Submitter      bool     `json:"submitter"`
+	ApprovalRoleId uint     `json:"approvalRoleId"`
+	ApprovalUserId uint     `json:"approvalUserId"`
+	Fields         []string `json:"fields"`
 }
 
 type FsmSubmitterDetail struct {
@@ -77,14 +86,14 @@ func (d *UpdateFsmSubmitterDetail) Parse() {
 type FsmPermissionLog struct {
 	Category       NullUint `json:"category" form:"category"`
 	Uuid           string   `json:"uuid" form:"uuid"`
-	ApprovalRoleId uint     `json:"approvalRoleId" form:"approvalRoleId"`
-	ApprovalUserId uint     `json:"approvalUserId" form:"approvalUserId"`
+	ApprovalRoleId uint     `json:"approvalRoleId"`
+	ApprovalUserId uint     `json:"approvalUserId"`
 	Approved       uint     `json:"approved" form:"approved"`
 }
 
 type FsmPendingLog struct {
-	ApprovalRoleId uint     `json:"approvalRoleId" form:"approvalRoleId"`
-	ApprovalUserId uint     `json:"approvalUserId" form:"approvalUserId"`
+	ApprovalRoleId uint     `json:"approvalRoleId"`
+	ApprovalUserId uint     `json:"approvalUserId"`
 	Category       NullUint `json:"category" form:"category"`
 	resp.Page
 }

@@ -36,8 +36,8 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		var r req.FsmPendingLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
-		r.ApprovalRoleId = u.Id
-		r.ApprovalUserId = u.RoleId
+		r.ApprovalRoleId = u.RoleId
+		r.ApprovalUserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		list, err := q.FindFsmApprovingLog(&r)
@@ -100,13 +100,26 @@ func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 
 func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
+	if ops.getCurrentUser == nil {
+		panic("getCurrentUser is empty")
+	}
 	if ops.updateFsmSubmitterDetail == nil {
 		panic("updateFsmSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
 		var r req.UpdateFsmSubmitterDetail
 		req.ShouldBind(c, &r)
-		err := ops.updateFsmSubmitterDetail(c, r)
+		u := ops.getCurrentUser(c)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		err := q.FsmCheckEditLogDetailPermission(req.FsmCheckEditLogDetailPermission{
+			Category: r.Category,
+			Uuid: r.Uuid,
+			ApprovalRoleId: u.RoleId,
+			ApprovalUserId: u.Id,
+		})
+		resp.CheckErr(err)
+		err = ops.updateFsmSubmitterDetail(c, r)
 		resp.CheckErr(err)
 		resp.Success()
 	}
@@ -114,6 +127,9 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 
 func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
+	if ops.getCurrentUser == nil {
+		panic("getCurrentUser is empty")
+	}
 	if ops.fsmTransition == nil {
 		panic("fsmTransition is empty")
 	}
@@ -121,8 +137,8 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 		var r req.FsmApproveLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
-		r.ApprovalRoleId = u.Id
-		r.ApprovalUserId = u.RoleId
+		r.ApprovalRoleId = u.RoleId
+		r.ApprovalUserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		item, err := q.FsmApproveLog(r)

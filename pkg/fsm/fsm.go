@@ -464,6 +464,61 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 	return log, nil
 }
 
+// check verify whether the current user/role has permission to edit log detail
+func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
+	if fs.Error != nil {
+		return fs.Error
+	}
+	// check whether approval is pending
+	log, err := fs.getLastPendingLog(req.FsmLog{
+		Category: r.Category,
+		Uuid:     r.Uuid,
+	})
+	if err != nil {
+		return ErrNoEditLogDetailPermission
+	}
+	submitter := false
+	confirm := false
+	if log.SubmitterRoleId == r.ApprovalRoleId && log.SubmitterUserId == r.ApprovalUserId && r.Submitter {
+		submitter = true
+	}
+	if submitter && log.NextEventId == 0 {
+		confirm = true
+	}
+	edit := false
+	editFields := ""
+	if submitter || confirm {
+		var machine *Machine
+		machine, err = fs.GetMachineByCategory(uint(r.Category))
+		if err != nil {
+			return err
+		}
+		edit = true
+		if submitter {
+			editFields = machine.SubmitterEditFields
+		} else {
+			editFields = machine.SubmitterConfirmEditFields
+		}
+	} else {
+		edit = log.NextEvent.Edit == constant.One
+		editFields = log.NextEvent.EditFields
+	}
+
+	if !edit {
+		return ErrNoEditLogDetailPermission
+	}
+	// split permission fields
+	fields := strings.Split(editFields, ",")
+	if len(fields) > 0 {
+		for _, f := range r.Fields {
+			if !utils.Contains(fields, f) {
+				return fmt.Errorf("%s with field: %s", ErrNoEditLogDetailPermission, f)
+			}
+		}
+	}
+	return nil
+}
+
 // get machine by category
 func (fs Fsm) GetMachineByCategory(category uint) (*Machine, error) {
 	if fs.Error != nil {
@@ -690,6 +745,7 @@ func (fs Fsm) getLastPendingLog(r req.FsmLog) (*Log, error) {
 		Preload("CanApprovalRoles").
 		Preload("CanApprovalUsers").
 		Preload("Progress").
+		Preload("CurrentEvent").
 		Preload("NextEvent").
 		Where("category = ?", r.Category).
 		Where("uuid = ?", r.Uuid).
@@ -1059,7 +1115,7 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 		roles := make([]Role, 0)
 		users := make([]User, 0)
 		if i == 0 {
-			// submitter has edit perssion
+			// submitter has edit permission
 			edit = constant.One
 			editFields = machine.SubmitterEditFields
 		} else if i < len(desc)-1 || machine.SubmitterConfirm == constant.Zero {
