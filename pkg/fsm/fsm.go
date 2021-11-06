@@ -511,7 +511,7 @@ func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission
 		return ErrNoEditLogDetailPermission
 	}
 	// split permission fields
-	fields := strings.Split(editFields, ",")
+	fields := strings.Split(utils.SnakeCase(editFields), ",")
 	if len(fields) > 0 {
 		for _, f := range r.Fields {
 			if !utils.Contains(fields, utils.SnakeCase(f)) {
