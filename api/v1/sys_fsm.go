@@ -89,12 +89,26 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getFsmSubmitterDetail == nil {
-		panic("getFsmDetail is empty")
+		panic("getFsmSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
 		var r req.FsmSubmitterDetail
 		req.ShouldBind(c, &r)
 		resp.SuccessWithData(ops.getFsmSubmitterDetail(c, r))
+	}
+}
+
+func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	if ops.updateFsmSubmitterDetail == nil {
+		panic("updateFsmSubmitterDetail is empty")
+	}
+	return func(c *gin.Context) {
+		var r req.UpdateFsmSubmitterDetail
+		req.ShouldBind(c, &r)
+		err := ops.updateFsmSubmitterDetail(c, r)
+		resp.CheckErr(err)
+		resp.Success()
 	}
 }
 

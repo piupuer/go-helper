@@ -37,6 +37,12 @@ type FsmLogTrack struct {
 	Confirm   bool                    `json:"confirm"`
 }
 
+type FsmSubmitterDetail struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+	Val  string `json:"val"`
+}
+
 type FsmMachine struct {
 	Base
 	Category                   uint   `json:"category"`

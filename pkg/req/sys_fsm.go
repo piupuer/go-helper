@@ -51,6 +51,29 @@ type FsmSubmitterDetail struct {
 	Uuid     string   `json:"uuid" form:"uuid"`
 }
 
+type FsmSubmitterDetailField struct {
+	Key string `json:"key"`
+	Val string `json:"val"`
+}
+
+type UpdateFsmSubmitterDetail struct {
+	FsmSubmitterDetail
+	Fields []FsmSubmitterDetailField `json:"fields"`
+	Keys   []string                  `json:"-"`
+	Vals   []string                  `json:"-"`
+}
+
+func (d *UpdateFsmSubmitterDetail) Parse() {
+	k := make([]string, len(d.Fields))
+	v := make([]string, len(d.Fields))
+	for _, field := range d.Fields {
+		k = append(k, field.Key)
+		v = append(v, field.Key)
+	}
+	d.Keys = k
+	d.Vals = v
+}
+
 type FsmPermissionLog struct {
 	Category       NullUint `json:"category" form:"category"`
 	Uuid           string   `json:"uuid" form:"uuid"`

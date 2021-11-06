@@ -24,7 +24,8 @@ type Options struct {
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	fsmTransition              func(c *gin.Context, logs ...resp.FsmApprovalLog) error
-	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []string
+	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail
+	updateFsmSubmitterDetail   func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64
 	uploadMergeConcurrentCount int
@@ -124,10 +125,18 @@ func WithFsmTransition(fun func(c *gin.Context, logs ...resp.FsmApprovalLog) err
 	}
 }
 
-func WithFsmGetFsmSubmitterDetail(fun func(c *gin.Context, detail req.FsmSubmitterDetail) []string) func(*Options) {
+func WithFsmGetFsmSubmitterDetail(fun func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).getFsmSubmitterDetail = fun
+		}
+	}
+}
+
+func WithFsmUpdateFsmSubmitterDetail(fun func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).updateFsmSubmitterDetail = fun
 		}
 	}
 }
