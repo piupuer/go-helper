@@ -331,6 +331,12 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		}
 		newLog.ProgressId = progressItem.Id
 		newLog.NextEventId = nextEvent.Id
+		if rp.Resubmit {
+			newLog.Resubmit = constant.One
+		}
+		if rp.Confirm {
+			newLog.Confirm = constant.One
+		}
 		if noUser {
 			newLog.CanApprovalRoles = []Role{
 				{
@@ -695,18 +701,10 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 			})
 		}
 		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {
-			var confirm, resubmit bool
-			if len(log.NextEvent.Roles) == 0 && len(log.NextEvent.Users) == 0 {
-				if strings.HasSuffix(log.NextEvent.Name.Name, constant.FsmSuffixConfirm) {
-					confirm = true
-				} else {
-					resubmit = true
-				}
-			}
 			track = append(track, resp.FsmLogTrack{
 				Name:     logs[i].Detail,
-				Resubmit: resubmit,
-				Confirm:  confirm,
+				Resubmit: log.Resubmit == constant.One,
+				Confirm:  log.Confirm == constant.One,
 			})
 		}
 	}
