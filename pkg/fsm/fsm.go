@@ -130,7 +130,7 @@ func (fs Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (*Machine, erro
 		return nil, err
 	}
 	// cancel log when machine config change
-	_, err = fs.CancelLog(oldMachine.Category)
+	err = fs.CancelLog(oldMachine.Category)
 	if err != nil {
 		return nil, err
 	}
@@ -372,13 +372,18 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &rp, nil
+	// status transition
+	if fs.ops.transition == nil {
+		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		return &rp, nil
+	}
+	return &rp, fs.ops.transition(fs.ops.ctx, rp)
 }
 
 // cancel log by category(it is applicable to the automatic cancellation of records to be approved when the approval configuration changes)
-func (fs Fsm) CancelLog(category uint) ([]resp.FsmApprovalLog, error) {
+func (fs Fsm) CancelLog(category uint) error {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return fs.Error
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
@@ -398,12 +403,26 @@ func (fs Fsm) CancelLog(category uint) ([]resp.FsmApprovalLog, error) {
 			Cancel:   true,
 		})
 	}
-	return list, q.Updates(&m).Error
+	// status transition
+	err := fs.ops.transition(fs.ops.ctx, list...)
+	if err != nil {
+		return err
+	}
+	err = q.Updates(&m).Error
+	if err != nil {
+		return err
+	}
+	// status transition
+	if fs.ops.transition == nil {
+		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		return nil
+	}
+	return fs.ops.transition(fs.ops.ctx, list...)
 }
 
-func (fs Fsm) CancelLogByUuids(ids []string) ([]resp.FsmApprovalLog, error) {
+func (fs Fsm) CancelLogByUuids(ids []string) error {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return fs.Error
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
@@ -423,7 +442,16 @@ func (fs Fsm) CancelLogByUuids(ids []string) ([]resp.FsmApprovalLog, error) {
 			Cancel:   true,
 		})
 	}
-	return list, q.Updates(&m).Error
+	err := q.Updates(&m).Error
+	if err != nil {
+		return err
+	}
+	// status transition
+	if fs.ops.transition == nil {
+		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		return nil
+	}
+	return fs.ops.transition(fs.ops.ctx, list...)
 }
 
 // =======================================================

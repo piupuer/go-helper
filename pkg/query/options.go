@@ -9,6 +9,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
+	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -22,6 +23,7 @@ type MysqlOptions struct {
 	enforcer        *casbin.Enforcer
 	txCtxKey        string
 	requestIdCtxKey string
+	fsmTransition   func(ctx context.Context, logs ...resp.FsmApprovalLog) error
 }
 
 func WithMysqlLogger(l logger.Interface) func(*MysqlOptions) {
@@ -60,6 +62,14 @@ func WithMysqlCasbinEnforcer(enforcer *casbin.Enforcer) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if enforcer != nil {
 			getMysqlOptionsOrSetDefault(options).enforcer = enforcer
+		}
+	}
+}
+
+func WithMysqlFsmTransition(fun func(ctx context.Context, logs ...resp.FsmApprovalLog) error) func(*MysqlOptions) {
+	return func(options *MysqlOptions) {
+		if fun != nil {
+			getMysqlOptionsOrSetDefault(options).fsmTransition = fun
 		}
 	}
 }

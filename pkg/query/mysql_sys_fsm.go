@@ -20,7 +20,7 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLo
 
 // find waiting approve log
 func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
-	f := fsm.New(my.Tx)
+	f := fsm.New(my.Tx, fsm.WithTransition(my.ops.fsmTransition))
 	return f.ApproveLog(r)
 }
 
@@ -38,7 +38,7 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 
 // update finite state machine
 func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
-	f := fsm.New(my.Tx)
+	f := fsm.New(my.Tx, fsm.WithTransition(my.ops.fsmTransition))
 	_, err := f.UpdateMachineById(id, r)
 	return err
 }

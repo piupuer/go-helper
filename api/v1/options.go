@@ -23,7 +23,6 @@ type Options struct {
 	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
-	fsmTransition              func(c *gin.Context, logs ...resp.FsmApprovalLog) error
 	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail
 	updateFsmSubmitterDetail   func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error
 	uploadSaveDir              string
@@ -113,14 +112,6 @@ func WithFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.User) func(
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).findUserByIds = fun
-		}
-	}
-}
-
-func WithFsmTransition(fun func(c *gin.Context, logs ...resp.FsmApprovalLog) error) func(*Options) {
-	return func(options *Options) {
-		if fun != nil {
-			getOptionsOrSetDefault(options).fsmTransition = fun
 		}
 	}
 }

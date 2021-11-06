@@ -4,6 +4,7 @@ import "fmt"
 
 var (
 	ErrDbNil                     = fmt.Errorf("db instance is empty")
+	ErrTransitionNil             = fmt.Errorf("transition handler is empty")
 	ErrEventsNil                 = fmt.Errorf("events is empty")
 	ErrEventNameNil              = fmt.Errorf("event name is empty")
 	ErrEventEndPointNotUnique    = fmt.Errorf("event end position is not unique or has no end position")
