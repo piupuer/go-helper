@@ -112,7 +112,12 @@ func GetSuccess() Resp {
 	return GetResult(Ok, map[string]interface{}{}, CustomError[Ok])
 }
 
-func GetSuccessWithData(data interface{}) Resp {
+func GetSuccessWithData(data ...interface{}) Resp {
+	switch len(data) {
+	case 2:
+		utils.Struct2StructByJson(data[0], data[1])
+		return GetResult(Ok, data[1], CustomError[Ok])
+	}
 	return GetResult(Ok, data, CustomError[Ok])
 }
 
@@ -145,8 +150,8 @@ func Success() {
 	panic(GetSuccess())
 }
 
-func SuccessWithData(data interface{}) {
-	panic(GetSuccessWithData(data))
+func SuccessWithData(data ...interface{}) {
+	panic(GetSuccessWithData(data...))
 }
 
 func SuccessWithPageData(real, brief interface{}, page Page) {
