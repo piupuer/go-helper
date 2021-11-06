@@ -514,7 +514,7 @@ func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission
 	fields := strings.Split(editFields, ",")
 	if len(fields) > 0 {
 		for _, f := range r.Fields {
-			if !utils.Contains(fields, f) {
+			if !utils.Contains(fields, utils.SnakeCase(f)) {
 				return fmt.Errorf("%s with field: %s", ErrNoEditLogDetailPermission, f)
 			}
 		}
