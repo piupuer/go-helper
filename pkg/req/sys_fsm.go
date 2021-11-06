@@ -46,6 +46,11 @@ type FsmApproveLog struct {
 	Approved        NullUint `json:"approved" form:"approved"`
 }
 
+type FsmSubmitterDetail struct {
+	Category NullUint `json:"category" form:"category"`
+	Uuid     string   `json:"uuid" form:"uuid"`
+}
+
 type FsmPermissionLog struct {
 	Category       NullUint `json:"category" form:"category"`
 	Uuid           string   `json:"uuid" form:"uuid"`

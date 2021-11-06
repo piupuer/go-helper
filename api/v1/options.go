@@ -8,6 +8,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/oss"
 	"github.com/piupuer/go-helper/pkg/query"
+	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 )
 
@@ -23,7 +24,7 @@ type Options struct {
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	fsmTransition              func(c *gin.Context, logs ...resp.FsmApprovalLog) error
-	getFsmDetail               func(c *gin.Context, uuid string) []string
+	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []string
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64
 	uploadMergeConcurrentCount int
@@ -123,10 +124,10 @@ func WithFsmTransition(fun func(c *gin.Context, logs ...resp.FsmApprovalLog) err
 	}
 }
 
-func WithFsmGetFsmDetail(fun func(c *gin.Context, uuid string) []string) func(*Options) {
+func WithFsmGetFsmSubmitterDetail(fun func(c *gin.Context, detail req.FsmSubmitterDetail) []string) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
-			getOptionsOrSetDefault(options).getFsmDetail = fun
+			getOptionsOrSetDefault(options).getFsmSubmitterDetail = fun
 		}
 	}
 }
