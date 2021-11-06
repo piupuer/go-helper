@@ -394,7 +394,7 @@ func (fs Fsm) CancelLog(category uint) error {
 		Where("category = ?", category).
 		Where("approved = ?", constant.FsmLogStatusWaiting)
 	oldLogs := make([]Log, 0)
-	q.Pluck("uuid", &oldLogs)
+	q.Find(&oldLogs)
 	list := make([]resp.FsmApprovalLog, 0)
 	for i, l := 0, len(oldLogs); i < l; i++ {
 		list = append(list, resp.FsmApprovalLog{
@@ -433,7 +433,7 @@ func (fs Fsm) CancelLogByUuids(ids []string) error {
 		Where("uuid IN (?)", ids).
 		Where("approved = ?", constant.FsmLogStatusWaiting)
 	oldLogs := make([]Log, 0)
-	q.Pluck("uuid", &oldLogs)
+	q.Find(&oldLogs)
 	list := make([]resp.FsmApprovalLog, 0)
 	for i, l := 0, len(oldLogs); i < l; i++ {
 		list = append(list, resp.FsmApprovalLog{
