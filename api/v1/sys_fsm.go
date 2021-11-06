@@ -42,51 +42,58 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		q := query.NewMySql(ops.dbOps...)
 		list, err := q.FindFsmApprovingLog(&r)
 		resp.CheckErr(err)
-		if ops.findRoleByIds != nil {
-			roleIds := make([]uint, 0)
-			for _, item := range list {
-				roleIds = append(roleIds, item.SubmitterRoleId)
-				for _, u := range item.CanApprovalRoles {
-					roleIds = append(roleIds, u.Id)
-				}
-			}
-			roles := ops.findRoleByIds(c, roleIds)
-			newRoles := make([]resp.Role, len(roles))
-			utils.Struct2StructByJson(roles, &newRoles)
-			m := make(map[uint]resp.Role)
-			for _, role := range newRoles {
-				m[role.Id] = role
-			}
-			for i, item := range list {
-				list[i].SubmitterRole = m[item.SubmitterRoleId]
-				for j, u := range item.CanApprovalRoles {
-					list[i].CanApprovalRoles[j] = m[u.Id]
-				}
+		roleIds := make([]uint, 0)
+		for _, item := range list {
+			roleIds = append(roleIds, item.SubmitterRoleId)
+			for _, u := range item.CanApprovalRoles {
+				roleIds = append(roleIds, u.Id)
 			}
 		}
-		if ops.findUserByIds != nil {
-			userIds := make([]uint, 0)
-			for _, item := range list {
-				userIds = append(userIds, item.SubmitterUserId)
-				for _, u := range item.CanApprovalUsers {
-					userIds = append(userIds, u.Id)
-				}
+		roles := ops.findRoleByIds(c, roleIds)
+		newRoles := make([]resp.Role, len(roles))
+		utils.Struct2StructByJson(roles, &newRoles)
+		m1 := make(map[uint]resp.Role)
+		for _, role := range newRoles {
+			m1[role.Id] = role
+		}
+		for i, item := range list {
+			list[i].SubmitterRole = m1[item.SubmitterRoleId]
+			for j, u := range item.CanApprovalRoles {
+				list[i].CanApprovalRoles[j] = m1[u.Id]
 			}
-			users := ops.findUserByIds(c, userIds)
-			newUsers := make([]resp.User, len(users))
-			utils.Struct2StructByJson(users, &newUsers)
-			m := make(map[uint]resp.User)
-			for _, user := range newUsers {
-				m[user.Id] = user
+		}
+		userIds := make([]uint, 0)
+		for _, item := range list {
+			userIds = append(userIds, item.SubmitterUserId)
+			for _, u := range item.CanApprovalUsers {
+				userIds = append(userIds, u.Id)
 			}
-			for i, item := range list {
-				list[i].SubmitterUser = m[item.SubmitterUserId]
-				for j, u := range item.CanApprovalUsers {
-					list[i].CanApprovalUsers[j] = m[u.Id]
-				}
+		}
+		users := ops.findUserByIds(c, userIds)
+		newUsers := make([]resp.User, len(users))
+		utils.Struct2StructByJson(users, &newUsers)
+		m2 := make(map[uint]resp.User)
+		for _, user := range newUsers {
+			m2[user.Id] = user
+		}
+		for i, item := range list {
+			list[i].SubmitterUser = m2[item.SubmitterUserId]
+			for j, u := range item.CanApprovalUsers {
+				list[i].CanApprovalUsers[j] = m2[u.Id]
 			}
 		}
 		resp.SuccessWithPageData(list, &[]resp.FsmApprovingLog{}, r.Page)
+	}
+}
+
+func GetFsmDetail(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	if ops.getFsmDetail == nil {
+		panic("getFsmDetail is empty")
+	}
+	return func(c *gin.Context) {
+		uid := c.Param("id")
+		resp.SuccessWithData(ops.getFsmDetail(c, uid))
 	}
 }
 

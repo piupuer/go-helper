@@ -9,6 +9,7 @@ func (rt Router) Fsm() {
 	router2.POST("/create", v1.CreateFsm(rt.ops.v1Ops...))
 	router1.PATCH("/update/:id", v1.UpdateFsmById(rt.ops.v1Ops...))
 	router1.GET("/approving/list", v1.FindFsmApprovingLog(rt.ops.v1Ops...))
+	router1.GET("/detail/:id", v1.GetFsmDetail(rt.ops.v1Ops...))
 	router1.PATCH("/approve", v1.FsmApproveLog(rt.ops.v1Ops...))
 	router1.DELETE("/delete/batch", v1.DeleteFsmByIds(rt.ops.v1Ops...))
 }

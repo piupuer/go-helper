@@ -23,6 +23,7 @@ type Options struct {
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	fsmTransition              func(c *gin.Context, logs ...resp.FsmApprovalLog) error
+	getFsmDetail               func(c *gin.Context, uuid string) []string
 	uploadSaveDir              string
 	uploadSingleMaxSize        int64
 	uploadMergeConcurrentCount int
@@ -118,6 +119,14 @@ func WithFsmTransition(fun func(c *gin.Context, logs ...resp.FsmApprovalLog) err
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).fsmTransition = fun
+		}
+	}
+}
+
+func WithFsmGetFsmDetail(fun func(c *gin.Context, uuid string) []string) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).getFsmDetail = fun
 		}
 	}
 }
