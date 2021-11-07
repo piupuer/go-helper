@@ -436,8 +436,8 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
-	m["approve_role_id"] = r.ApprovalRoleId
-	m["approve_user_id"] = r.ApprovalUserId
+	m["approval_role_id"] = r.ApprovalRoleId
+	m["approval_user_id"] = r.ApprovalUserId
 	m["next_event_id"] = constant.Zero
 	m["detail"] = constant.FsmMsgManualCancel
 	q := fs.session.
