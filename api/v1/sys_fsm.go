@@ -86,6 +86,19 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.FsmLog
+		req.ShouldBind(c, &r)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		item, err := q.FindFsmLogTrack(r)
+		resp.CheckErr(err)
+		resp.SuccessWithData(item)
+	}
+}
+
 func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getFsmSubmitterDetail == nil {

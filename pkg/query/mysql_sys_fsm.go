@@ -26,6 +26,20 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLo
 	return f.FindPendingLogByApprover(r)
 }
 
+// find approve log
+func (my MySql) FindFsmLogTrack(r req.FsmLog) ([]resp.FsmLogTrack, error) {
+	f := fsm.New(
+		my.Tx,
+		fsm.WithLogger(my.ops.logger),
+		fsm.WithCtx(my.Ctx),
+	)
+	logs, err := f.FindLog(r)
+	if err != nil {
+		return nil, err
+	}
+	return f.FindLogTrack(logs)
+}
+
 // find waiting approve log
 func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	f := fsm.New(

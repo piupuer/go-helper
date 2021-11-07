@@ -31,7 +31,7 @@ type FsmUpdateMachine struct {
 }
 
 type FsmCancelLog struct {
-	Uuids    []string `json:"uuids"`
+	Uuids []string `json:"uuids"`
 }
 
 type FsmCreateLog struct {
