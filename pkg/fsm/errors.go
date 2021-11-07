@@ -9,7 +9,7 @@ var (
 	ErrEventNameNil              = fmt.Errorf("event name is empty")
 	ErrEventEndPointNotUnique    = fmt.Errorf("event end position is not unique or has no end position")
 	ErrRepeatSubmit              = fmt.Errorf("approval record already exists")
-	ErrStatus                    = fmt.Errorf("illegal approval status")
+	ErrParams                    = fmt.Errorf("illegal param")
 	ErrNoPermissionApprove       = fmt.Errorf("no permission to pass the approval")
 	ErrNoPermissionRefuse        = fmt.Errorf("no permission to refuse approval")
 	ErrNoPermissionOrEnded       = fmt.Errorf("no permission to approve or approval ended")

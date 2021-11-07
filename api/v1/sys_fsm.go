@@ -162,9 +162,15 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 
 func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
+	if ops.getCurrentUser == nil {
+		panic("getCurrentUser is empty")
+	}
 	return func(c *gin.Context) {
 		var r req.FsmCancelLog
 		req.ShouldBind(c, &r)
+		u := ops.getCurrentUser(c)
+		r.ApprovalRoleId = u.RoleId
+		r.ApprovalUserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		err := q.FsmCancelLogByUuids(r)

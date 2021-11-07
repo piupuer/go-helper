@@ -59,7 +59,7 @@ func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 		fsm.WithCtx(my.Ctx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
-	return f.CancelLogByUuids(r.Uuids)
+	return f.CancelLogByUuids(r)
 }
 
 // check edit log detail permission

@@ -289,7 +289,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	}
 
 	if eventName == "" {
-		return nil, ErrStatus
+		return nil, fmt.Errorf("%s: approved", ErrParams)
 	}
 	nextName := getNextItemName(approved, eventName)
 	f.SetState(nextName)
@@ -427,20 +427,28 @@ func (fs Fsm) CancelLog(category uint) error {
 	return fs.ops.transition(fs.ops.ctx, list...)
 }
 
-func (fs Fsm) CancelLogByUuids(ids []string) error {
+func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 	if fs.Error != nil {
 		return fs.Error
 	}
+	if len(r.Uuids) == 0 {
+		return fmt.Errorf("%s: uuids", ErrParams)
+	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
+	m["approve_role_id"] = r.ApprovalRoleId
+	m["approve_user_id"] = r.ApprovalUserId
 	m["next_event_id"] = constant.Zero
 	m["detail"] = constant.FsmMsgManualCancel
 	q := fs.session.
 		Model(&Log{}).
-		Where("uuid IN (?)", ids).
+		Where("uuid IN (?)", r.Uuids).
 		Where("approved = ?", constant.FsmLogStatusWaiting)
 	oldLogs := make([]Log, 0)
 	q.Find(&oldLogs)
+	if len(oldLogs) == 0 {
+		return ErrNoPermissionOrEnded
+	}
 	list := make([]resp.FsmApprovalLog, 0)
 	for i, l := 0, len(oldLogs); i < l; i++ {
 		list = append(list, resp.FsmApprovalLog{

@@ -31,7 +31,9 @@ type FsmUpdateMachine struct {
 }
 
 type FsmCancelLog struct {
-	Uuids []string `json:"uuids"`
+	ApprovalRoleId uint     `json:"approvalRoleId"`
+	ApprovalUserId uint     `json:"approvalUserId"`
+	Uuids          []string `json:"uuids"`
 }
 
 type FsmCreateLog struct {
