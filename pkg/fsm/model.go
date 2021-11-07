@@ -5,7 +5,7 @@ import "github.com/piupuer/go-helper/ms"
 // finite state machine
 type Machine struct {
 	ms.M
-	Category                   uint    `gorm:"default:1;comment:'custom category(>0)'" json:"category"`
+	Category                   uint    `gorm:"comment:'custom category(>0)'" json:"category"`
 	Name                       string  `gorm:"comment:'fsm name'" json:"name"`
 	SubmitterName              string  `gorm:"comment:'submitter username or role name'" json:"submitterName"`
 	SubmitterEditFields        string  `gorm:"comment:'submitter can edit fields'" json:"submitterEditFields"`
@@ -27,9 +27,9 @@ type Event struct {
 	Src        []EventItem `gorm:"many2many:event_src_item_relation;" json:"src"`
 	DstId      uint        `gorm:"comment:'destination event'" json:"dstId"`
 	Dst        EventItem   `gorm:"foreignKey:DstId" json:"dst"`
-	Edit       uint        `gorm:"type:tinyint(1);default:1;comment:'approver can edit(0: no, 1: yes)'" json:"edit"`
+	Edit       uint        `gorm:"type:tinyint(1);comment:'approver can edit(0: no, 1: yes)'" json:"edit"`
 	EditFields string      `gorm:"comment:'approver can edit fields(split by comma, can edit all field if it empty, edit=1 take effect)'" json:"editFields"`
-	Refuse     uint        `gorm:"type:tinyint(1);default:1;comment:'approver can refuse(0: no, 1: yes)'" json:"refuse"`
+	Refuse     uint        `gorm:"type:tinyint(1);comment:'approver can refuse(0: no, 1: yes)'" json:"refuse"`
 	Roles      []Role      `gorm:"many2many:event_role_relation;comment:'approver role ids'" json:"roles"`
 	Users      []User      `gorm:"many2many:event_user_relation;comment:'approver user ids'" json:"users"`
 }
@@ -68,7 +68,7 @@ type EventItem struct {
 // fsm log(save every operation)
 type Log struct {
 	ms.M
-	Category         uint      `gorm:"default:1;comment:'custom category(>0)'" json:"category"`
+	Category         uint      `gorm:"comment:'custom category(>0)'" json:"category"`
 	Uuid             string    `gorm:"comment:'unique str'" json:"uuid"`
 	Approved         uint      `gorm:"type:tinyint(1);default:0;comment:'approval status'" json:"approved"`
 	ProgressId       uint      `gorm:"comment:'current progress'" json:"progressId"`
