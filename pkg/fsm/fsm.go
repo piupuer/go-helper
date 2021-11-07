@@ -250,7 +250,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		m["approval_opinion"] = r.ApprovalOpinion
 		m["next_event_id"] = constant.Zero
 		m["detail"] = constant.FsmMsgSubmitterCancel
-		rp.Cancel = true
+		rp.Cancel = constant.One
 		err = fs.session.
 			Model(&Log{}).
 			Where("id = ?", oldLog.Id).
@@ -324,17 +324,17 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		if len(nextEvent.Roles) == 0 && len(nextEvent.Users) == 0 {
 			noUser = true
 			if strings.HasSuffix(nextEvent.Name.Name, constant.FsmSuffixConfirm) {
-				rp.Confirm = true
+				rp.Confirm = constant.One
 			} else {
-				rp.Resubmit = true
+				rp.Resubmit = constant.One
 			}
 		}
 		newLog.ProgressId = progressItem.Id
 		newLog.NextEventId = nextEvent.Id
-		if rp.Resubmit {
+		if rp.Resubmit == constant.One {
 			newLog.Resubmit = constant.One
 		}
-		if rp.Confirm {
+		if rp.Confirm == constant.One {
 			newLog.Confirm = constant.One
 		}
 		newLog.Refuse = nextEvent.Refuse
@@ -355,7 +355,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		}
 		newLog.Detail = nextEvent.Name.Name
 	} else {
-		rp.End = true
+		rp.End = constant.One
 		newLog.Approved = constant.FsmLogStatusApproved
 		newLog.Detail = constant.FsmMsgEnded
 	}
@@ -407,7 +407,7 @@ func (fs Fsm) CancelLog(category uint) error {
 		list = append(list, resp.FsmApprovalLog{
 			Uuid:     oldLogs[i].Uuid,
 			Category: oldLogs[i].Category,
-			Cancel:   true,
+			Cancel:   constant.One,
 		})
 	}
 	// status transition
@@ -454,7 +454,7 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 		list = append(list, resp.FsmApprovalLog{
 			Uuid:     oldLogs[i].Uuid,
 			Category: oldLogs[i].Category,
-			Cancel:   true,
+			Cancel:   constant.One,
 		})
 	}
 	err := q.Updates(&m).Error
@@ -669,19 +669,24 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 	l := len(logs)
 	for i, log := range logs {
 		prevApproved := constant.FsmLogStatusWaiting
-		prevCancel := false
+		prevCancel := constant.Zero
 		prevOpinion := ""
-		end := false
-		cancel := log.Approved == constant.FsmLogStatusCancelled
+		end := constant.Zero
+		cancel := constant.Zero
+		if log.Approved == constant.FsmLogStatusCancelled {
+			cancel = constant.One
+		}
 		if i > 0 {
 			prevApproved = logs[i-1].Approved
-			prevCancel = logs[i-1].Approved == constant.FsmLogStatusCancelled
+			if logs[i-1].Approved == constant.FsmLogStatusCancelled {
+				prevCancel = constant.One
+			}
 			prevOpinion = logs[i-1].ApprovalOpinion
 		}
 		if i == l-1 && log.NextEventId == constant.Zero {
-			end = true
+			end = constant.One
 		}
-		if end || cancel {
+		if end == constant.One || cancel == constant.One {
 			track = append(track, resp.FsmLogTrack{
 				CreatedAt: log.CreatedAt,
 				UpdatedAt: log.UpdatedAt,
@@ -712,8 +717,8 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {
 			track = append(track, resp.FsmLogTrack{
 				Name:     logs[i].Detail,
-				Resubmit: log.Resubmit == constant.One,
-				Confirm:  log.Confirm == constant.One,
+				Resubmit: log.Resubmit,
+				Confirm:  log.Confirm,
 			})
 		}
 	}

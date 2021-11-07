@@ -5,10 +5,10 @@ import "github.com/golang-module/carbon"
 type FsmApprovalLog struct {
 	Uuid     string `json:"uuid"`
 	Category uint   `json:"category"`
-	End      bool   `json:"end"`      // is ended?
-	Confirm  bool   `json:"confirm"`  // is waiting submitter confirm?
-	Resubmit bool   `json:"resubmit"` // is waiting submitter resubmit?
-	Cancel   bool   `json:"cancel"`   // is submitter canceled?
+	End      uint   `json:"end"`      // is ended?
+	Confirm  uint   `json:"confirm"`  // is waiting submitter confirm?
+	Resubmit uint   `json:"resubmit"` // is waiting submitter resubmit?
+	Cancel   uint   `json:"cancel"`   // is submitter canceled?
 }
 
 type FsmApprovingLog struct {
@@ -34,10 +34,10 @@ type FsmLogTrack struct {
 	Name      string                  `json:"name"`
 	Opinion   string                  `json:"opinion"`
 	Status    uint                    `json:"status"`
-	End       bool                    `json:"end"`
-	Cancel    bool                    `json:"cancel"`
-	Resubmit  bool                    `json:"resubmit"`
-	Confirm   bool                    `json:"confirm"`
+	End       uint                    `json:"end"`
+	Cancel    uint                    `json:"cancel"`
+	Resubmit  uint                    `json:"resubmit"`
+	Confirm   uint                    `json:"confirm"`
 }
 
 type FsmSubmitterDetail struct {
