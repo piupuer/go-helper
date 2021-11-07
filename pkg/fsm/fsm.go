@@ -337,6 +337,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		if rp.Confirm {
 			newLog.Confirm = constant.One
 		}
+		newLog.Refuse = nextEvent.Refuse
 		if noUser {
 			newLog.CanApprovalRoles = []Role{
 				{

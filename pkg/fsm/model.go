@@ -84,6 +84,7 @@ type Log struct {
 	CurrentEvent     Event     `gorm:"foreignKey:CurrentEventId;comment:'current event'" json:"currentEvent"`
 	Resubmit         uint      `gorm:"type:tinyint(1);default:0;comment:'waiting submitter resubmit'" json:"resubmit"`
 	Confirm          uint      `gorm:"type:tinyint(1);default:0;comment:'waiting submitter confirm'" json:"confirm"`
+	Refuse           uint      `gorm:"type:tinyint(1);default:0;comment:'refuse permission'" json:"refuse"`
 	NextEventId      uint      `gorm:"comment:'next event id'" json:"nextEventId"`
 	NextEvent        Event     `gorm:"foreignKey:NextEventId;comment:'next event'" json:"nextEvent"`
 	CanApprovalRoles []Role    `gorm:"many2many:log_approval_role_relation;comment:'can approve roles'" json:"canApprovalRoles"`
