@@ -12,10 +12,10 @@ func Casbin(options ...func(*CasbinOptions)) gin.HandlerFunc {
 	for _, f := range options {
 		f(ops)
 	}
-	if ops.enforcer == nil {
-		panic("casbin enforcer is empty")
+	if ops.Enforcer == nil {
+		panic("casbin Enforcer is empty")
 	}
-	if ops.enforcer == nil {
+	if ops.Enforcer == nil {
 		panic("casbin getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
@@ -38,6 +38,6 @@ var checkLock sync.Mutex
 func check(sub, obj, act string, ops CasbinOptions) bool {
 	checkLock.Lock()
 	defer checkLock.Unlock()
-	pass, _ := ops.enforcer.Enforce(sub, obj, act)
+	pass, _ := ops.Enforcer.Enforce(sub, obj, act)
 	return pass
 }

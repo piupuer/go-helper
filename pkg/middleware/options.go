@@ -47,7 +47,7 @@ type CasbinOptions struct {
 	logger         logger.Interface
 	urlPrefix      string
 	getCurrentUser func(c *gin.Context) ms.User
-	enforcer       *casbin.Enforcer
+	Enforcer       *casbin.Enforcer
 	failWithCode   func(code int)
 }
 
@@ -76,7 +76,7 @@ func WithCasbinGetCurrentUser(fun func(c *gin.Context) ms.User) func(*CasbinOpti
 func WithCasbinEnforcer(enforcer *casbin.Enforcer) func(*CasbinOptions) {
 	return func(options *CasbinOptions) {
 		if enforcer != nil {
-			getCasbinOptionsOrSetDefault(options).enforcer = enforcer
+			getCasbinOptionsOrSetDefault(options).Enforcer = enforcer
 		}
 	}
 }
@@ -87,6 +87,14 @@ func WithCasbinFailWithCode(fun func(code int)) func(*CasbinOptions) {
 			getCasbinOptionsOrSetDefault(options).failWithCode = fun
 		}
 	}
+}
+
+func ParseCasbinOptions(options ...func(*CasbinOptions)) *CasbinOptions {
+	ops := getCasbinOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	return ops
 }
 
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {

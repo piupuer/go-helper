@@ -34,6 +34,19 @@ func NewRouter(options ...func(*Options)) *Router {
 			query.WithMessageHubLogger(ops.logger),
 		))
 	}
+	if ops.casbin {
+		cabinOps := middleware.ParseCasbinOptions(ops.casbinOps...)
+		if cabinOps.Enforcer != nil {
+			ops.v1Ops = append(
+				ops.v1Ops,
+				v1.WithDbOps(
+					query.WithMysqlCasbinEnforcer(cabinOps.Enforcer),
+				),
+				v1.WithBinlogOps(
+					query.WithRedisCasbinEnforcer(cabinOps.Enforcer),
+				))
+		}
+	}
 	if ops.redis != nil {
 		ops.idempotenceOps = append(ops.idempotenceOps, middleware.WithIdempotenceRedis(ops.redis))
 		ops.v1Ops = append(ops.v1Ops, v1.WithRedis(ops.redis))
