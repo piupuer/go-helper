@@ -54,12 +54,17 @@ func Str2Uint(str string) uint {
 	return uint(num)
 }
 
-func Str2UintArr(str string) (ids []uint) {
-	idArr := strings.Split(str, ",")
+func Str2UintArr(str string) []uint {
+	ids := make([]uint, 0)
+	s := strings.TrimSpace(str)
+	if s == "" {
+		return ids
+	}
+	idArr := strings.Split(s, ",")
 	for _, v := range idArr {
 		ids = append(ids, Str2Uint(v))
 	}
-	return
+	return ids
 }
 
 func Str2Int(str string) int {
@@ -78,20 +83,30 @@ func Str2Int64(str string) int64 {
 	return num
 }
 
-func Str2IntArr(str string) (ids []int) {
-	idArr := strings.Split(str, ",")
+func Str2IntArr(str string) []int {
+	ids := make([]int, 0)
+	s := strings.TrimSpace(str)
+	if s == "" {
+		return ids
+	}
+	idArr := strings.Split(s, ",")
 	for _, v := range idArr {
 		ids = append(ids, Str2Int(v))
 	}
-	return
+	return ids
 }
 
-func Str2Int64Arr(str string) (ids []int64) {
-	idArr := strings.Split(str, ",")
+func Str2Int64Arr(str string) []int64 {
+	ids := make([]int64, 0)
+	s := strings.TrimSpace(str)
+	if s == "" {
+		return ids
+	}
+	idArr := strings.Split(s, ",")
 	for _, v := range idArr {
 		ids = append(ids, Str2Int64(v))
 	}
-	return
+	return ids
 }
 
 func EncodeStr2Base64(str string) string {

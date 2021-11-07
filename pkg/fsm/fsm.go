@@ -1167,12 +1167,12 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 			edit = constant.One
 			editFields = machine.SubmitterEditFields
 		} else if i < len(desc)-1 || machine.SubmitterConfirm == constant.Zero {
-			// machineIddle levels
+			// machine middle levels
 			index := (i+1)/2 - 1
 			edit = uint(r[index].Edit)
 			editFields = r[index].EditFields
 			refuse = uint(r[index].Refuse)
-			// mock roles/users
+			// find roles/users
 			roles = fs.findRole(r[index].Roles.Uints())
 			users = fs.findUser(r[index].Users.Uints())
 		} else if i == len(desc)-1 && machine.SubmitterConfirm == constant.One {
