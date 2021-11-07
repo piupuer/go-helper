@@ -37,6 +37,18 @@ func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error)
 	return f.ApproveLog(r)
 }
 
+// cancel finite state machine log by uuids
+func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
+	f := fsm.New(
+		my.Tx,
+		fsm.WithLogger(my.ops.logger),
+		fsm.WithCtx(my.Ctx),
+		fsm.WithTransition(my.ops.fsmTransition),
+	)
+	return f.CancelLogByUuids(r.Uuids)
+}
+
+// check edit log detail permission
 func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
 	f := fsm.New(
 		my.Tx,

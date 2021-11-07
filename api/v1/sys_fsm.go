@@ -147,6 +147,19 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		var r req.FsmCancelLog
+		req.ShouldBind(c, &r)
+		ops.addCtx(c)
+		q := query.NewMySql(ops.dbOps...)
+		err := q.FsmCancelLogByUuids(r)
+		resp.CheckErr(err)
+		resp.Success()
+	}
+}
+
 func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

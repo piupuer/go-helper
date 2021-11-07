@@ -12,5 +12,6 @@ func (rt Router) Fsm() {
 	router1.GET("/submitter/detail", v1.GetFsmSubmitterDetail(rt.ops.v1Ops...))
 	router1.PATCH("/submitter/detail", v1.UpdateFsmSubmitterDetail(rt.ops.v1Ops...))
 	router1.PATCH("/approve", v1.FsmApproveLog(rt.ops.v1Ops...))
+	router1.PATCH("/cancel", v1.FsmCancelLogByUuids(rt.ops.v1Ops...))
 	router1.DELETE("/delete/batch", v1.DeleteFsmByIds(rt.ops.v1Ops...))
 }

@@ -30,6 +30,10 @@ type FsmUpdateMachine struct {
 	Levels                     []FsmCreateEvent `json:"levels"`
 }
 
+type FsmCancelLog struct {
+	Uuids    []string `json:"uuids"`
+}
+
 type FsmCreateLog struct {
 	Category        NullUint `json:"category" form:"category"`
 	Uuid            string   `json:"uuid" form:"uuid"`
