@@ -15,7 +15,6 @@ type FsmCreateMachine struct {
 type FsmCreateEvent struct {
 	Name       string   `json:"name" form:"name"`
 	Edit       NullUint `json:"edit" form:"edit"`
-	Refuse     NullUint `json:"refuse" form:"refuse"`
 	EditFields string   `json:"editFields" form:"editFields"`
 	Roles      IdsStr   `json:"roles" form:"roles"`
 	Users      IdsStr   `json:"users" form:"users"`

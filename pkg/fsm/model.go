@@ -29,7 +29,6 @@ type Event struct {
 	Dst        EventItem   `gorm:"foreignKey:DstId" json:"dst"`
 	Edit       uint        `gorm:"type:tinyint(1);comment:'approver can edit(0: no, 1: yes)'" json:"edit"`
 	EditFields string      `gorm:"comment:'approver can edit fields(split by comma, can edit all field if it empty, edit=1 take effect)'" json:"editFields"`
-	Refuse     uint        `gorm:"type:tinyint(1);comment:'approver can refuse(0: no, 1: yes)'" json:"refuse"`
 	Roles      []Role      `gorm:"many2many:event_role_relation;comment:'approver role ids'" json:"roles"`
 	Users      []User      `gorm:"many2many:event_user_relation;comment:'approver user ids'" json:"users"`
 }
@@ -84,7 +83,6 @@ type Log struct {
 	CurrentEvent     Event     `gorm:"foreignKey:CurrentEventId;comment:'current event'" json:"currentEvent"`
 	Resubmit         uint      `gorm:"type:tinyint(1);default:0;comment:'waiting submitter resubmit'" json:"resubmit"`
 	Confirm          uint      `gorm:"type:tinyint(1);default:0;comment:'waiting submitter confirm'" json:"confirm"`
-	Refuse           uint      `gorm:"type:tinyint(1);default:0;comment:'refuse permission'" json:"refuse"`
 	NextEventId      uint      `gorm:"comment:'next event id'" json:"nextEventId"`
 	NextEvent        Event     `gorm:"foreignKey:NextEventId;comment:'next event'" json:"nextEvent"`
 	CanApprovalRoles []Role    `gorm:"many2many:log_approval_role_relation;comment:'can approve roles'" json:"canApprovalRoles"`

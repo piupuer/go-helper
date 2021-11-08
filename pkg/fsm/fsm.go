@@ -337,7 +337,6 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		if rp.Confirm == constant.One {
 			newLog.Confirm = constant.One
 		}
-		newLog.Refuse = nextEvent.Refuse
 		if noUser {
 			newLog.CanApprovalRoles = []Role{
 				{
@@ -505,9 +504,6 @@ func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
 	}
 	if !utils.Contains(roles, r.ApprovalRoleId) && !utils.Contains(users, r.ApprovalUserId) {
 		return nil, ErrNoPermissionApprove
-	}
-	if r.Approved == constant.FsmLogStatusRefused && log.NextEvent.Refuse == constant.Zero {
-		return nil, ErrNoPermissionRefuse
 	}
 	return log, nil
 }
@@ -1156,9 +1152,8 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 			}
 		}
 
-		// default: no edit/refuse permission
+		// default: no edit permission
 		edit := constant.Zero
-		refuse := constant.Zero
 		editFields := ""
 		roles := make([]Role, 0)
 		users := make([]User, 0)
@@ -1171,7 +1166,6 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 			index := (i+1)/2 - 1
 			edit = uint(r[index].Edit)
 			editFields = r[index].EditFields
-			refuse = uint(r[index].Refuse)
 			// find roles/users
 			roles = fs.findRole(r[index].Roles.Uints())
 			users = fs.findUser(r[index].Users.Uints())
@@ -1190,7 +1184,6 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 			DstId:      dstId,
 			Edit:       edit,
 			EditFields: editFields,
-			Refuse:     refuse,
 			Roles:      roles,
 			Users:      users,
 		})

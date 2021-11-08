@@ -23,7 +23,6 @@ type FsmApprovingLog struct {
 	Detail           string `json:"detail"`
 	Confirm          uint   `json:"confirm"`
 	Resubmit         uint   `json:"resubmit"`
-	Refuse           uint   `json:"refuse"`
 	CanApprovalRoles []Role `json:"canApprovalRoles"`
 	CanApprovalUsers []User `json:"canApprovalUsers"`
 }
