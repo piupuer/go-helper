@@ -150,8 +150,9 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 					}
 					record.Status = item.Code
 				}
-			} else {
-				response = "no resp"
+			}
+			if response == "" {
+				response = "{}"
 			}
 			record.Resp = response
 
