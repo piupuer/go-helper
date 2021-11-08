@@ -34,7 +34,8 @@ type OperationRecord struct {
 	Method     string                  `json:"method"`
 	Header     string                  `json:"header"`
 	Body       string                  `json:"body"`
-	Data       string                  `json:"data"`
+	Params     string                  `json:"params"`
+	Resp       string                  `json:"resp"`
 	Status     int                     `json:"status"`
 	Username   string                  `json:"username"`
 	RoleName   string                  `json:"roleName"`
@@ -60,6 +61,8 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			// write back to gin request body
 			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 		}
+		// find request params
+		reqParams := c.Request.URL.Query()
 		defer func() {
 			if ops.skipGetOrOptionsMethod {
 				// skip GET/OPTIONS
@@ -117,6 +120,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				Path:      strings.TrimPrefix(c.Request.URL.Path, "/"+ops.urlPrefix),
 				Header:    utils.Struct2Json(header),
 				Body:      string(body),
+				Params:    utils.Struct2Json(reqParams),
 				Latency:   endTime.Time.Sub(startTime.Time),
 				UserAgent: c.Request.UserAgent(),
 			}
@@ -137,9 +141,9 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 
 			record.Status = c.Writer.Status()
 			rp, exists := c.Get(ops.ctxKey)
-			var data string
+			var response string
 			if exists {
-				data = utils.Struct2Json(rp)
+				response = utils.Struct2Json(rp)
 				if item, ok := rp.(resp.Resp); ok {
 					if item.Code == resp.Unauthorized {
 						return
@@ -147,9 +151,9 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 					record.Status = item.Code
 				}
 			} else {
-				data = "no data"
+				response = "no resp"
 			}
-			record.Data = data
+			record.Resp = response
 
 			// delay to update to db
 			logLock.Lock()
