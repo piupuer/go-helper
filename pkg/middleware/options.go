@@ -551,9 +551,10 @@ func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOption
 }
 
 type TransactionOptions struct {
-	dbNoTx          *gorm.DB
-	requestIdCtxKey string
-	txCtxKey        string
+	dbNoTx             *gorm.DB
+	requestIdCtxKey    string
+	txCtxKey           string
+	operationLogCtxKey string
 }
 
 func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
@@ -576,11 +577,18 @@ func WithTransactionTxCtxKey(key string) func(*TransactionOptions) {
 	}
 }
 
+func WithTransactionOperationLogCtxKey(key string) func(*TransactionOptions) {
+	return func(options *TransactionOptions) {
+		getTransactionOptionsOrSetDefault(options).operationLogCtxKey = key
+	}
+}
+
 func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
 		return &TransactionOptions{
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
+			requestIdCtxKey:    constant.MiddlewareRequestIdCtxKey,
+			txCtxKey:           constant.MiddlewareTransactionTxCtxKey,
+			operationLogCtxKey: constant.MiddlewareOperationLogCtxKey,
 		}
 	}
 	return options
