@@ -7,9 +7,9 @@ type OperationLog struct {
 	ApiDesc    string        `json:"apiDesc"`
 	Path       string        `json:"path"`
 	Method     string        `json:"method"`
-	Params     string        `json:"params"`
 	Body       string        `json:"body"`
-	Data       string        `json:"data"`
+	Params     string        `json:"params"`
+	Resp       string        `json:"resp"`
 	Status     int           `json:"status"`
 	Username   string        `json:"username"`
 	RoleName   string        `json:"roleName"`
