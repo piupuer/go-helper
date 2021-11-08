@@ -10,7 +10,7 @@ type SysOperationLog struct {
 	Header     string        `gorm:"type:blob;comment:'request header'" json:"header"`
 	Body       string        `gorm:"type:blob;comment:'request body'" json:"body"`
 	Params     string        `gorm:"type:blob;comment:'request params'" json:"params"`
-	Resp       string        `gorm:"type:blob;comment:'response data'" json:"data"`
+	Resp       string        `gorm:"type:blob;comment:'response data'" json:"resp"`
 	Status     int           `gorm:"comment:'response status'" json:"status"`
 	Username   string        `gorm:"comment:'login username'" json:"username"`
 	RoleName   string        `gorm:"comment:'login role name'" json:"roleName"`
