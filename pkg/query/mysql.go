@@ -297,6 +297,34 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 	return
 }
 
+// find data by q condition(no cache / no limit primary)
+func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{}) {
+	rv := reflect.ValueOf(model)
+	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
+		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		return
+	}
+	countCache := false
+	if page.CountCache != nil {
+		countCache = *page.CountCache
+	}
+	if !page.NoPagination {
+		if !page.SkipCount {
+			q.Count(&page.Total)
+		}
+		if page.Total > 0 || page.SkipCount {
+			limit, offset := page.GetLimit()
+			q.Limit(limit).Offset(offset).Find(model)
+		}
+	} else {
+		// no pagination
+		q.Find(model)
+		page.Total = int64(rv.Elem().Len())
+		page.GetLimit()
+	}
+	page.CountCache = &countCache
+}
+
 // scan data  q condition(often used to JOIN)
 func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
