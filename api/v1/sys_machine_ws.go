@@ -179,6 +179,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			}()
 		}
 
+		oldCmd := ""
 		// read user input
 		for {
 			m, p, err := conn.ReadMessage()
@@ -189,14 +190,24 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			}
 
 			if m == websocket.TextMessage {
-				cmd := string(p)
-				if err := utils.IsSafetyCmd(cmd); err != nil {
-					err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%s\r\n\r\n", err.Error())))
-					if err != nil {
-						ops.logger.Warn(c, "write msg failed: %v", err)
-						break
+				s := string(p)
+				if s == "\r" {
+					cmd := oldCmd
+					oldCmd = ""
+					if err := utils.IsSafetyCmd(cmd); err != nil {
+						err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%v\r\n\r\n", err)))
+						if err != nil {
+							ops.logger.Warn(c, "write msg failed: %v", err)
+							break
+						}
+						// write Ctrl C
+						if _, err := channel.Write([]byte{3}); nil != err {
+							break
+						}
+						continue
 					}
-					continue
+				} else {
+					oldCmd += s
 				}
 				if _, err := channel.Write(p); nil != err {
 					break
