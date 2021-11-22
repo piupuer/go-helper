@@ -28,7 +28,7 @@ func RSAGenKey(customBlock string, bits int) ([]byte, []byte, error) {
 	}
 	privateBytes = pem.EncodeToMemory(&privateBlock)
 
-	// 生成公钥
+	// 4. gen public key
 	publicKey := privateKey.PublicKey
 	publicStream, err := x509.MarshalPKIXPublicKey(&publicKey)
 	publicBlock := pem.Block{

@@ -79,15 +79,13 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 				newRows = append(newRows, row)
 			}
 		}
-		break
 	case canal.UpdateAction:
 		// update change
 		// two item is one group
 		for i, l := 0, len(changeRows); i < l; i += 2 {
 			oldRow := changeRows[i]
 			newRow := changeRows[i+1]
-			// get old row index
-			index := getOldRowIndex(ops, newRows, oldRow, e.Table)
+			index := getIndexById(newRows, oldRow[idIndex])
 			if len(newRows) > 0 && index >= 0 {
 				if deletedAtIndex >= 0 && oldRow[deletedAtIndex] == nil && newRow[deletedAtIndex] != nil {
 					if index < rowCount-1 {
@@ -102,12 +100,10 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 				newRows = append(newRows, getRow(ops, newRow, e.Table))
 			}
 		}
-
-		break
 	case canal.DeleteAction:
 		indexes := make([]int, 0)
 		for _, changeRow := range changeRows {
-			index := getOldRowIndex(ops, newRows, changeRow, e.Table)
+			index := getIndexById(newRows, changeRow[idIndex])
 			if index > -1 {
 				indexes = append(indexes, index)
 			}
@@ -122,7 +118,6 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 				newRows = append(newRows[:i])
 			}
 		}
-		break
 	}
 	compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 	if err != nil {
@@ -135,14 +130,10 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	}
 }
 
-// get old row index
-func getOldRowIndex(ops Options, oldRows []map[string]interface{}, data []interface{}, table *schema.Table) int {
-	newRow := getRow(ops, data, table)
-	for i, row := range oldRows {
-		m := make(map[string]interface{}, 0)
-		utils.CompareDiff(row, newRow, &m)
-		// no change
-		if len(m) == 0 {
+// get index by id
+func getIndexById(rows []map[string]interface{}, id interface{}) int {
+	for i, row := range rows {
+		if row[idName] == id {
 			return i
 		}
 	}
