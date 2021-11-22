@@ -25,7 +25,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.GetMenuTree(u.RoleId)
+		list, err := q.GetMenuTree(u.RoleId, u.RoleSort)
 		resp.CheckErr(err)
 		var rp []resp.MenuTree
 		utils.Struct2StructByJson(list, &rp)
@@ -112,6 +112,7 @@ func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		err := q.UpdateById(id, r, new(ms.SysMenu))
+		CacheFlushMenuTree(c, *ops)
 		resp.CheckErr(err)
 		resp.Success()
 	}

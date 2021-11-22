@@ -34,7 +34,7 @@ func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 	tree := make([]ms.SysMenu, 0)
 	accessIds := make([]uint, 0)
 	allMenu := rd.findMenuByCurrentRole(currentRoleId, currentRoleSort)
-	roleMenus := rd.findMenuByRoleId(roleId)
+	roleMenus := rd.findMenuByRoleId(roleId, constant.Zero)
 	tree = rd.GenMenuTree(0, allMenu)
 	for _, menu := range roleMenus {
 		accessIds = append(accessIds, menu.Id)
@@ -44,7 +44,7 @@ func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 }
 
 // find all menus by role id(not menu tree)
-func (rd Redis) findMenuByRoleId(roleId uint) []ms.SysMenu {
+func (rd Redis) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
 	// q current role menu relation
 	relations := make([]ms.SysMenuRoleRelation, 0)
 	menuIds := make([]uint, 0)
@@ -57,10 +57,14 @@ func (rd Redis) findMenuByRoleId(roleId uint) []ms.SysMenu {
 	}
 	roleMenu := make([]ms.SysMenu, 0)
 	if len(menuIds) > 0 {
-		rd.
+		q := rd.
 			Table("sys_menu").
-			Where("id", "in", menuIds).
-			Order("sort").
+			Where("id", "in", menuIds)
+		if roleSort != constant.Zero {
+			// normal user check menu status
+			q.Where("status", "=", constant.One)
+		}
+		q.Order("sort").
 			Find(&roleMenu)
 	}
 	return roleMenu
@@ -71,7 +75,7 @@ func (rd Redis) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.
 	menus := make([]ms.SysMenu, 0)
 	if currentRoleSort != constant.Zero {
 		// find menus by current role id
-		menus = rd.findMenuByRoleId(currentRoleId)
+		menus = rd.findMenuByRoleId(currentRoleId, currentRoleSort)
 	} else {
 		// super admin has all menus
 		rd.

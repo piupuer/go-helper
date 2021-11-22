@@ -8,14 +8,14 @@ import (
 )
 
 // get menu tree by role id
-func (my MySql) GetMenuTree(roleId uint) ([]ms.SysMenu, error) {
+func (my MySql) GetMenuTree(roleId, roleSort uint) ([]ms.SysMenu, error) {
 	tree := make([]ms.SysMenu, 0)
 	// q all menus
 	allMenu := make([]ms.SysMenu, 0)
 	my.Tx.
 		Model(&ms.SysMenu{}).
 		Find(&allMenu)
-	roleMenu := my.findMenuByRoleId(roleId)
+	roleMenu := my.findMenuByRoleId(roleId, roleSort)
 	_, newMenus := addParentMenu(roleMenu, allMenu)
 
 	tree = my.GenMenuTree(0, newMenus)
@@ -64,7 +64,7 @@ func (my MySql) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 	tree := make([]ms.SysMenu, 0)
 	accessIds := make([]uint, 0)
 	allMenu := my.findMenuByCurrentRole(currentRoleId, currentRoleSort)
-	roleMenus := my.findMenuByRoleId(roleId)
+	roleMenus := my.findMenuByRoleId(roleId, constant.Zero)
 	tree = my.GenMenuTree(0, allMenu)
 	for _, menu := range roleMenus {
 		accessIds = append(accessIds, menu.Id)
@@ -135,7 +135,7 @@ func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMen
 
 func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, req req.UpdateMenuIncrementalIds) (err error) {
 	allMenu := my.FindMenu(currentRoleId, currentRoleSort)
-	roleMenus := my.findMenuByRoleId(targetRoleId)
+	roleMenus := my.findMenuByRoleId(targetRoleId, constant.Zero)
 	menuIds := make([]uint, 0)
 	for _, menu := range roleMenus {
 		menuIds = append(menuIds, menu.Id)
@@ -163,7 +163,7 @@ func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId 
 }
 
 // find all menus by role id(not menu tree)
-func (my MySql) findMenuByRoleId(roleId uint) []ms.SysMenu {
+func (my MySql) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
 	// q current role menu relation
 	menuIds := make([]uint, 0)
 	my.Tx.
@@ -172,10 +172,14 @@ func (my MySql) findMenuByRoleId(roleId uint) []ms.SysMenu {
 		Pluck("menu_id", &menuIds)
 	roleMenu := make([]ms.SysMenu, 0)
 	if len(menuIds) > 0 {
-		my.Tx.
+		q := my.Tx.
 			Model(&ms.SysMenu{}).
-			Where("id IN (?)", menuIds).
-			Order("sort").
+			Where("id IN (?)", menuIds)
+		if roleSort != constant.Zero {
+			// normal user check menu status
+			q.Where("status = ?", constant.One)
+		}
+		q.Order("sort").
 			Find(&roleMenu)
 	}
 	return roleMenu
@@ -186,7 +190,7 @@ func (my MySql) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.
 	menus := make([]ms.SysMenu, 0)
 	if currentRoleSort != constant.Zero {
 		// find menus by current role id
-		menus = my.findMenuByRoleId(currentRoleId)
+		menus = my.findMenuByRoleId(currentRoleId, currentRoleSort)
 	} else {
 		// super admin has all menus
 		my.Tx.
