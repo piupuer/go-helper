@@ -79,7 +79,7 @@ func (s *Page) GetLimit() (int, int) {
 	}
 
 	// PageNum greater than maxPageNum is set as empty data: offset=last
-	if int64(s.PageNum) > maxPageNum {
+	if total > 0 && int64(s.PageNum) > maxPageNum {
 		pageNum = maxPageNum + 1
 		offset = limit * maxPageNum
 	}
