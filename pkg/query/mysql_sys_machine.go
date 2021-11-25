@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -37,8 +38,8 @@ func (my MySql) FindMachine(req *req.Machine) []ms.SysMachine {
 func (my MySql) ConnectMachine(id uint) error {
 	var oldMachine ms.SysMachine
 	q := my.Tx.Model(&oldMachine).Where("id = ?", id).First(&oldMachine)
-	if q.Error == gorm.ErrRecordNotFound {
-		return gorm.ErrRecordNotFound
+	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
+		return errors.WithStack(gorm.ErrRecordNotFound)
 	}
 
 	err := initRemoteMachine(&oldMachine)
@@ -48,7 +49,7 @@ func (my MySql) ConnectMachine(id uint) error {
 	if err != nil {
 		newMachine.Status = &unConnectedStatus
 		q.Updates(newMachine)
-		return err
+		return errors.WithStack(err)
 	}
 	newMachine.Status = &normalStatus
 	newMachine.Version = oldMachine.Version
@@ -95,7 +96,7 @@ func initRemoteMachine(machine *ms.SysMachine) error {
 
 	info := strings.Split(strings.TrimSuffix(res.Result, "\n"), "\n")
 	if len(info) != len(cmds) {
-		return fmt.Errorf("read machine info failed")
+		return errors.WithStack(fmt.Errorf("read machine info failed"))
 	}
 
 	normalStatus := ms.SysMachineStatusHealthy

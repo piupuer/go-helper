@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -43,7 +44,7 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 	// find all casbin by current role id
 	casbins, err := FindCasbinByRoleKeyword(my.ops.enforcer, roleKeyword)
 	if err != nil {
-		return tree, accessIds, err
+		return tree, accessIds, errors.WithStack(err)
 	}
 
 	newApi := make([]ms.SysApi, 0)
@@ -107,7 +108,7 @@ func (my MySql) CreateApi(req *req.CreateApi) (err error) {
 	api := new(ms.SysApi)
 	err = my.Create(req, new(ms.SysApi))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if len(req.RoleKeywords) > 0 {
 		// generate casbin rules
@@ -127,8 +128,8 @@ func (my MySql) CreateApi(req *req.CreateApi) (err error) {
 func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	var api ms.SysApi
 	q := my.Tx.Model(&api).Where("id = ?", id).First(&api)
-	if q.Error == gorm.ErrRecordNotFound {
-		return gorm.ErrRecordNotFound
+	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
+		return errors.WithStack(gorm.ErrRecordNotFound)
 	}
 
 	m := make(map[string]interface{}, 0)

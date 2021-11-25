@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/pkg/errors"
 	"io"
 	"net/url"
 	"time"
@@ -28,7 +29,7 @@ func NewMinio(options ...func(*MinioOptions)) (*MinioOss, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &MinioOss{
 		ops:    *ops,
@@ -50,7 +51,7 @@ func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, loca
 		if errBucketExists == nil && exists {
 			mo.ops.logger.Warn(ctx, "bucket %s(location %s) already exists", bucketName, location)
 		} else {
-			mo.ops.logger.Error(ctx, "make bucket failed: %v", err)
+			mo.ops.logger.Error(ctx, "make bucket failed: %+v", err)
 		}
 	}
 }

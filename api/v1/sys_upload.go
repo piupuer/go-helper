@@ -30,9 +30,7 @@ func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 		baseDir := fmt.Sprintf("%s/%s", pwd, fileDir)
 		fullName := fmt.Sprintf("%s%s", baseDir, filename)
 		unzipFiles, err := utils.UnZip(fullName, baseDir)
-		if err != nil {
-			resp.CheckErr(err)
-		}
+		resp.CheckErr(err)
 		// hide absolute path for front end
 		files := make([]string, 0)
 		for _, file := range unzipFiles {
@@ -125,9 +123,7 @@ func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 		if ops.uploadMinio != nil && ops.uploadMinioBucket != "" {
 			// send to minio
 			err = ops.uploadMinio.PutLocal(c, ops.uploadMinioBucket, mergeFileName, mergeFileName)
-			if err != nil {
-				resp.CheckErr("put object to minio failed, %v", err)
-			}
+			resp.CheckErr("put object to minio failed, %v", err)
 			previewUrl = ops.uploadMinio.GetPreviewUrl(c, ops.uploadMinioBucket, mergeFileName)
 		}
 		// remove all chunk files
@@ -145,13 +141,9 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// limit file maximum memory( << 20 = 1MB)
 		err := c.Request.ParseMultipartForm(ops.uploadSingleMaxSize << 20)
-		if err != nil {
-			resp.CheckErr("the file size exceeds the maximum: %dMB", ops.uploadSingleMaxSize)
-		}
+		resp.CheckErr("the file size exceeds the maximum: %dMB", ops.uploadSingleMaxSize)
 		file, header, err := c.Request.FormFile("file")
-		if err != nil {
-			resp.CheckErr(err)
-		}
+		resp.CheckErr(err)
 
 		// read file part
 		var filePart req.FilePartInfo

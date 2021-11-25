@@ -8,6 +8,7 @@ import (
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -218,7 +219,7 @@ func initJwt(ops JwtOptions) *jwt.GinJWTMiddleware {
 
 // check auth failed
 func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
-	ops.logger.Debug(c, "jwt auth check failed, err: %d, %v", code, err)
+	ops.logger.Debug(c, "jwt auth check failed, err: %d, %+v", code, err)
 	msg := fmt.Sprintf("%v", err)
 	if msg == resp.LoginCheckErrorMsg || msg == resp.ForbiddenMsg || msg == resp.UserDisabledMsg {
 		ops.failWithMsg(msg)
@@ -265,21 +266,21 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	r.Username = strings.TrimSpace(r.Username)
 	r.Password = strings.TrimSpace(r.Password)
 	if r.Username == "" {
-		return nil, fmt.Errorf("username is empty")
+		return nil, errors.WithStack(fmt.Errorf("username is empty"))
 	}
 	if r.Password == "" {
-		return nil, fmt.Errorf("password is empty")
+		return nil, errors.WithStack(fmt.Errorf("password is empty"))
 	}
 
 	decodePwd, err := utils.RSADecrypt([]byte(r.Password), ops.privateBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// custom password check
 	userId, pass := ops.loginPwdCheck(c, r.Username, string(decodePwd))
 	if !pass {
-		return nil, fmt.Errorf(resp.LoginCheckErrorMsg)
+		return nil, errors.WithStack(fmt.Errorf(resp.LoginCheckErrorMsg))
 	}
 	return map[string]interface{}{
 		"user": fmt.Sprintf("%d", userId),

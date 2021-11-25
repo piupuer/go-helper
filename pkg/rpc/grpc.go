@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -29,12 +30,12 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 	if len(ops.clientKey) > 0 || len(ops.clientPem) > 0 || len(ops.caPem) > 0 {
 		cert, err := tls.X509KeyPair(gr.ops.clientPem, gr.ops.clientKey)
 		if err != nil {
-			gr.Error = fmt.Errorf("[grpc]load x509 key pair err: %v", err)
+			gr.Error = errors.Wrap(err, "load x509 key pair failed")
 			return &gr
 		}
 		certPool := x509.NewCertPool()
 		if ok := certPool.AppendCertsFromPEM(gr.ops.caPem); !ok {
-			gr.Error = fmt.Errorf("[grpc]append certs from pem err: %v", err)
+			gr.Error = errors.WithStack(fmt.Errorf("append certs from pem failed"))
 			return &gr
 		}
 		gr.ctl = credentials.NewTLS(&tls.Config{
@@ -64,17 +65,17 @@ func (gr Grpc) Conn() (*grpc.ClientConn, error) {
 		option,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("[grpc]dial %s err: %v", gr.uri, err)
+		return nil, errors.Wrapf(err, "dial %s failed", gr.uri)
 	}
 	if gr.ops.healthCheck {
 		// health check
 		client := grpc_health_v1.NewHealthClient(conn)
 		h, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
-			return nil, fmt.Errorf("grpc health check %s err: %v", gr.uri, err)
+			return nil, errors.Wrapf(err, "health check %s failed", gr.uri)
 		}
 		if h.Status != grpc_health_v1.HealthCheckResponse_SERVING {
-			return nil, fmt.Errorf("grpc health check %s not SERVING: %v", gr.uri, h.Status)
+			return nil, errors.Wrapf(err, "health check %s not SERVING", gr.uri)
 		}
 	}
 	return conn, nil

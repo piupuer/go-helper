@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 	"strings"
 )
@@ -33,7 +34,7 @@ func UintIdWithErr(c *gin.Context) (uint, error) {
 	i := c.Param("id")
 	id := utils.Str2Uint(i)
 	if id == 0 {
-		return id, fmt.Errorf("invalid path id")
+		return id, errors.WithStack(fmt.Errorf("invalid path id"))
 	}
 	return id, nil
 }
@@ -53,7 +54,7 @@ func UintIdsWithErr(c *gin.Context) ([]uint, error) {
 	i := c.Param("ids")
 	arr := utils.Str2UintArr(i)
 	if len(arr) == 0 {
-		return nil, fmt.Errorf("invalid path ids: %s", i)
+		return nil, errors.WithStack(fmt.Errorf("invalid path ids: %s", i))
 	}
 	return arr, nil
 }

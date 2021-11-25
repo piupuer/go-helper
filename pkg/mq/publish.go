@@ -3,6 +3,7 @@ package mq
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"time"
 )
@@ -17,20 +18,20 @@ type Publish struct {
 // publish grpc proto msg
 func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) error {
 	if m == nil {
-		return fmt.Errorf("msg is nil")
+		return errors.WithStack(fmt.Errorf("msg is nil"))
 	}
 	b, err := proto.Marshal(m)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
-		return pu.Error
+		return errors.WithStack(pu.Error)
 	}
 	pu.msg.Body = b
 	err = pu.publish()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -42,12 +43,12 @@ func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) erro
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
-		return pu.Error
+		return errors.WithStack(pu.Error)
 	}
 	pu.msg.Body = []byte(m)
 	err := pu.publish()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -62,10 +63,8 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 	for _, f := range options {
 		f(ops)
 	}
-	ctx := pu.ops.ctx
 	if len(ops.routeKeys) == 0 {
-		ex.rb.ops.logger.Error(ctx, "route key is empty")
-		pu.Error = fmt.Errorf("route key is empty")
+		pu.Error = errors.WithStack(fmt.Errorf("route key is empty"))
 		return &pu
 	}
 	if ops.deliveryMode <= 0 || ops.deliveryMode > amqp.Persistent {
@@ -87,15 +86,14 @@ func (pu *Publish) publish() error {
 	ctx := pu.ops.ctx
 	ch, err := pu.ex.rb.getChannel(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "get channel failed")
 	}
 	defer ch.Close()
 	count := len(pu.ops.routeKeys)
 
 	// set publisher confirm
 	if err := ch.Confirm(false); err != nil {
-		pu.ex.rb.ops.logger.Error(ctx, "set publisher confirm err: %v", err)
-		return err
+		return errors.Wrap(err, "set publisher confirm failed")
 	}
 	confirmCh := ch.NotifyPublish(make(chan amqp.Confirmation, count))
 	returnCh := ch.NotifyReturn(make(chan amqp.Return, count))
@@ -109,8 +107,7 @@ func (pu *Publish) publish() error {
 			pu.msg,
 		)
 		if err != nil {
-			pu.ex.rb.ops.logger.Error(ctx, "publish err: %v", err)
-			return err
+			return errors.Wrap(err, "publish failed")
 		}
 	}
 	timeout := time.Duration(pu.ex.rb.ops.timeout) * time.Second
@@ -120,16 +117,15 @@ func (pu *Publish) publish() error {
 		select {
 		case c := <-confirmCh:
 			if !c.Ack {
-				pu.ex.rb.ops.logger.Error(ctx, "publish confirm err: %v", err)
-				return fmt.Errorf("delivery tag: %d", c.DeliveryTag)
+				return errors.Wrapf(err, "publish confirm faled, delivery tag: %d", c.DeliveryTag)
 			}
 			index++
 		case r := <-returnCh:
 			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
-			return fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
+			return errors.WithStack(fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText))
 		case <-timer.C:
 			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
-			return fmt.Errorf("publish timeout: %ds", pu.ex.rb.ops.timeout)
+			return errors.Wrapf(err, "publish timeout: %ds", pu.ex.rb.ops.timeout)
 		}
 		if index == count {
 			break

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
 	"time"
@@ -17,16 +18,16 @@ type Consume struct {
 
 func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
 	if handler == nil {
-		return fmt.Errorf("handler is nil")
+		return errors.WithStack(fmt.Errorf("handler is nil"))
 	}
 	co := qu.beforeConsume(options...)
 	if co.Error != nil {
-		return co.Error
+		return errors.WithStack(co.Error)
 	}
 	ctx := co.newContext(nil)
 	delivery, err := co.consume(ctx)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	go func() {
 		for {
@@ -39,12 +40,12 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					if handler(ctx, co.qu.ops.name, msg) {
 						err := msg.Ack(false)
 						if err != nil {
-							co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
+							co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %+v", err)
 						}
 					} else {
 						err := msg.Nack(false, co.ops.nackRequeue)
 						if err != nil {
-							co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
+							co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %+v", err)
 						}
 					}
 				}
@@ -64,7 +65,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 				}
 				d, err := co.consume(ctx)
 				if err != nil {
-					co.qu.ex.rb.ops.logger.Error(ctx, "reconsume err: %v", err)
+					co.qu.ex.rb.ops.logger.Error(ctx, "reconsume err: %+v", err)
 					return
 				}
 				delivery = d
@@ -76,19 +77,19 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 
 func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
 	if handler == nil {
-		return fmt.Errorf("handler is nil")
+		return errors.WithStack(fmt.Errorf("handler is nil"))
 	}
 	co := qu.beforeConsume(options...)
 	if co.Error != nil {
-		return co.Error
+		return errors.WithStack(co.Error)
 	}
 	ctx := co.newContext(co.ops.oneCtx)
 	msg, ok, err := co.consumeOne(ctx)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if !ok {
-		return fmt.Errorf("queue is empty, can't get one msg")
+		return errors.WithStack(fmt.Errorf("queue is empty, can't get one msg"))
 	}
 	if co.ops.autoAck {
 		handler(ctx, co.qu.ops.name, msg)
@@ -97,12 +98,12 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 	if handler(ctx, co.qu.ops.name, msg) {
 		err := msg.Ack(false)
 		if err != nil {
-			co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %v", err)
+			co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %+v", err)
 		}
 	} else {
 		err := msg.Nack(false, co.ops.nackRequeue)
 		if err != nil {
-			co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %v", err)
+			co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %+v", err)
 		}
 	}
 	return nil
@@ -126,7 +127,7 @@ func (qu *Queue) beforeConsume(options ...func(*ConsumeOptions)) *Consume {
 func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 	channel, err := co.qu.ex.rb.getChannel(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// set channel qos
 	err = channel.Qos(
@@ -135,7 +136,7 @@ func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 		co.ops.qosGlobal,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return channel.Consume(
 		co.qu.ops.name,
@@ -152,7 +153,7 @@ func (co *Consume) consumeOne(ctx context.Context) (amqp.Delivery, bool, error) 
 	channel, err := co.qu.ex.rb.getChannel(ctx)
 	var msg amqp.Delivery
 	if err != nil {
-		return msg, false, err
+		return msg, false, errors.WithStack(err)
 	}
 
 	return channel.Get(

@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 )
@@ -153,19 +154,19 @@ func (my MySql) CreateMessage(req *req.PushMessage) error {
 		switch uint(*req.Type) {
 		case ms.SysMessageTypeOneToOne:
 			if len(req.ToUserIds) == 0 {
-				return fmt.Errorf("to user is empty")
+				return errors.WithStack(fmt.Errorf("to user is empty"))
 			}
 			return my.BatchCreateOneToOneMessage(message, req.ToUserIds)
 		case ms.SysMessageTypeOneToMany:
 			if len(req.ToRoleIds) == 0 {
-				return fmt.Errorf("to role is empty")
+				return errors.WithStack(fmt.Errorf("to role is empty"))
 			}
 			return my.BatchCreateOneToManyMessage(message, req.ToRoleIds)
 		case ms.SysMessageTypeSystem:
 			return my.CreateSystemMessage(message)
 		}
 	}
-	return fmt.Errorf("message type is illegal")
+	return errors.WithStack(fmt.Errorf("message type is illegal"))
 }
 
 // one2one message
@@ -181,7 +182,7 @@ func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) 
 
 	err := my.Tx.Create(&message).Error
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	// save ToUsers
 	for _, id := range toIds {
@@ -190,7 +191,7 @@ func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) 
 		log.ToUserId = id
 		err = my.Tx.Create(&log).Error
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 
@@ -213,7 +214,7 @@ func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []u
 		message.RoleId = id
 		err := my.Tx.Create(&message).Error
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 

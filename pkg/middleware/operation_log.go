@@ -56,7 +56,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 		var body []byte
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
-			ops.logger.Error(c, "read body err: %v", err)
+			ops.logger.Error(c, "read body err: %+v", err)
 		} else {
 			// write back to gin request body
 			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))

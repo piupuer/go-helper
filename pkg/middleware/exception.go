@@ -55,7 +55,7 @@ func ExceptionWithNoTransaction(options ...func(*ExceptionOptions)) gin.HandlerF
 					rp = item
 					rp.RequestId = rid
 				} else {
-					ops.logger.Error(c, "[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+					ops.logger.Error(c, "[exception middleware]runtime err: %+v", err, string(debug.Stack()))
 				}
 				// set json data
 				c.JSON(http.StatusOK, rp)

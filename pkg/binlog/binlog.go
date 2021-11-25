@@ -7,6 +7,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"reflect"
 	"regexp"
 	"runtime/debug"
@@ -23,13 +24,13 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	}
 
 	if ops.db == nil {
-		return fmt.Errorf("binlog db is empty")
+		return errors.WithStack(fmt.Errorf("binlog db is empty"))
 	}
 	if ops.dsn == nil {
-		return fmt.Errorf("binlog dsn is empty")
+		return errors.WithStack(fmt.Errorf("binlog dsn is empty"))
 	}
 	if ops.redis == nil {
-		return fmt.Errorf("binlog redis is empty")
+		return errors.WithStack(fmt.Errorf("binlog redis is empty"))
 	}
 
 	l := len(ops.models)
@@ -58,7 +59,7 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 
 	c, err := canal.NewCanal(cfg)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	// add ignore tables
 	c.AddDumpIgnoreTables(cfg.Dump.TableDB, ops.ignores...)
@@ -69,7 +70,7 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	// refresh cache before run
 	err = refresh(*ops, tableNames)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	// run from the last position
 	pos, _ := c.GetMasterPos()
@@ -103,12 +104,12 @@ func refresh(ops Options, tableNames []string) error {
 		// compress by zlib
 		compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		// set to redis
 		err = ops.redis.Set(ops.ctx, cacheKey, compress, 0).Err()
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	return nil
@@ -118,12 +119,12 @@ func getRows(ops Options, table string, model interface{}) ([]map[string]interfa
 	list := make([]map[string]interface{}, 0)
 	rows, err := ops.db.Table(table).Rows()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	mt := reflect.TypeOf(model).Elem()
 
@@ -208,7 +209,7 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				eh.ops.logger.Error(eh.ops.ctx, "[binlog ddl]drop table %s sync to redis err: %v", table, err)
+				eh.ops.logger.Error(eh.ops.ctx, "[binlog ddl]drop table %s sync to redis err: %+v", table, err)
 			} else {
 				eh.ops.logger.Debug(eh.ops.ctx, "[binlog ddl]drop table %s success", table)
 			}
@@ -227,7 +228,7 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				eh.ops.logger.Error(eh.ops.ctx, "[binlog ddl]truncate table %s sync to redis err: %v", table, err)
+				eh.ops.logger.Error(eh.ops.ctx, "[binlog ddl]truncate table %s sync to redis err: %+v", table, err)
 			} else {
 				eh.ops.logger.Debug(eh.ops.ctx, "[binlog ddl]truncate table %s success", table)
 			}

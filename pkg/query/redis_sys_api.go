@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -43,7 +44,7 @@ func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 	// find all casbin by current role id
 	casbins, err := FindCasbinByRoleKeyword(rd.ops.enforcer, roleKeyword)
 	if err != nil {
-		return tree, accessIds, err
+		return tree, accessIds, errors.WithStack(err)
 	}
 
 	newApi := make([]ms.SysApi, 0)

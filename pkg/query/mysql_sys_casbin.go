@@ -5,6 +5,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 )
 
 func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
@@ -26,8 +27,7 @@ func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
 
 func (my MySql) CreateRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
 	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
-		return false, fmt.Errorf("casbin enforcer is empty")
+		return false, errors.WithStack(fmt.Errorf("casbin enforcer is empty"))
 	}
 	return my.ops.enforcer.AddPolicy(c.Keyword, c.Path, c.Method)
 }
@@ -35,8 +35,7 @@ func (my MySql) CreateRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
 func (my MySql) BatchCreateRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 	rules := make([][]string, 0)
 	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
-		return false, fmt.Errorf("casbin enforcer is empty")
+		return false, errors.WithStack(fmt.Errorf("casbin enforcer is empty"))
 	}
 	for _, c := range cs {
 		rules = append(rules, []string{
@@ -50,16 +49,14 @@ func (my MySql) BatchCreateRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 
 func (my MySql) DeleteRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
 	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
-		return false, fmt.Errorf("casbin enforcer is empty")
+		return false, errors.WithStack(fmt.Errorf("casbin enforcer is empty"))
 	}
 	return my.ops.enforcer.RemovePolicy(c.Keyword, c.Path, c.Method)
 }
 
 func (my MySql) BatchDeleteRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
-		return false, fmt.Errorf("casbin enforcer is empty")
+		return false, errors.WithStack(fmt.Errorf("casbin enforcer is empty"))
 	}
 	rules := make([][]string, 0)
 	for _, c := range cs {
@@ -75,7 +72,7 @@ func (my MySql) BatchDeleteRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) ([]ms.SysCasbin, error) {
 	casbins := make([]ms.SysCasbin, 0)
 	if enforcer == nil {
-		return casbins, fmt.Errorf("casbin enforcer is empty")
+		return casbins, errors.WithStack(fmt.Errorf("casbin enforcer is empty"))
 	}
 	list := make([][]string, 0)
 	if roleKeyword != "" {

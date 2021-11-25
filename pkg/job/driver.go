@@ -2,9 +2,9 @@ package job
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"time"
 )
@@ -52,12 +52,12 @@ func (rd *RedisClientDriver) heartBeat(nodeID string) {
 	for range tickers.C {
 		keyExist, err := rd.do("EXPIRE", key, int(rd.timeout/time.Second))
 		if err != nil {
-			rd.ops.logger.Warn(rd.ops.ctx, "redis expire err: %v", err)
+			rd.ops.logger.Warn(rd.ops.ctx, "redis expire err: %+v", err)
 			continue
 		}
 		if keyExist == int64(0) {
 			if err := rd.registerServiceNode(nodeID); err != nil {
-				rd.ops.logger.Warn(rd.ops.ctx, "register service node err: %v", err)
+				rd.ops.logger.Warn(rd.ops.ctx, "register service node err: %+v", err)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func (rd *RedisClientDriver) GetServiceNodeList(serviceName string) ([]string, e
 func (rd *RedisClientDriver) RegisterServiceNode(serviceName string) (nodeID string, err error) {
 	nodeID = rd.randNodeID(serviceName)
 	if err := rd.registerServiceNode(nodeID); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	return nodeID, nil
 }
@@ -99,7 +99,7 @@ func (rd *RedisClientDriver) scan(matchStr string) ([]string, error) {
 	for {
 		reply, err := rd.do("scan", cursor, "match", matchStr)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		if r, ok := reply.([]interface{}); ok && len(r) == 2 {
 			cursor = r[0].(string)
@@ -112,7 +112,7 @@ func (rd *RedisClientDriver) scan(matchStr string) ([]string, error) {
 				break
 			}
 		} else {
-			return nil, errors.New("redis scan resp struct error")
+			return nil, errors.WithStack(fmt.Errorf("redis scan resp struct failed"))
 		}
 	}
 	return ret, nil

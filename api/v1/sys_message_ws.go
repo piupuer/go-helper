@@ -35,7 +35,7 @@ func MessageWs(hub *query.MessageHub, options ...func(*Options)) gin.HandlerFunc
 		h.Add(constant.MiddlewareRequestIdHeaderName, c.GetString(constant.MiddlewareRequestIdCtxKey))
 		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, h)
 		if err != nil {
-			ops.logger.Error(c, "upgrade websocket failed: %v", err)
+			ops.logger.Error(c, "upgrade websocket failed: %+v", err)
 			return
 		}
 

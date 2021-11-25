@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
@@ -266,7 +267,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 				if q.Statement.Model != nil {
 					err := q.Statement.Parse(q.Statement.Model)
 					if err != nil {
-						my.ops.logger.Warn(my.ops.ctx, "parse model err: %v", err)
+						my.ops.logger.Warn(my.ops.ctx, "parse model err: %+v", err)
 						return
 					}
 				}
@@ -372,11 +373,11 @@ func (my MySql) Create(req interface{}, model interface{}) (err error) {
 func (my MySql) UpdateById(id uint, req interface{}, model interface{}) error {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Struct) {
-		return fmt.Errorf("model must be a pointer")
+		return errors.WithStack(fmt.Errorf("model must be a pointer"))
 	}
 	q := my.Tx.Model(rv.Interface()).Where("id = ?", id).First(rv.Interface())
-	if q.Error == gorm.ErrRecordNotFound {
-		return fmt.Errorf("can not get old record")
+	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
+		return errors.WithStack(fmt.Errorf("can not get old record"))
 	}
 
 	m := make(map[string]interface{}, 0)

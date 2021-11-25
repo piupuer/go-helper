@@ -2,9 +2,9 @@ package query
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"github.com/thedevsaddam/gojsonq/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -46,9 +46,9 @@ func NewRedis(options ...func(*RedisOptions)) Redis {
 // add error to db
 func (rd *Redis) AddError(err error) error {
 	if rd.Error == nil {
-		rd.Error = err
+		rd.Error = errors.WithStack(err)
 	} else if err != nil {
-		rd.Error = fmt.Errorf("%v; %w", rd.Error, err)
+		rd.Error = errors.Wrapf(rd.Error, "%v", err)
 	}
 	return rd.Error
 }
@@ -93,7 +93,7 @@ func (rd Redis) check() bool {
 	ins := rd.getInstance()
 	// check table name when json is false
 	if !ins.Statement.json && strings.TrimSpace(ins.Statement.Table) == "" {
-		rd.Error = fmt.Errorf("invalid table name: '%s'", ins.Statement.Table)
+		rd.Error = errors.WithStack(fmt.Errorf("invalid table name: '%s'", ins.Statement.Table))
 		return false
 	}
 	return true
@@ -134,7 +134,7 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		str, err := rd.ops.redis.Get(rd.Ctx, cacheKey).Result()
 		rd.ops.logger.Debug(rd.Ctx, "[q redis]read %s", tableName)
 		if err != nil {
-			rd.ops.logger.Debug(rd.Ctx, "[q redis]read %s err: %v", tableName, err)
+			rd.ops.logger.Debug(rd.Ctx, "[q redis]read %s err: %+v", tableName, err)
 		} else {
 			// decompress
 			jsonStr = utils.DeCompressStrByZlib(str)
@@ -167,7 +167,7 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		if list != nil {
 			rd.processPreload()
 		} else {
-			rd.AddError(gorm.ErrRecordNotFound)
+			rd.AddError(errors.WithStack(gorm.ErrRecordNotFound))
 		}
 	}
 

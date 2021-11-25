@@ -25,7 +25,7 @@ func Zip(src, dst string) error {
 	zw := zip.NewWriter(fw)
 	defer func() {
 		if err := zw.Close(); err != nil {
-			fmt.Printf("[Zip]close file err: %v", err)
+			fmt.Printf("[Zip]close file err: %+v", err)
 		}
 	}()
 

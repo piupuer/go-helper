@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -33,7 +34,7 @@ func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictDat
 			return &data, nil
 		}
 	}
-	return nil, gorm.ErrRecordNotFound
+	return nil, errors.WithStack(gorm.ErrRecordNotFound)
 }
 
 func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {

@@ -4,6 +4,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/fsm"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/pkg/errors"
 )
 
 // find finite state machine
@@ -35,7 +36,7 @@ func (my MySql) FindFsmLogTrack(r req.FsmLog) ([]resp.FsmLogTrack, error) {
 	)
 	logs, err := f.FindLog(r)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return f.FindLogTrack(logs)
 }

@@ -3,6 +3,7 @@ package req
 import (
 	"database/sql/driver"
 	"fmt"
+	"github.com/pkg/errors"
 	"strconv"
 	"strings"
 )
@@ -39,5 +40,5 @@ func (r *NullUint) Scan(v interface{}) error {
 		*r = value
 		return nil
 	}
-	return fmt.Errorf("can not convert %v to NullUint", v)
+	return errors.WithStack(fmt.Errorf("can not convert %v to NullUint", v))
 }

@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
@@ -13,6 +12,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -246,14 +246,14 @@ func (c *MessageClient) receive() {
 			if err == nil {
 				ops := middleware.ParseIdempotenceOptions(c.hub.ops.idempotenceOps...)
 				if c.hub.ops.idempotence && !middleware.CheckIdempotenceToken(c.ctx, data.IdempotenceToken, *ops) {
-					err = errors.New(resp.IdempotenceTokenInvalidMsg)
+					err = errors.WithStack(fmt.Errorf(resp.IdempotenceTokenInvalidMsg))
 				} else {
 					data.FromUserId = c.User.Id
 					err = c.hub.ops.dbNoTx.CreateMessage(&data)
 				}
 			}
 			if err != nil {
-				detail = resp.GetFailWithMsg(err.Error())
+				detail = resp.GetFailWithMsg(err)
 			} else {
 				c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			}
@@ -267,7 +267,7 @@ func (c *MessageClient) receive() {
 			err = c.hub.ops.dbNoTx.BatchUpdateMessageRead(data.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
-				detail = resp.GetFailWithMsg(err.Error())
+				detail = resp.GetFailWithMsg(err)
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
@@ -280,7 +280,7 @@ func (c *MessageClient) receive() {
 			err = c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(data.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
-				detail = resp.GetFailWithMsg(err.Error())
+				detail = resp.GetFailWithMsg(err)
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
@@ -291,7 +291,7 @@ func (c *MessageClient) receive() {
 			err = c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.Id)
 			detail := resp.GetSuccess()
 			if err != nil {
-				detail = resp.GetFailWithMsg(err.Error())
+				detail = resp.GetFailWithMsg(err)
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
@@ -302,7 +302,7 @@ func (c *MessageClient) receive() {
 			err = c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.Id)
 			detail := resp.GetSuccess()
 			if err != nil {
-				detail = resp.GetFailWithMsg(err.Error())
+				detail = resp.GetFailWithMsg(err)
 			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{

@@ -9,6 +9,7 @@ import (
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
@@ -29,7 +30,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.tls {
 		t, err := NewGrpcServerTls(ops.tlsOps...)
 		if err != nil {
-			ops.logger.Warn(ops.ctx, "load tls err: %v", err)
+			ops.logger.Warn(ops.ctx, "load tls failed: %+v", err)
 		} else {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}
@@ -75,12 +76,12 @@ func NewGrpcServerTls(options ...func(*GrpcServerTlsOptions)) (t credentials.Tra
 		var cert tls.Certificate
 		cert, err = tls.X509KeyPair(ops.serverPem, ops.serverKey)
 		if err != nil {
-			err = fmt.Errorf("[grpc]load x509 key pair err: %v", err)
+			err = errors.Wrap(err, "load x509 key pair failed")
 			return
 		}
 		certPool := x509.NewCertPool()
 		if ok := certPool.AppendCertsFromPEM(ops.caPem); !ok {
-			err = fmt.Errorf("[grpc]append certs from pem err: %v", err)
+			err = errors.WithStack(fmt.Errorf("append certs from pem failed"))
 			return
 		}
 		return credentials.NewTLS(&tls.Config{
@@ -89,5 +90,5 @@ func NewGrpcServerTls(options ...func(*GrpcServerTlsOptions)) (t credentials.Tra
 			ClientCAs:    certPool,
 		}), nil
 	}
-	return nil, fmt.Errorf("[grpc]invalid options, serverKey: %s, serverPem: %s, caPem: %s", string(ops.serverKey), string(ops.serverPem), string(ops.caPem))
+	return nil, errors.WithStack(fmt.Errorf("invalid options, serverKey: %s, serverPem: %s, caPem: %s", string(ops.serverKey), string(ops.serverPem), string(ops.caPem)))
 }

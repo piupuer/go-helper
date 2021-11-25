@@ -11,7 +11,6 @@ var (
 	ErrRepeatSubmit              = fmt.Errorf("approval record already exists")
 	ErrParams                    = fmt.Errorf("illegal param")
 	ErrNoPermissionApprove       = fmt.Errorf("no permission to pass the approval")
-	ErrNoPermissionRefuse        = fmt.Errorf("no permission to refuse approval")
 	ErrNoPermissionOrEnded       = fmt.Errorf("no permission to approve or approval ended")
 	ErrNoEditLogDetailPermission = fmt.Errorf("no permission to edit log detail")
 	ErrOnlySubmitterCancel       = fmt.Errorf("only the submitter can cancel")

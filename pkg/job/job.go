@@ -7,6 +7,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	uuid "github.com/satori/go.uuid"
 	"strings"
@@ -67,7 +68,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 		}
 		r, err := ParseRedisURI(cfg.RedisUri)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		job.redis = r
 	}
@@ -76,7 +77,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
-		job.ops.logger.Warn(job.ops.ctx, "initialize redis failed, switch singe mode, err: %v", err)
+		job.ops.logger.Warn(job.ops.ctx, "initialize redis failed, switch singe mode, err: %+v", err)
 		return &job, nil
 	}
 
@@ -87,7 +88,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 		WithDriverPrefix(job.ops.prefix),
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	job.driver = drv
 	job.tasks = make(map[string]GoodDistributeTask, 0)
@@ -104,7 +105,7 @@ func ParseRedisURI(uri string) (redis.UniversalClient, error) {
 		}
 		return opt.MakeRedisClient().(redis.UniversalClient), nil
 	}
-	return nil, fmt.Errorf("invalid redis config")
+	return nil, errors.WithStack(fmt.Errorf("invalid redis config"))
 }
 
 func (g *GoodJob) AddTask(task GoodTask) *GoodJob {

@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 	"net"
 	"path"
@@ -31,7 +32,7 @@ func IsSafetyCmd(cmd string) error {
 	c := path.Clean(strings.ToLower(cmd))
 	if strings.Contains(c, "rm") {
 		if len(strings.Split(c, "/")) <= 1 {
-			return fmt.Errorf("rm command %s cannot delete files smaller than level 2 dir", cmd)
+			return errors.WithStack(fmt.Errorf("rm command %s cannot delete files smaller than level 2 dir", cmd))
 		}
 	}
 	return nil
@@ -54,7 +55,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 	if session, err = client.NewSession(); err != nil {
 		return SshResult{
 			Connect: false,
-			Err:     fmt.Errorf("create ssh session failed, %s, %v", config.Host, err),
+			Err:     errors.Wrapf(err, "create ssh %s session failed", config.Host),
 		}
 	}
 	defer closeClient(session, client)
@@ -63,7 +64,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 		if timeout > 0 {
 			sleep, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
 			if err != nil {
-				fmt.Printf("close ssh session failed: %v\n", err)
+				fmt.Printf("close ssh session failed: %+v\n", err)
 				return
 			}
 			time.Sleep(sleep)
@@ -95,7 +96,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 		if err := session.Run(command); err != nil {
 			return SshResult{
 				Connect: true,
-				Err:     fmt.Errorf("exec cmd: %s failed: %v", command, err),
+				Err:     errors.Wrapf(err, "exec cmd: %s failed", command),
 				Result:  e.String(),
 			}
 		}
@@ -111,7 +112,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 func closeClient(session *ssh.Session, client *ssh.Client) {
 	err := client.Close()
 	if err != nil {
-		fmt.Printf("close ssh client failed: %v\n", err)
+		fmt.Printf("close ssh client failed: %+v\n", err)
 	}
 	session.Close()
 }
@@ -143,7 +144,7 @@ func GetSshClient(config SshConfig) (*ssh.Client, error) {
 	// connect to ssh
 	addr = fmt.Sprintf("%s:%d", config.Host, config.Port)
 	if client, err = ssh.Dial("tcp", addr, clientConfig); err != nil {
-		return nil, fmt.Errorf("connect ssh failed, %s, %v", addr, err)
+		return nil, errors.Wrapf(err, "connect ssh %s failed", addr)
 	}
 	return client, nil
 }

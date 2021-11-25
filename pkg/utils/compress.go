@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/foobaz/lossypng/lossypng"
 	"github.com/nfnt/resize"
+	"github.com/pkg/errors"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -21,13 +22,13 @@ func CompressStrByZlib(s string) (string, error) {
 	var b bytes.Buffer
 	gz := zlib.NewWriter(&b)
 	if _, err := gz.Write([]byte(s)); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := gz.Flush(); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := gz.Close(); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	res := base64.StdEncoding.EncodeToString(b.Bytes())
 	return res, nil
@@ -51,7 +52,7 @@ func CompressImage(filename string) error {
 func CompressImageSaveOriginal(filename string, before string) error {
 	suffix := strings.ToLower(filepath.Ext(filename))
 	if suffix != ".jpg" && suffix != ".jpeg" && suffix != ".png" {
-		return fmt.Errorf("picture format is not supported: %s", filename)
+		return errors.WithStack(fmt.Errorf("picture format is not supported: %s", filename))
 	}
 	isJpg := true
 	if suffix == ".png" {
@@ -61,7 +62,7 @@ func CompressImageSaveOriginal(filename string, before string) error {
 	newFilename := filename + ".compress"
 	file, err := os.Open(filename)
 	if err != nil {
-		return fmt.Errorf("cannot find file %s, err: %v", filename, err)
+		return errors.Wrapf(err, "cannot find file %s", filename)
 	}
 
 	beforeFilename := ""
@@ -76,7 +77,7 @@ func CompressImageSaveOriginal(filename string, before string) error {
 		beforeFilename = beforeDir + "/" + name
 		_, err := os.Stat(beforeFilename)
 		if err == nil {
-			return fmt.Errorf("file %s has been compressed, so it will not be compressed again", filename)
+			return errors.WithStack(fmt.Errorf("file %s has been compressed, so it will not be compressed again", filename))
 		}
 	}
 
@@ -88,7 +89,7 @@ func CompressImageSaveOriginal(filename string, before string) error {
 		img, err = png.Decode(file)
 	}
 	if err != nil {
-		return fmt.Errorf("decode image err: %v", err)
+		return errors.Wrap(err, "decode image failed")
 	}
 	file.Close()
 	bound := img.Bounds()
@@ -105,7 +106,7 @@ func CompressImageSaveOriginal(filename string, before string) error {
 
 	out, err := os.Create(newFilename)
 	if err != nil {
-		return fmt.Errorf("create tmp file %s, err: %v", newFilename, err)
+		return errors.Wrapf(err, "create tmp file %s failed", newFilename)
 	}
 	defer out.Close()
 
@@ -116,18 +117,18 @@ func CompressImageSaveOriginal(filename string, before string) error {
 		err = png.Encode(out, compressed)
 	}
 	if err != nil {
-		return fmt.Errorf("encode image err: %v", err)
+		return errors.Wrap(err, "encode image failed")
 	}
 	if beforeDir != "" {
 		CreateDirIfNotExists(beforeDir)
 		err = os.Rename(filename, beforeFilename)
 		if err != nil {
-			return fmt.Errorf("save original file to %s err: %v", beforeFilename, err)
+			return errors.Wrapf(err, "save original file to %s failed", beforeFilename)
 		}
 	}
 	err = os.Rename(newFilename, filename)
 	if err != nil {
-		return fmt.Errorf("rename %s to %s, err: %v", newFilename, filename, err)
+		return errors.Wrapf(err, "rename %s to %s failed", newFilename, filename)
 	}
 	return nil
 }
