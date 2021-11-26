@@ -284,12 +284,13 @@ func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
 	}
 }
 
-func WithPublishRouteKey(key string) func(*PublishOptions) {
+func WithPublishRouteKey(keys ...string) func(*PublishOptions) {
 	return func(options *PublishOptions) {
 		d := getPublishOptionsOrSetDefault(options)
-		keys := d.routeKeys
-		if !funk.ContainsString(keys, key) {
-			d.routeKeys = append(keys, key)
+		for _, item := range keys {
+			if !funk.ContainsString(d.routeKeys, item) {
+				d.routeKeys = append(d.routeKeys, item)
+			}
 		}
 	}
 }
