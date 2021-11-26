@@ -188,7 +188,7 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			eh.ops.logger.Error(eh.ops.ctx, "[binlog row change]runtime error: %v\nstack: %v", err, string(debug.Stack()))
+			eh.ops.logger.Error(eh.ops.ctx, "[binlog row change]runtime err: %+v\nstack: %v", err, string(debug.Stack()))
 			return
 		}
 	}()

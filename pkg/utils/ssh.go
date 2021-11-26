@@ -64,7 +64,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 		if timeout > 0 {
 			sleep, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
 			if err != nil {
-				fmt.Printf("close ssh session failed: %+v\n", err)
+				fmt.Printf("close ssh session failed: %+v\n", errors.WithStack(err))
 				return
 			}
 			time.Sleep(sleep)

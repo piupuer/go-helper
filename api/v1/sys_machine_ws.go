@@ -8,6 +8,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/middleware"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 	"time"
 	"unicode/utf8"
@@ -122,7 +123,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 				for {
 					x, size, err := br.ReadRune()
 					if err != nil {
-						ops.logger.Warn(c, "read shell failed: %+v", err)
+						ops.logger.Warn(c, "read shell failed: %+v", errors.WithStack(err))
 						break
 					}
 					if size > 0 {

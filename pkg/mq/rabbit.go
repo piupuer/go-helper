@@ -93,7 +93,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 		case err := <-connLost:
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
-				rb.ops.logger.Warn(ctx, "connection is lost")
+				rb.ops.logger.Warn(ctx, "connection is lost: %+v", errors.WithStack(err))
 				rb.lost = true
 				rb.lostCh <- err
 			}
