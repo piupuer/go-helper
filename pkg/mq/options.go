@@ -262,14 +262,16 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 }
 
 type PublishOptions struct {
-	routeKeys    []string
-	contentType  string
-	headers      amqp.Table
-	deliveryMode uint8
-	mandatory    bool
-	immediate    bool
-	expiration   string
-	ctx          context.Context
+	routeKeys            []string
+	contentType          string
+	headers              amqp.Table
+	deliveryMode         uint8
+	mandatory            bool
+	immediate            bool
+	expiration           string
+	ctx                  context.Context
+	deadLetter           bool
+	deadLetterFirstQueue string
 }
 
 func WithPublishOptionsContentType(contentType string) func(*PublishOptions) {
@@ -300,6 +302,18 @@ func WithPublishCtx(ctx context.Context) func(*PublishOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getPublishOptionsOrSetDefault(options).ctx = ctx
 		}
+	}
+}
+
+func WithPublishDeadLetter(flag bool) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		getPublishOptionsOrSetDefault(options).deadLetter = flag
+	}
+}
+
+func WithPublishDeadLetterFirstQueue(q string) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		getPublishOptionsOrSetDefault(options).deadLetterFirstQueue = q
 	}
 }
 

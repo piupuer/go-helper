@@ -67,6 +67,14 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 		pu.Error = errors.WithStack(fmt.Errorf("route key is empty"))
 		return &pu
 	}
+	if ops.deadLetter {
+		if ops.deadLetterFirstQueue == "" {
+			pu.Error = errors.WithStack(fmt.Errorf("dead letter first queue is empty"))
+			return &pu
+		}
+		ops.headers["x-retry-count"] = 0
+		ops.headers["x-first-death-queue"] = ops.deadLetterFirstQueue
+	}
 	if ops.deliveryMode <= 0 || ops.deliveryMode > amqp.Persistent {
 		ops.deliveryMode = amqp.Persistent
 	}
