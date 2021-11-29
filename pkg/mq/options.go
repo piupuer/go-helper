@@ -282,7 +282,9 @@ func WithPublishContentType(contentType string) func(*PublishOptions) {
 
 func WithPublishHeaders(headers amqp.Table) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		getPublishOptionsOrSetDefault(options).headers = headers
+		if headers != nil {
+			getPublishOptionsOrSetDefault(options).headers = headers
+		}
 	}
 }
 
@@ -322,6 +324,7 @@ func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 		return &PublishOptions{
 			contentType: "text/plain",
 			ctx:         context.Background(),
+			headers:     amqp.Table{},
 		}
 	}
 	return options
