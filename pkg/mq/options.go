@@ -274,13 +274,13 @@ type PublishOptions struct {
 	deadLetterFirstQueue string
 }
 
-func WithPublishOptionsContentType(contentType string) func(*PublishOptions) {
+func WithPublishContentType(contentType string) func(*PublishOptions) {
 	return func(options *PublishOptions) {
 		getPublishOptionsOrSetDefault(options).contentType = contentType
 	}
 }
 
-func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
+func WithPublishHeaders(headers amqp.Table) func(*PublishOptions) {
 	return func(options *PublishOptions) {
 		getPublishOptionsOrSetDefault(options).headers = headers
 	}
