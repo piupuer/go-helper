@@ -12,6 +12,7 @@ type Options struct {
 	ctx             context.Context
 	prefix          string
 	requestIdCtxKey string
+	taskNameCtxKey  string
 	autoRequestId   bool
 }
 
@@ -54,6 +55,7 @@ func getOptionsOrSetDefault(options *Options) *Options {
 		return &Options{
 			logger:          logger.DefaultLogger(),
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			taskNameCtxKey:  constant.JobTaskNameCtxKey,
 		}
 	}
 	return options
@@ -92,6 +94,37 @@ func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 		return &DriverOptions{
 			logger: logger.DefaultLogger(),
 			prefix: constant.JobDriverPrefix,
+		}
+	}
+	return options
+}
+
+type CronOptions struct {
+	logger logger.Interface
+	ctx    context.Context
+}
+
+func WithCronLogger(l logger.Interface) func(*CronOptions) {
+	return func(options *CronOptions) {
+		if l != nil {
+			getCronOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithCronCtx(ctx context.Context) func(*CronOptions) {
+	return func(options *CronOptions) {
+		if !utils.InterfaceIsNil(ctx) {
+			getCronOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func getCronOptionsOrSetDefault(options *CronOptions) *CronOptions {
+	if options == nil {
+		return &CronOptions{
+			logger: logger.DefaultLogger(),
+			ctx:    context.Background(),
 		}
 	}
 	return options

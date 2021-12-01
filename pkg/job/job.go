@@ -6,11 +6,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
-	uuid "github.com/satori/go.uuid"
-	"strings"
 	"sync"
 )
 
@@ -36,10 +34,13 @@ type GoodJob struct {
 }
 
 type GoodTask struct {
-	running bool
-	Name    string
-	Expr    string
-	Func    func(ctx context.Context) error
+	running             bool
+	Name                string
+	Expr                string
+	SkipIfStillRunning  bool
+	DelayIfStillRunning bool
+	Func                func(ctx context.Context) error
+	Wrappers            []cron.JobWrapper
 }
 
 type GoodSingleTask struct {
@@ -129,12 +130,8 @@ func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
 		return g
 	}
 
-	c := cron.New()
-	j := job{
-		ops:  g.ops,
-		Func: task.Func,
-	}
-	c.AddJob(task.Expr, j)
+	c := cron.New(cron.WithChain(g.parseWrapper(task)...))
+	c.AddFunc(task.Expr, g.parseFun(task))
 
 	t := GoodSingleTask{
 		GoodTask: task,
@@ -158,26 +155,45 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	c := dcron.NewDcronWithOption(
 		task.Name,
 		g.driver,
-		dcron.WithLogger(&cronLogger{
+		dcron.WithLogger(&dcronLogger{
 			g.ops.logger,
 		}),
+		dcron.CronOptionChain(g.parseWrapper(task)...),
 	)
-	fun := (func(task GoodTask) func() {
-		return func() {
-			ctx := context.Background()
-			if g.ops.autoRequestId {
-				ctx = context.WithValue(ctx, g.ops.requestIdCtxKey, uuid.NewV4().String())
-			}
-			task.Func(ctx)
-		}
-	})(task)
-	c.AddFunc(task.Name, task.Expr, fun)
+	c.AddFunc(task.Name, task.Expr, g.parseFun(task))
 	t := GoodDistributeTask{
 		GoodTask: task,
 		c:        c,
 	}
 	g.tasks[task.Name] = t
 	return g
+}
+
+func (g GoodJob) parseWrapper(task GoodTask) []cron.JobWrapper {
+	cronLogger := NewCronLogger(
+		WithCronLogger(g.ops.logger),
+		WithCronCtx(g.ops.ctx),
+	)
+	if task.SkipIfStillRunning {
+		task.Wrappers = append(task.Wrappers, cron.SkipIfStillRunning(cronLogger))
+	}
+	if !task.SkipIfStillRunning && task.DelayIfStillRunning {
+		task.Wrappers = append(task.Wrappers, cron.DelayIfStillRunning(cronLogger))
+	}
+	return task.Wrappers
+}
+
+func (g GoodJob) parseFun(task GoodTask) func() {
+	return (func(task GoodTask) func() {
+		return func() {
+			ctx := context.Background()
+			if g.ops.autoRequestId {
+				ctx = query.NewRequestId(ctx, g.ops.requestIdCtxKey)
+			}
+			ctx = context.WithValue(ctx, g.ops.taskNameCtxKey, task.Name)
+			task.Func(ctx)
+		}
+	})(task)
 }
 
 func (g *GoodJob) Start() {
@@ -266,33 +282,5 @@ func (g *GoodJob) Stop(taskName string) {
 				}
 			}
 		}
-	}
-}
-
-type cronLogger struct {
-	l logger.Interface
-}
-
-func (c cronLogger) Printf(format string, args ...interface{}) {
-	ctx := context.Background()
-	if strings.HasPrefix(format, dcronInfoPrefix) {
-		c.l.Info(ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
-	} else if strings.HasPrefix(format, dcronErrorPrefix) {
-		c.l.Error(ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
-	}
-}
-
-type job struct {
-	ops  Options
-	Func func(ctx context.Context) error
-}
-
-func (j job) Run() {
-	if j.Func != nil {
-		ctx := context.Background()
-		if j.ops.autoRequestId {
-			ctx = context.WithValue(ctx, j.ops.requestIdCtxKey, uuid.NewV4().String())
-		}
-		j.Func(ctx)
 	}
 }
