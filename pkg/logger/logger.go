@@ -72,7 +72,7 @@ func newWithOption(ops *Options) *Logger {
 	if ops.lumber {
 		now := time.Now()
 		filename := ops.lumberOps.Filename
-		if filename != "" {
+		if filename == "" {
 			filename = fmt.Sprintf("%s/%04d-%02d-%02d%s", ops.lumberOps.LogPath, now.Year(), now.Month(), now.Day(), ops.lumberOps.LogSuffix)
 		}
 		ops.lumberOps.Filename = filename
