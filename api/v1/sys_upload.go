@@ -141,7 +141,9 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// limit file maximum memory( << 20 = 1MB)
 		err := c.Request.ParseMultipartForm(ops.uploadSingleMaxSize << 20)
-		resp.CheckErr("the file size exceeds the maximum: %dMB", ops.uploadSingleMaxSize)
+		if err != nil {
+			resp.CheckErr("the file size exceeds the maximum: %dMB", ops.uploadSingleMaxSize)
+		}
 		file, header, err := c.Request.FormFile("file")
 		resp.CheckErr(err)
 
