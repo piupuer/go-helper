@@ -77,7 +77,7 @@ func (fs Fsm) DeleteMachineByIds(ids []uint) error {
 			Where("next_event_id IN (?)", eventIds).
 			Find(&logs)
 		if len(logs) > 0 {
-			return errors.WithStack(fmt.Errorf("remove machine so that old approve log cannot be displayed normally"))
+			return errors.Errorf("remove machine so that old approve log cannot be displayed normally")
 		}
 	}
 	return fs.session.
@@ -98,7 +98,7 @@ func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 		Where("category = ?", machine.Category).
 		Count(&count)
 	if count > 0 {
-		return nil, errors.WithStack(fmt.Errorf("fsm category %d already exists", machine.Category))
+		return nil, errors.Errorf("fsm category %d already exists", machine.Category)
 	}
 	// save json for query
 	machine.EventsJson = utils.Struct2Json(r.Levels)

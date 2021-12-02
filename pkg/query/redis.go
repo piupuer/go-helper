@@ -93,7 +93,7 @@ func (rd Redis) check() bool {
 	ins := rd.getInstance()
 	// check table name when json is false
 	if !ins.Statement.json && strings.TrimSpace(ins.Statement.Table) == "" {
-		rd.Error = errors.WithStack(fmt.Errorf("invalid table name: '%s'", ins.Statement.Table))
+		rd.Error = errors.Errorf("invalid table name: '%s'", ins.Statement.Table)
 		return false
 	}
 	return true

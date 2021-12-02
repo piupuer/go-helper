@@ -373,11 +373,11 @@ func (my MySql) Create(req interface{}, model interface{}) (err error) {
 func (my MySql) UpdateById(id uint, req interface{}, model interface{}) error {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Struct) {
-		return errors.WithStack(fmt.Errorf("model must be a pointer"))
+		return errors.Errorf("model must be a pointer")
 	}
 	q := my.Tx.Model(rv.Interface()).Where("id = ?", id).First(rv.Interface())
 	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
-		return errors.WithStack(fmt.Errorf("can not get old record"))
+		return errors.Errorf("can not get old record")
 	}
 
 	m := make(map[string]interface{}, 0)

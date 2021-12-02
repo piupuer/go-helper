@@ -1,7 +1,6 @@
 package mq
 
 import (
-	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
@@ -18,7 +17,7 @@ type Publish struct {
 // publish grpc proto msg
 func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) error {
 	if m == nil {
-		return errors.WithStack(fmt.Errorf("msg is nil"))
+		return errors.Errorf("msg is nil")
 	}
 	b, err := proto.Marshal(m)
 	if err != nil {
@@ -39,7 +38,7 @@ func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOption
 // publish str msg
 func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) error {
 	if m == "" {
-		return fmt.Errorf("msg is empty")
+		return errors.Errorf("msg is empty")
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
@@ -64,12 +63,12 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 		f(ops)
 	}
 	if len(ops.routeKeys) == 0 {
-		pu.Error = errors.WithStack(fmt.Errorf("route key is empty"))
+		pu.Error = errors.Errorf("route key is empty")
 		return &pu
 	}
 	if ops.deadLetter {
 		if ops.deadLetterFirstQueue == "" {
-			pu.Error = errors.WithStack(fmt.Errorf("dead letter first queue is empty"))
+			pu.Error = errors.Errorf("dead letter first queue is empty")
 			return &pu
 		}
 		ops.headers["x-retry-count"] = 0
@@ -100,14 +99,14 @@ func (pu *Publish) publish() error {
 	count := len(pu.ops.routeKeys)
 
 	// set publisher confirm
-	if err := ch.Confirm(false); err != nil {
+	if err = ch.Confirm(false); err != nil {
 		return errors.Wrap(err, "set publisher confirm failed")
 	}
 	confirmCh := ch.NotifyPublish(make(chan amqp.Confirmation, count))
 	returnCh := ch.NotifyReturn(make(chan amqp.Return, count))
 
 	for i := 0; i < count; i++ {
-		err := ch.Publish(
+		err = ch.Publish(
 			pu.ex.ops.name,
 			pu.ops.routeKeys[i],
 			pu.ops.mandatory,
@@ -125,15 +124,15 @@ func (pu *Publish) publish() error {
 		select {
 		case c := <-confirmCh:
 			if !c.Ack {
-				return errors.Wrapf(err, "publish confirm faled, delivery tag: %d", c.DeliveryTag)
+				return errors.Errorf("publish confirm faled, delivery tag: %d", c.DeliveryTag)
 			}
 			index++
 		case r := <-returnCh:
 			pu.ex.rb.ops.logger.Error(ctx, "publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
-			return errors.WithStack(fmt.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText))
+			return errors.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 		case <-timer.C:
 			pu.ex.rb.ops.logger.Warn(ctx, "publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
-			return errors.Wrapf(err, "publish timeout: %ds", pu.ex.rb.ops.timeout)
+			return errors.Errorf("publish timeout: %ds", pu.ex.rb.ops.timeout)
 		}
 		if index == count {
 			break

@@ -246,7 +246,7 @@ func (c *MessageClient) receive() {
 			if err == nil {
 				ops := middleware.ParseIdempotenceOptions(c.hub.ops.idempotenceOps...)
 				if c.hub.ops.idempotence && !middleware.CheckIdempotenceToken(c.ctx, data.IdempotenceToken, *ops) {
-					err = errors.WithStack(fmt.Errorf(resp.IdempotenceTokenInvalidMsg))
+					err = errors.Errorf(resp.IdempotenceTokenInvalidMsg)
 				} else {
 					data.FromUserId = c.User.Id
 					err = c.hub.ops.dbNoTx.CreateMessage(&data)

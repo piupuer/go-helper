@@ -91,38 +91,38 @@ func (pt *FilePartInfo) GetChunkRootPath() string {
 func (pt *FilePartInfo) Validate() error {
 	filePart := pt
 	if filePart == nil {
-		return errors.WithStack(fmt.Errorf("file params invalid"))
+		return errors.Errorf("file params invalid")
 	}
 	if filePart.ChunkNumber == 0 ||
 		filePart.ChunkSize == 0 ||
 		filePart.TotalSize == 0 ||
 		filePart.Identifier == "" ||
 		filePart.Filename == "" {
-		return errors.WithStack(fmt.Errorf("file name or file size invalid"))
+		return errors.Errorf("file name or file size invalid")
 	}
 
 	totalChunk := filePart.GetTotalChunk()
 	if filePart.ChunkNumber > totalChunk {
-		return errors.WithStack(fmt.Errorf("file chunk number invalid"))
+		return errors.Errorf("file chunk number invalid")
 	}
 
 	if filePart.CurrentSize != nil {
-		if int64(*filePart.CurrentSize) > int64(pt.SingleMaxSize)<<20 {
-			return errors.WithStack(fmt.Errorf("the file size exceeds the maximum: %dMB, current: %dB", pt.SingleMaxSize, int64(*filePart.CurrentSize)))
+		if int64(*filePart.CurrentSize) > pt.SingleMaxSize<<20 {
+			return errors.Errorf("the file size exceeds the maximum: %dMB, current: %dB", pt.SingleMaxSize, int64(*filePart.CurrentSize))
 		}
 
 		if filePart.ChunkNumber < totalChunk && *filePart.CurrentSize != filePart.ChunkSize {
-			return errors.WithStack(fmt.Errorf("inconsistent file block size: [%d:%d]", filePart.CurrentSize, filePart.ChunkSize))
+			return errors.Errorf("inconsistent file block size: [%d:%d]", filePart.CurrentSize, filePart.ChunkSize)
 		}
 
 		if totalChunk > 1 &&
 			filePart.ChunkNumber == totalChunk &&
 			*filePart.CurrentSize != filePart.TotalSize%filePart.ChunkSize+filePart.ChunkSize {
-			return errors.WithStack(fmt.Errorf("inconsistent file last block size: [%d:%d]", filePart.CurrentSize, filePart.TotalSize%filePart.ChunkSize+filePart.ChunkSize))
+			return errors.Errorf("inconsistent file last block size: [%d:%d]", filePart.CurrentSize, filePart.TotalSize%filePart.ChunkSize+filePart.ChunkSize)
 		}
 		if totalChunk == 1 &&
 			*filePart.CurrentSize != filePart.TotalSize {
-			return errors.WithStack(fmt.Errorf("inconsistent file first block size: [%d:%d]", filePart.CurrentSize, filePart.TotalSize))
+			return errors.Errorf("inconsistent file first block size: [%d:%d]", filePart.CurrentSize, filePart.TotalSize)
 		}
 	}
 	return nil

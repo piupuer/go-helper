@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"github.com/pkg/errors"
 	"os"
 )
@@ -59,7 +58,7 @@ func RSAEncrypt(data, publicBytes []byte) ([]byte, error) {
 	block, _ := pem.Decode(publicBytes)
 
 	if block == nil {
-		return res, errors.WithStack(fmt.Errorf("pem decode failed, may be public bytes is wrong"))
+		return res, errors.Errorf("pem decode failed, may be public bytes is wrong")
 	}
 
 	keyInit, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -79,7 +78,7 @@ func RSADecrypt(base64Data, privateBytes []byte) ([]byte, error) {
 	data := []byte(DecodeStrFromBase64(string(base64Data)))
 	block, _ := pem.Decode(privateBytes)
 	if block == nil {
-		return res, errors.WithStack(fmt.Errorf("pem decode failed, may be public bytes is wrong"))
+		return res, errors.Errorf("pem decode failed, may be public bytes is wrong")
 	}
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {

@@ -2,7 +2,6 @@ package mq
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"os"
@@ -74,10 +73,10 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 	}
 	v := atomic.LoadInt32(&rb.connLock)
 	if v == 1 {
-		return errors.WithStack(fmt.Errorf("the connection is creating"))
+		return errors.Errorf("the connection is creating")
 	}
 	if !atomic.CompareAndSwapInt32(&rb.connLock, 0, 1) {
-		return errors.WithStack(fmt.Errorf("the connection is creating"))
+		return errors.Errorf("the connection is creating")
 	}
 	defer atomic.AddInt32(&rb.connLock, -1)
 	conn, err := dialWithTimeout(rb.dsn, 5)
@@ -133,7 +132,7 @@ func (rb *Rabbit) reconnect(ctx context.Context) error {
 	var err error
 	for {
 		if atomic.LoadInt32(&rb.connLock) == 1 {
-			return errors.WithStack(fmt.Errorf("the connection is creating"))
+			return errors.Errorf("the connection is creating")
 		}
 		time.Sleep(interval)
 		err = rb.connect(ctx)
@@ -178,7 +177,7 @@ func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 		f(ops)
 	}
 	if ops.name == "" {
-		ex.Error = errors.WithStack(fmt.Errorf("exchange name is empty"))
+		ex.Error = errors.Errorf("exchange name is empty")
 		return &ex
 	}
 	switch ops.kind {
@@ -187,7 +186,7 @@ func (rb *Rabbit) beforeExchange(options ...func(*ExchangeOptions)) *Exchange {
 	case amqp.ExchangeTopic:
 	case amqp.ExchangeHeaders:
 	default:
-		ex.Error = errors.WithStack(fmt.Errorf("invalid exchange kind: %s", ops.kind))
+		ex.Error = errors.Errorf("invalid exchange kind: %s", ops.kind)
 		return &ex
 	}
 	prefix := ""
@@ -236,7 +235,7 @@ func (ex *Exchange) QueueWithDeadLetter(options ...func(*QueueOptions)) *Queue {
 
 	if ops.deadLetterName == "" {
 		var qu Queue
-		qu.Error = errors.WithStack(fmt.Errorf("dead letter name is empty"))
+		qu.Error = errors.Errorf("dead letter name is empty")
 		return &qu
 	}
 	args["x-dead-letter-exchange"] = ops.deadLetterName
@@ -269,7 +268,7 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 		ops.args = args
 	}
 	if ops.name == "" {
-		qu.Error = errors.WithStack(fmt.Errorf("queue name is empty"))
+		qu.Error = errors.Errorf("queue name is empty")
 		return &qu
 	}
 	prefix := ""

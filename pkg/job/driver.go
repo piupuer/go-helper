@@ -112,7 +112,7 @@ func (rd *RedisClientDriver) scan(matchStr string) ([]string, error) {
 				break
 			}
 		} else {
-			return nil, errors.WithStack(fmt.Errorf("redis scan resp struct failed"))
+			return nil, errors.Errorf("redis scan resp struct failed")
 		}
 	}
 	return ret, nil

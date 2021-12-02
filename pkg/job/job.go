@@ -2,7 +2,6 @@ package job
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
@@ -106,7 +105,7 @@ func ParseRedisURI(uri string) (redis.UniversalClient, error) {
 		}
 		return opt.MakeRedisClient().(redis.UniversalClient), nil
 	}
-	return nil, errors.WithStack(fmt.Errorf("invalid redis config"))
+	return nil, errors.Errorf("invalid redis config")
 }
 
 func (g *GoodJob) AddTask(task GoodTask) *GoodJob {

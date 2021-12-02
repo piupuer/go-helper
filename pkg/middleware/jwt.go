@@ -266,10 +266,10 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	r.Username = strings.TrimSpace(r.Username)
 	r.Password = strings.TrimSpace(r.Password)
 	if r.Username == "" {
-		return nil, errors.WithStack(fmt.Errorf("username is empty"))
+		return nil, errors.Errorf("username is empty")
 	}
 	if r.Password == "" {
-		return nil, errors.WithStack(fmt.Errorf("password is empty"))
+		return nil, errors.Errorf("password is empty")
 	}
 
 	decodePwd, err := utils.RSADecrypt([]byte(r.Password), ops.privateBytes)
@@ -280,7 +280,7 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	// custom password check
 	userId, pass := ops.loginPwdCheck(c, r.Username, string(decodePwd))
 	if !pass {
-		return nil, errors.WithStack(fmt.Errorf(resp.LoginCheckErrorMsg))
+		return nil, errors.Errorf(resp.LoginCheckErrorMsg)
 	}
 	return map[string]interface{}{
 		"user": fmt.Sprintf("%d", userId),

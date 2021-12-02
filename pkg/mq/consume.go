@@ -2,7 +2,6 @@ package mq
 
 import (
 	"context"
-	"fmt"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -18,7 +17,7 @@ type Consume struct {
 
 func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
 	if handler == nil {
-		return errors.WithStack(fmt.Errorf("handler is nil"))
+		return errors.Errorf("handler is nil")
 	}
 	co := qu.beforeConsume(options...)
 	if co.Error != nil {
@@ -77,7 +76,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 
 func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
 	if handler == nil {
-		return errors.WithStack(fmt.Errorf("handler is nil"))
+		return errors.Errorf("handler is nil")
 	}
 	co := qu.beforeConsume(options...)
 	if co.Error != nil {
@@ -89,7 +88,7 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 		return errors.WithStack(err)
 	}
 	if !ok {
-		return errors.WithStack(fmt.Errorf("queue is empty, can't get one msg"))
+		return errors.Errorf("queue is empty, can't get one msg")
 	}
 	if co.ops.autoAck {
 		handler(ctx, co.qu.ops.name, msg)

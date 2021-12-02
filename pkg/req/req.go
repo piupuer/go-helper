@@ -34,7 +34,7 @@ func UintIdWithErr(c *gin.Context) (uint, error) {
 	i := c.Param("id")
 	id := utils.Str2Uint(i)
 	if id == 0 {
-		return id, errors.WithStack(fmt.Errorf("invalid path id"))
+		return id, errors.Errorf("invalid path id")
 	}
 	return id, nil
 }
@@ -54,7 +54,7 @@ func UintIdsWithErr(c *gin.Context) ([]uint, error) {
 	i := c.Param("ids")
 	arr := utils.Str2UintArr(i)
 	if len(arr) == 0 {
-		return nil, errors.WithStack(fmt.Errorf("invalid path ids: %s", i))
+		return nil, errors.Errorf("invalid path ids: %s", i)
 	}
 	return arr, nil
 }

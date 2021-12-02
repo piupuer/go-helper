@@ -40,5 +40,5 @@ func (r *NullUint) Scan(v interface{}) error {
 		*r = value
 		return nil
 	}
-	return errors.WithStack(fmt.Errorf("can not convert %v to NullUint", v))
+	return errors.Errorf("can not convert %v to NullUint", v)
 }

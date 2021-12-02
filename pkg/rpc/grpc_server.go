@@ -3,7 +3,6 @@ package rpc
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -81,7 +80,7 @@ func NewGrpcServerTls(options ...func(*GrpcServerTlsOptions)) (t credentials.Tra
 		}
 		certPool := x509.NewCertPool()
 		if ok := certPool.AppendCertsFromPEM(ops.caPem); !ok {
-			err = errors.WithStack(fmt.Errorf("append certs from pem failed"))
+			err = errors.Errorf("append certs from pem failed")
 			return
 		}
 		return credentials.NewTLS(&tls.Config{
@@ -90,5 +89,5 @@ func NewGrpcServerTls(options ...func(*GrpcServerTlsOptions)) (t credentials.Tra
 			ClientCAs:    certPool,
 		}), nil
 	}
-	return nil, errors.WithStack(fmt.Errorf("invalid options, serverKey: %s, serverPem: %s, caPem: %s", string(ops.serverKey), string(ops.serverPem), string(ops.caPem)))
+	return nil, errors.Errorf("invalid options, serverKey: %s, serverPem: %s, caPem: %s", string(ops.serverKey), string(ops.serverPem), string(ops.caPem))
 }

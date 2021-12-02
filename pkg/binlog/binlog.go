@@ -24,13 +24,13 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	}
 
 	if ops.db == nil {
-		return errors.WithStack(fmt.Errorf("binlog db is empty"))
+		return errors.Errorf("binlog db is empty")
 	}
 	if ops.dsn == nil {
-		return errors.WithStack(fmt.Errorf("binlog dsn is empty"))
+		return errors.Errorf("binlog dsn is empty")
 	}
 	if ops.redis == nil {
-		return errors.WithStack(fmt.Errorf("binlog redis is empty"))
+		return errors.Errorf("binlog redis is empty")
 	}
 
 	l := len(ops.models)

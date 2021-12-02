@@ -32,7 +32,7 @@ func IsSafetyCmd(cmd string) error {
 	c := path.Clean(strings.ToLower(cmd))
 	if strings.Contains(c, "rm") {
 		if len(strings.Split(c, "/")) <= 1 {
-			return errors.WithStack(fmt.Errorf("rm command %s cannot delete files smaller than level 2 dir", cmd))
+			return errors.Errorf("rm command %s cannot delete files smaller than level 2 dir", cmd)
 		}
 	}
 	return nil

@@ -96,7 +96,7 @@ func initRemoteMachine(machine *ms.SysMachine) error {
 
 	info := strings.Split(strings.TrimSuffix(res.Result, "\n"), "\n")
 	if len(info) != len(cmds) {
-		return errors.WithStack(fmt.Errorf("read machine info failed"))
+		return errors.Errorf("read machine info failed")
 	}
 
 	normalStatus := ms.SysMachineStatusHealthy

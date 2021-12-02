@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/base64"
-	"fmt"
 	"github.com/foobaz/lossypng/lossypng"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
@@ -52,7 +51,7 @@ func CompressImage(filename string) error {
 func CompressImageSaveOriginal(filename string, before string) error {
 	suffix := strings.ToLower(filepath.Ext(filename))
 	if suffix != ".jpg" && suffix != ".jpeg" && suffix != ".png" {
-		return errors.WithStack(fmt.Errorf("picture format is not supported: %s", filename))
+		return errors.Errorf("picture format is not supported: %s", filename)
 	}
 	isJpg := true
 	if suffix == ".png" {
@@ -77,7 +76,7 @@ func CompressImageSaveOriginal(filename string, before string) error {
 		beforeFilename = beforeDir + "/" + name
 		_, err := os.Stat(beforeFilename)
 		if err == nil {
-			return errors.WithStack(fmt.Errorf("file %s has been compressed, so it will not be compressed again", filename))
+			return errors.Errorf("file %s has been compressed, so it will not be compressed again", filename)
 		}
 	}
 

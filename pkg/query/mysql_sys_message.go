@@ -154,19 +154,19 @@ func (my MySql) CreateMessage(req *req.PushMessage) error {
 		switch uint(*req.Type) {
 		case ms.SysMessageTypeOneToOne:
 			if len(req.ToUserIds) == 0 {
-				return errors.WithStack(fmt.Errorf("to user is empty"))
+				return errors.Errorf("to user is empty")
 			}
 			return my.BatchCreateOneToOneMessage(message, req.ToUserIds)
 		case ms.SysMessageTypeOneToMany:
 			if len(req.ToRoleIds) == 0 {
-				return errors.WithStack(fmt.Errorf("to role is empty"))
+				return errors.Errorf("to role is empty")
 			}
 			return my.BatchCreateOneToManyMessage(message, req.ToRoleIds)
 		case ms.SysMessageTypeSystem:
 			return my.CreateSystemMessage(message)
 		}
 	}
-	return errors.WithStack(fmt.Errorf("message type is illegal"))
+	return errors.Errorf("message type is illegal")
 }
 
 // one2one message

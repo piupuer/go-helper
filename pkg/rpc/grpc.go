@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -35,7 +34,7 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 		}
 		certPool := x509.NewCertPool()
 		if ok := certPool.AppendCertsFromPEM(gr.ops.caPem); !ok {
-			gr.Error = errors.WithStack(fmt.Errorf("append certs from pem failed"))
+			gr.Error = errors.Errorf("append certs from pem failed")
 			return &gr
 		}
 		gr.ctl = credentials.NewTLS(&tls.Config{
