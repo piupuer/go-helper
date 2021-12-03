@@ -34,25 +34,33 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}
 	}
-	interceptors := make([]grpc.UnaryServerInterceptor, 0)
+	so := make([]grpc.ServerOption, 0)
+	// interceptor options
 	if ops.exception {
 		ops.exceptionOps = append(ops.exceptionOps, interceptor.WithExceptionLogger(ops.logger))
-		interceptors = append(interceptors, interceptor.Exception(ops.exceptionOps...))
+		so = append(so, grpc.UnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
 	}
 	if ops.requestId {
-		interceptors = append(interceptors, interceptor.RequestId(ops.requestIdOps...))
+		so = append(so, grpc.UnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
 	}
 	if ops.tag {
-		interceptors = append(interceptors, grpc_ctxtags.UnaryServerInterceptor(ops.tagOps...))
+		so = append(so, grpc.UnaryInterceptor(grpc_ctxtags.UnaryServerInterceptor(ops.tagOps...)))
 	}
 	if ops.opentracing {
-		interceptors = append(interceptors, grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...))
+		so = append(so, grpc.UnaryInterceptor(grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...)))
 	}
 	if z, ok := ops.logger.(*logger.Logger); ok {
-		interceptors = append(interceptors, grpc_zap.UnaryServerInterceptor(z.GetZapLog()))
+		so = append(so, grpc.UnaryInterceptor(grpc_zap.UnaryServerInterceptor(z.GetZapLog())))
 	}
 	if ops.transaction {
-		interceptors = append(interceptors, interceptor.Transaction(ops.transactionOps...))
+		so = append(so, grpc.UnaryInterceptor(interceptor.Transaction(ops.transactionOps...)))
+	}
+	// custom options
+	if len(ops.customs) > 0 {
+		so = append(so, ops.customs...)
+	}
+	for _, item := range so {
+		serverOps = append(serverOps, item)
 	}
 	srv := grpc.NewServer(serverOps...)
 	if ops.healthCheck {

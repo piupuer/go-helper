@@ -8,6 +8,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"google.golang.org/grpc"
 	"io/ioutil"
 )
 
@@ -111,6 +112,7 @@ type GrpcServerOptions struct {
 	opentracingOps []grpc_opentracing.Option
 	healthCheck    bool
 	reflection     bool
+	customs        []grpc.ServerOption
 }
 
 func WithGrpcServerLogger(l logger.Interface) func(*GrpcServerOptions) {
@@ -210,6 +212,12 @@ func WithGrpcServerHealthCheck(flag bool) func(*GrpcServerOptions) {
 func WithGrpcServerReflection(flag bool) func(*GrpcServerOptions) {
 	return func(options *GrpcServerOptions) {
 		getGrpcServerOptionsOrSetDefault(options).reflection = flag
+	}
+}
+
+func WithGrpcServerCustom(ops ...grpc.ServerOption) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).customs = append(getGrpcServerOptionsOrSetDefault(options).customs, ops...)
 	}
 }
 
