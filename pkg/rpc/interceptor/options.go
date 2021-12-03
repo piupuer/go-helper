@@ -73,3 +73,32 @@ func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOption
 	}
 	return options
 }
+
+type AccessLogOptions struct {
+	logger logger.Interface
+	detail bool
+}
+
+func WithAccessLogLogger(l logger.Interface) func(*AccessLogOptions) {
+	return func(options *AccessLogOptions) {
+		if l != nil {
+			getAccessLogOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithAccessLogDetail(flag bool) func(*AccessLogOptions) {
+	return func(options *AccessLogOptions) {
+		getAccessLogOptionsOrSetDefault(options).detail = flag
+	}
+}
+
+func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
+	if options == nil {
+		return &AccessLogOptions{
+			logger: logger.DefaultLogger(),
+			detail: true,
+		}
+	}
+	return options
+}

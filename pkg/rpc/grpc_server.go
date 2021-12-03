@@ -3,10 +3,8 @@ package rpc
 import (
 	"crypto/tls"
 	"crypto/x509"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -36,12 +34,11 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	}
 	so := make([]grpc.ServerOption, 0)
 	// interceptor options
-	if ops.exception {
-		ops.exceptionOps = append(ops.exceptionOps, interceptor.WithExceptionLogger(ops.logger))
-		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
-	}
 	if ops.requestId {
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
+	}
+	if ops.accessLog {
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.AccessLog(ops.accessLogOps...)))
 	}
 	if ops.tag {
 		so = append(so, grpc.ChainUnaryInterceptor(grpc_ctxtags.UnaryServerInterceptor(ops.tagOps...)))
@@ -49,8 +46,9 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.opentracing {
 		so = append(so, grpc.ChainUnaryInterceptor(grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...)))
 	}
-	if z, ok := ops.logger.(*logger.Logger); ok {
-		so = append(so, grpc.ChainUnaryInterceptor(grpc_zap.UnaryServerInterceptor(z.GetZapLog())))
+	if ops.exception {
+		ops.exceptionOps = append(ops.exceptionOps, interceptor.WithExceptionLogger(ops.logger))
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
 	}
 	if ops.transaction {
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Transaction(ops.transactionOps...)))

@@ -100,16 +100,18 @@ type GrpcServerOptions struct {
 	ctx            context.Context
 	tls            bool
 	tlsOps         []func(*GrpcServerTlsOptions)
-	exception      bool
-	exceptionOps   []func(*interceptor.ExceptionOptions)
 	requestId      bool
 	requestIdOps   []func(*interceptor.RequestIdOptions)
-	transaction    bool
-	transactionOps []func(*interceptor.TransactionOptions)
+	accessLog      bool
+	accessLogOps   []func(*interceptor.AccessLogOptions)
 	tag            bool
 	tagOps         []grpc_ctxtags.Option
 	opentracing    bool
 	opentracingOps []grpc_opentracing.Option
+	exception      bool
+	exceptionOps   []func(*interceptor.ExceptionOptions)
+	transaction    bool
+	transactionOps []func(*interceptor.TransactionOptions)
 	healthCheck    bool
 	reflection     bool
 	customs        []grpc.ServerOption
@@ -203,6 +205,18 @@ func WithGrpcServerOpentracingOps(ops ...grpc_opentracing.Option) func(*GrpcServ
 	}
 }
 
+func WithGrpcServerAccessLog(flag bool) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).accessLog = flag
+	}
+}
+
+func WithGrpcServerAccessLogOps(ops ...func(*interceptor.AccessLogOptions)) func(*GrpcServerOptions) {
+	return func(options *GrpcServerOptions) {
+		getGrpcServerOptionsOrSetDefault(options).accessLogOps = append(getGrpcServerOptionsOrSetDefault(options).accessLogOps, ops...)
+	}
+}
+
 func WithGrpcServerHealthCheck(flag bool) func(*GrpcServerOptions) {
 	return func(options *GrpcServerOptions) {
 		getGrpcServerOptionsOrSetDefault(options).healthCheck = flag
@@ -227,10 +241,11 @@ func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOpt
 			logger:      logger.DefaultLogger(),
 			ctx:         context.Background(),
 			tls:         true,
-			exception:   true,
 			requestId:   true,
+			accessLog:   true,
 			tag:         true,
 			opentracing: true,
+			exception:   true,
 			transaction: true,
 			healthCheck: true,
 		}
