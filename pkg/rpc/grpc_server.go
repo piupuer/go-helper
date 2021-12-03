@@ -38,22 +38,22 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	// interceptor options
 	if ops.exception {
 		ops.exceptionOps = append(ops.exceptionOps, interceptor.WithExceptionLogger(ops.logger))
-		so = append(so, grpc.UnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
 	}
 	if ops.requestId {
-		so = append(so, grpc.UnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
 	}
 	if ops.tag {
-		so = append(so, grpc.UnaryInterceptor(grpc_ctxtags.UnaryServerInterceptor(ops.tagOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(grpc_ctxtags.UnaryServerInterceptor(ops.tagOps...)))
 	}
 	if ops.opentracing {
-		so = append(so, grpc.UnaryInterceptor(grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...)))
 	}
 	if z, ok := ops.logger.(*logger.Logger); ok {
-		so = append(so, grpc.UnaryInterceptor(grpc_zap.UnaryServerInterceptor(z.GetZapLog())))
+		so = append(so, grpc.ChainUnaryInterceptor(grpc_zap.UnaryServerInterceptor(z.GetZapLog())))
 	}
 	if ops.transaction {
-		so = append(so, grpc.UnaryInterceptor(interceptor.Transaction(ops.transactionOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Transaction(ops.transactionOps...)))
 	}
 	// custom options
 	if len(ops.customs) > 0 {
