@@ -19,7 +19,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		endTime := time.Now()
 
 		// calc request exec time
-		execTime := endTime.Sub(startTime)
+		execTime := endTime.Sub(startTime).String()
 
 		reqMethod := c.Request.Method
 		reqUri := c.Request.RequestURI
@@ -33,7 +33,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 				reqMethod,
 				reqUri,
 				statusCode,
-				execTime.String(),
+				execTime,
 				clientIP,
 			)
 		} else {
@@ -43,7 +43,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 				reqMethod,
 				reqUri,
 				statusCode,
-				execTime.String(),
+				execTime,
 				clientIP,
 			)
 		}

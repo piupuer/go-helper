@@ -27,7 +27,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.tls {
 		t, err := NewGrpcServerTls(ops.tlsOps...)
 		if err != nil {
-			ops.logger.Warn(ops.ctx, "load tls failed: %+v", err)
+			ops.logger.Warn(ops.ctx, "load tls failed: %v", err)
 		} else {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}
@@ -38,6 +38,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
 	}
 	if ops.accessLog {
+		ops.accessLogOps = append(ops.accessLogOps, interceptor.WithAccessLogLogger(ops.logger))
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.AccessLog(ops.accessLogOps...)))
 	}
 	if ops.tag {

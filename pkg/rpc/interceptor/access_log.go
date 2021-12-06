@@ -2,12 +2,22 @@ package interceptor
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"time"
 )
+
+type errResp struct {
+	Error errCode `json:"error"`
+}
+
+type errCode struct {
+	Code int64  `json:"code"`
+	Msg  string `json:"msg"`
+}
 
 func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	ops := getAccessLogOptionsOrSetDefault(nil)
@@ -24,23 +34,24 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 			)
 		}
 
-		resp, err := handler(ctx, req)
+		rp, err := handler(ctx, req)
 
 		endTime := time.Now()
+		// calc request exec time
+		execTime := endTime.Sub(startTime).String()
 
 		fullMethod := info.FullMethod
-
 		addr := ""
 		if p, ok := peer.FromContext(ctx); ok {
 			addr = p.Addr.String()
 		}
 		code := status.Code(err).String()
-		// calc request exec time
-		execTime := endTime.Sub(startTime).String()
+		var e errResp
+		utils.Struct2StructByJson(rp, &e)
 		if err != nil {
 			ops.logger.Error(
 				ctx,
-				"%s %d %s %s %v",
+				"%s %s %s RPC code: '%s', RPC err: '%v'",
 				fullMethod,
 				execTime,
 				addr,
@@ -52,18 +63,32 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 				ops.logger.Info(
 					ctx,
 					"resp: %s",
-					utils.Struct2Json(resp),
+					utils.Struct2Json(rp),
 				)
 			}
-			ops.logger.Info(
-				ctx,
-				"%s %d %s %s",
-				fullMethod,
-				execTime,
-				addr,
-				code,
-			)
+			if e.Error.Code == resp.Ok {
+				ops.logger.Info(
+					ctx,
+					"%s %s %s RPC code: '%s', APP code: '%d'",
+					fullMethod,
+					execTime,
+					addr,
+					code,
+					e.Error.Code,
+				)
+			} else {
+				ops.logger.Error(
+					ctx,
+					"%s %s %s RPC code: '%s', APP code: '%d', APP err: '%s'",
+					fullMethod,
+					execTime,
+					addr,
+					code,
+					e.Error.Code,
+					e.Error.Msg,
+				)
+			}
 		}
-		return resp, err
+		return rp, err
 	}
 }
