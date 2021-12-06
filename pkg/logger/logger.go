@@ -259,8 +259,10 @@ func fileWithLineNum() string {
 func (l Logger) removePrefix(s1 string, s2 string) string {
 	res1 := l.removeBaseDir(s1)
 	res2 := l.removeBaseDir(s2)
+	f1 := len(res1) <= len(res2)
+	f2 := strings.HasPrefix(s1, sourceDir)
 	// src/runtime may be in go routine
-	if (len(res1) < len(res2) && !strings.HasPrefix(s1, sourceDir)) || strings.Contains(res2, "src/runtime") {
+	if strings.Contains(res2, "src/runtime") || (f1 || !f1 && f2) {
 		return res1
 	}
 	return res2
