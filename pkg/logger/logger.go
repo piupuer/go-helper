@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm/utils"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -27,7 +26,7 @@ var (
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("%slogger%slogger.go", string(os.PathSeparator), string(os.PathSeparator)))
+	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("go-helper%spkg%slogger%slogger.go", string(os.PathSeparator), string(os.PathSeparator), string(os.PathSeparator)))
 }
 
 // Interface logger interface
@@ -56,6 +55,7 @@ type Config struct {
 	lineNumPrefix string
 	lineNumLevel  int
 	keepSourceDir bool
+	keepVersion   bool
 }
 
 // New logger like gorm2
@@ -107,6 +107,7 @@ func newWithOption(ops *Options) *Logger {
 			lineNumPrefix: ops.lineNumPrefix,
 			lineNumLevel:  ops.lineNumLevel,
 			keepSourceDir: ops.keepSourceDir,
+			keepVersion:   ops.keepVersion,
 		},
 	)
 }
@@ -269,6 +270,7 @@ func (l Logger) removePrefix(s1 string, s2 string) string {
 }
 
 func (l Logger) removeBaseDir(s string) string {
+	sep := string(os.PathSeparator)
 	if !l.keepSourceDir && strings.HasPrefix(s, sourceDir) {
 		s = strings.TrimPrefix(s, path.Dir(sourceDir)+"/")
 	}
@@ -277,21 +279,23 @@ func (l Logger) removeBaseDir(s string) string {
 	}
 	arr := strings.Split(s, "@")
 	if len(arr) == 2 {
+		arr1 := strings.Split(arr[0], sep)
+		arr2 := strings.Split(arr[1], sep)
 		if l.lineNumLevel > 0 {
-			s = fmt.Sprintf("%s@%s", l.getParentDir(arr[0], l.lineNumLevel), arr[1])
+			if l.lineNumLevel < len(arr1) {
+				arr1 = arr1[len(arr1)-l.lineNumLevel:]
+			}
+		}
+		if !l.keepVersion {
+			arr2 = arr2[1:]
+		}
+		s1 := strings.Join(arr1, sep)
+		s2 := strings.Join(arr2, sep)
+		if !l.keepVersion {
+			s = fmt.Sprintf("%s%s%s", s1, sep, s2)
+		} else {
+			s = fmt.Sprintf("%s@%s", s1, s2)
 		}
 	}
 	return s
-}
-
-func (l Logger) getParentDir(dir string, index int) string {
-	d, b := filepath.Split(filepath.Clean(dir))
-	parentDir := ""
-	if index > 0 {
-		parentDir = l.getParentDir(d, index-1)
-	}
-	if parentDir != "" {
-		return fmt.Sprintf("%s%s%s", parentDir, string(os.PathSeparator), b)
-	}
-	return b
 }

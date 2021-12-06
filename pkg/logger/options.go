@@ -13,6 +13,7 @@ type Options struct {
 	lineNumPrefix   string
 	lineNumLevel    int
 	keepSourceDir   bool
+	keepVersion     bool
 	lumber          bool
 	lumberOps       LumberjackOption
 }
@@ -65,6 +66,12 @@ func WithKeepSourceDir(flag bool) func(*Options) {
 	}
 }
 
+func WithKeepVersion(flag bool) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).keepVersion = flag
+	}
+}
+
 func WithLumberjackOption(option LumberjackOption) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).lumberOps = option
@@ -76,8 +83,8 @@ func getOptionsOrSetDefault(options *Options) *Options {
 		return &Options{
 			level:           Level(zapcore.DebugLevel),
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			lineNumLevel:    2,
-			keepSourceDir:   true,
+			lineNumLevel:    1,
+			keepVersion:     true,
 			lumber:          true,
 			lumberOps: LumberjackOption{
 				Logger: lumberjack.Logger{
