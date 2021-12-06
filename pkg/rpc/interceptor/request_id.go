@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/query"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func RequestId(options ...func(*RequestIdOptions)) grpc.UnaryServerInterceptor {
@@ -12,8 +13,10 @@ func RequestId(options ...func(*RequestIdOptions)) grpc.UnaryServerInterceptor {
 		f(ops)
 	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		newContext := query.NewRequestId(ctx, ops.ctxKey)
+		newContext := query.NewRequestIdWithMetaData(ctx, ops.ctxKey)
 		resp, err := handler(newContext, req)
+		md := metadata.Pairs(ops.ctxKey, newContext.Value(ops.ctxKey).(string))
+		grpc.SendHeader(newContext, md)
 		return resp, err
 	}
 }

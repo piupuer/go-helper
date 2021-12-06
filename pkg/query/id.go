@@ -13,6 +13,24 @@ func NewRequestId(ctx context.Context, ctxKey string) context.Context {
 		ctx = context.Background()
 	}
 	requestId := ""
+	// get value from context
+	requestIdValue := ctx.Value(ctxKey)
+	if item, ok := requestIdValue.(string); ok && item != "" {
+		requestId = item
+	}
+	// gen uuid
+	if requestId == "" {
+		uuid4 := uuid.NewV4()
+		requestId = uuid4.String()
+	}
+	return context.WithValue(ctx, ctxKey, requestId)
+}
+
+func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Context {
+	if utils.InterfaceIsNil(ctx) {
+		ctx = context.Background()
+	}
+	requestId := ""
 	// get value from metadata
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
@@ -23,7 +41,6 @@ func NewRequestId(ctx context.Context, ctxKey string) context.Context {
 	} else {
 		md = metadata.MD{}
 	}
-
 	// get value from context
 	requestIdValue := ctx.Value(ctxKey)
 	if item, ok := requestIdValue.(string); ok && item != "" {
