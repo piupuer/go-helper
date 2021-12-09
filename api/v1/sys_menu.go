@@ -10,6 +10,14 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
+// GetMenuTree
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description GetMenuTree
+// @Router /menu/tree [GET]
 func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -34,6 +42,15 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindMenuByRoleId
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description FindMenuByRoleId
+// @Param id path uint true "id"
+// @Router /menu/all/{id} [GET]
 func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -62,6 +79,15 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindMenu
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description FindMenu
+// @Param params query req.Menu true "params"
+// @Router /menu/list [GET]
 func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -85,6 +111,15 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// CreateMenu
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description CreateMenu
+// @Param params body req.CreateMenu true "params"
+// @Router /menu/create [POST]
 func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -103,6 +138,16 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateMenuById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description UpdateMenuById
+// @Param id path uint true "id"
+// @Param params body req.UpdateMenu true "params"
+// @Router /menu/update/{id} [PATCH]
 func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -118,6 +163,16 @@ func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateMenuByRoleId
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description UpdateMenuByRoleId
+// @Param id path uint true "id"
+// @Param params body req.UpdateMenuIncrementalIds true "params"
+// @Router /menu/role/update/{id} [PATCH]
 func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -144,6 +199,15 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// BatchDeleteMenuByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Menu
+// @Description BatchDeleteMenuByIds
+// @Param ids body req.Ids true "ids"
+// @Router /menu/delete/batch [DELETE]
 func BatchDeleteMenuByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

@@ -9,17 +9,17 @@ import (
 
 // base fields(like Id/CreatedAt/UpdatedAt common fields)
 type Base struct {
-	Id        uint                    `json:"id"`
-	CreatedAt carbon.ToDateTimeString `json:"createdAt"`
-	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"`
+	Id        uint                    `json:"id"`        // primary key
+	CreatedAt carbon.ToDateTimeString `json:"createdAt"` // create time
+	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"` // update time
 }
 
 // http resp structure
 type Resp struct {
-	Code      int         `json:"code"`      // err code
-	Data      interface{} `json:"data"`      // response data if no err
-	Msg       string      `json:"msg"`       // response msg(success/err)
-	RequestId string      `json:"requestId"` // request id
+	Code      int         `json:"code" enums:"201,401,403,405,500"`                         // response code
+	Data      interface{} `json:"data" example:"object"`                                    // response data if code=201
+	Msg       string      `json:"msg" example:"success"`                                    // response msg
+	RequestId string      `json:"requestId" example:"4cb6e3f6-1f52-4fba-9b7d-e65098600f02"` // request id
 }
 
 // array data page info

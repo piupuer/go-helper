@@ -58,6 +58,14 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
+// JwtLogin
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Base
+// @Description Login
+// @Param params body middleware.User true "params"
+// @Router /base/login [POST]
 func JwtLogin(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -116,6 +124,13 @@ func JwtLogin(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
+// JwtLogout
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Base
+// @Description Logout
+// @Router /base/logout [POST]
 func JwtLogout(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -144,6 +159,14 @@ func JwtLogout(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 }
 
+// JwtRefresh
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Base
+// @Description RefreshToken
+// @Router /base/refreshToken [POST]
 func JwtRefresh(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOrSetDefault(nil)
 	for _, f := range options {

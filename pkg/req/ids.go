@@ -5,7 +5,7 @@ import (
 )
 
 type Ids struct {
-	Ids string `json:"ids" form:"ids"`
+	Ids string `json:"ids" form:"ids"` // id array string, split by comma
 }
 
 func (id Ids) Uints() []uint {

@@ -10,6 +10,15 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
+// FindApi
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description FindApi
+// @Param params query req.Api true "params"
+// @Router /api/list [GET]
 func FindApi(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -29,6 +38,16 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindApiGroupByCategoryByRoleKeyword
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description FindApiGroupByCategoryByRoleKeyword
+// @Param id path uint true "id"
+// @Param params query req.Api true "params"
+// @Router /api/all/category/{id} [GET]
 func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -58,6 +77,15 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 	}
 }
 
+// CreateApi
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description CreateApi
+// @Param params body req.CreateApi true "params"
+// @Router /api/create [POST]
 func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.findRoleKeywordByRoleIds == nil {
@@ -76,6 +104,16 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateApiById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description UpdateApiById
+// @Param id path uint true "id"
+// @Param params body req.UpdateApi true "params"
+// @Router /api/update/{id} [PATCH]
 func UpdateApiById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -90,7 +128,17 @@ func UpdateApiById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
-func UpdateApiByRoleKeyword(options ...func(*Options)) gin.HandlerFunc {
+// UpdateApiByRoleId
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description UpdateApiByRoleId
+// @Param id path uint true "id"
+// @Param params body req.UpdateMenuIncrementalIds true "params"
+// @Router /api/role/update/{id} [PATCH]
+func UpdateApiByRoleId(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
 		panic("getCurrentUser is empty")
@@ -116,6 +164,15 @@ func UpdateApiByRoleKeyword(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// BatchDeleteApiByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Api
+// @Description BatchDeleteApiByIds
+// @Param ids body req.Ids true "ids"
+// @Router /api/delete/batch [DELETE]
 func BatchDeleteApiByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

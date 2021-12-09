@@ -9,6 +9,6 @@ func (rt Router) Api() {
 	router1.GET("/all/category/:id", v1.FindApiGroupByCategoryByRoleKeyword(rt.ops.v1Ops...))
 	router2.POST("/create", v1.CreateApi(rt.ops.v1Ops...))
 	router1.PATCH("/update/:id", v1.UpdateApiById(rt.ops.v1Ops...))
-	router1.PATCH("/role/update/:id", v1.UpdateApiByRoleKeyword(rt.ops.v1Ops...))
+	router1.PATCH("/role/update/:id", v1.UpdateApiByRoleId(rt.ops.v1Ops...))
 	router1.DELETE("/delete/batch", v1.BatchDeleteApiByIds(rt.ops.v1Ops...))
 }

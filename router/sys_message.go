@@ -8,7 +8,7 @@ import (
 func (rt Router) Message() *query.MessageHub {
 	router1 := rt.Casbin("/message")
 	router2 := rt.CasbinAndIdempotence("/message")
-	router1.GET("/all", v1.FindMessage(rt.ops.v1Ops...))
+	router1.GET("/list", v1.FindMessage(rt.ops.v1Ops...))
 	router1.GET("/unRead/count", v1.GetUnReadMessageCount(rt.ops.v1Ops...))
 	router2.POST("/push", v1.PushMessage(rt.ops.v1Ops...))
 	router1.PATCH("/read/batch", v1.BatchUpdateMessageRead(rt.ops.v1Ops...))

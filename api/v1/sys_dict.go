@@ -8,6 +8,15 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 )
 
+// FindDict
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description FindDict
+// @Param params query req.Dict true "params"
+// @Router /dict/list [GET]
 func FindDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -27,6 +36,15 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// CreateDict
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description CreateDict
+// @Param params body req.CreateDict true "params"
+// @Router /dict/create [POST]
 func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -41,6 +59,16 @@ func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateDictById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description UpdateDictById
+// @Param id path uint true "id"
+// @Param params body req.UpdateDict true "params"
+// @Router /dict/update/{id} [PATCH]
 func UpdateDictById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -55,6 +83,15 @@ func UpdateDictById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// BatchDeleteDictByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description BatchDeleteDictByIds
+// @Param ids body req.Ids true "ids"
+// @Router /dict/delete/batch [DELETE]
 func BatchDeleteDictByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -68,6 +105,15 @@ func BatchDeleteDictByIds(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindDictData
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description FindDictData
+// @Param params query req.DictData true "params"
+// @Router /dict/data/list [GET]
 func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -87,6 +133,15 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// CreateDictData
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description CreateDictData
+// @Param params body req.CreateDictData true "params"
+// @Router /dict/data/create [POST]
 func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -101,6 +156,16 @@ func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateDictDataById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description UpdateDictDataById
+// @Param id path uint true "id"
+// @Param params body req.UpdateDictData true "params"
+// @Router /dict/data/update/{id} [PATCH]
 func UpdateDictDataById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -115,6 +180,15 @@ func UpdateDictDataById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// BatchDeleteDictDataByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Dict
+// @Description BatchDeleteDictDataByIds
+// @Param ids body req.Ids true "ids"
+// @Router /dict/data/delete/batch [DELETE]
 func BatchDeleteDictDataByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

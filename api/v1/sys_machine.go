@@ -8,6 +8,15 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 )
 
+// FindMachine
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Machine
+// @Description FindMachine
+// @Param params query req.Machine true "params"
+// @Router /machine/list [GET]
 func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -27,6 +36,15 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// CreateMachine
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Machine
+// @Description CreateMachine
+// @Param params body req.CreateMachine true "params"
+// @Router /machine/create [POST]
 func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -41,6 +59,16 @@ func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateMachineById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Machine
+// @Description UpdateMachineById
+// @Param id path uint true "id"
+// @Param params body req.UpdateMachine true "params"
+// @Router /machine/update/{id} [PATCH]
 func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -55,6 +83,15 @@ func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// ConnectMachineById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Machine
+// @Description ConnectMachineById
+// @Param id path uint true "id"
+// @Router /machine/connect/{id} [PATCH]
 func ConnectMachineById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -67,6 +104,15 @@ func ConnectMachineById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// BatchDeleteMachineByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Machine
+// @Description BatchDeleteMachineByIds
+// @Param ids body req.Ids true "ids"
+// @Router /machine/delete/batch [DELETE]
 func BatchDeleteMachineByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {

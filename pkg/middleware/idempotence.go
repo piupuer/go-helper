@@ -45,6 +45,14 @@ func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	}
 }
 
+// GetIdempotenceToken
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Base
+// @Description IdempotenceToken
+// @Router /base/idempotenceToken [GET]
 func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	ops := getIdempotenceOptionsOrSetDefault(nil)
 	for _, f := range options {

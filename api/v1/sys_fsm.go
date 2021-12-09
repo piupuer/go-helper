@@ -8,6 +8,15 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
+// FindFsm
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description FindFsm
+// @Param params query req.FsmMachine true "params"
+// @Router /fsm/list [GET]
 func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -21,6 +30,15 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindFsmApprovingLog
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description FindFsmApprovingLog
+// @Param params query req.FsmPendingLog true "params"
+// @Router /fsm/approving/list [GET]
 func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -86,6 +104,15 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FindFsmLogTrack
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description FindFsmLogTrack
+// @Param params query req.FsmLog true "params"
+// @Router /fsm/log/track [GET]
 func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -99,6 +126,15 @@ func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// GetFsmSubmitterDetail
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description GetFsmSubmitterDetail
+// @Param params query req.FsmSubmitterDetail true "params"
+// @Router /fsm/submitter/detail [GET]
 func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getFsmSubmitterDetail == nil {
@@ -111,6 +147,15 @@ func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateFsmSubmitterDetail
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description UpdateFsmSubmitterDetail
+// @Param params query req.UpdateFsmSubmitterDetail true "params"
+// @Router /fsm/submitter/detail [PATCH]
 func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -141,6 +186,15 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FsmApproveLog
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description FsmApproveLog
+// @Param params query req.FsmApproveLog true "params"
+// @Router /fsm/approve [PATCH]
 func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -160,6 +214,15 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// FsmCancelLogByUuids
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description FsmCancelLogByUuids
+// @Param params query req.FsmCancelLog true "params"
+// @Router /fsm/cancel [PATCH]
 func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -179,6 +242,15 @@ func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// CreateFsm
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description CreateFsm
+// @Param params body req.FsmCreateMachine true "params"
+// @Router /fsm/create [POST]
 func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -192,6 +264,16 @@ func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
+// UpdateFsmById
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description UpdateFsmById
+// @Param id path uint true "id"
+// @Param params body req.FsmUpdateMachine true "params"
+// @Router /fsm/update/{id} [PATCH]
 func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
@@ -206,7 +288,16 @@ func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
-func DeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
+// BatchDeleteFsmByIds
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags Fsm
+// @Description BatchDeleteFsmByIds
+// @Param ids body req.Ids true "ids"
+// @Router /fsm/delete/batch [DELETE]
+func BatchDeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
 		var r req.Ids
