@@ -154,9 +154,10 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	c := dcron.NewDcronWithOption(
 		task.Name,
 		g.driver,
-		dcron.WithLogger(&dcronLogger{
-			g.ops.logger,
-		}),
+		dcron.WithLogger(newDCronLogger(
+			WithCronLogger(g.ops.logger),
+			WithCronCtx(g.ops.ctx),
+		)),
 		dcron.CronOptionChain(g.parseWrapper(task)...),
 	)
 	c.AddFunc(task.Name, task.Expr, g.parseFun(task))

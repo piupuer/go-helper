@@ -1,22 +1,27 @@
 package job
 
 import (
-	"context"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/robfig/cron/v3"
 	"strings"
 )
 
 type dcronLogger struct {
-	l logger.Interface
+	ops CronOptions
+}
+
+func newDCronLogger(options ...func(*CronOptions)) *dcronLogger {
+	ops := getCronOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
+	return &dcronLogger{ops: *ops}
 }
 
 func (c dcronLogger) Printf(format string, args ...interface{}) {
-	ctx := context.Background()
 	if strings.HasPrefix(format, dcronInfoPrefix) {
-		c.l.Info(ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
+		c.ops.logger.Info(c.ops.ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
 	} else if strings.HasPrefix(format, dcronErrorPrefix) {
-		c.l.Error(ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
+		c.ops.logger.Error(c.ops.ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
 	}
 }
 
