@@ -20,7 +20,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Upload
+// @Tags *Upload
 // @Description UploadUnZip
 // @Param params body req.FilePartInfo true "params"
 // @Router /upload/unzip [POST]
@@ -56,7 +56,7 @@ func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Upload
+// @Tags *Upload
 // @Description UploadFileChunkExists
 // @Param params query req.FilePartInfo true "params"
 // @Router /upload/file [GET]
@@ -79,7 +79,7 @@ func UploadFileChunkExists(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Upload
+// @Tags *Upload
 // @Description UploadMerge
 // @Param params body req.FilePartInfo true "params"
 // @Router /upload/merge [POST]
@@ -168,7 +168,7 @@ func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 // @Accept multipart/form-data
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Upload
+// @Tags *Upload
 // @Description UploadFile
 // @Param params body req.FilePartInfo true "params"
 // @Router /upload/file [POST]

@@ -15,7 +15,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description FindApi
 // @Param params query req.Api true "params"
 // @Router /api/list [GET]
@@ -43,7 +43,7 @@ func FindApi(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description FindApiGroupByCategoryByRoleKeyword
 // @Param id path uint true "id"
 // @Param params query req.Api true "params"
@@ -82,7 +82,7 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description CreateApi
 // @Param params body req.CreateApi true "params"
 // @Router /api/create [POST]
@@ -109,7 +109,7 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description UpdateApiById
 // @Param id path uint true "id"
 // @Param params body req.UpdateApi true "params"
@@ -133,7 +133,7 @@ func UpdateApiById(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description UpdateApiByRoleId
 // @Param id path uint true "id"
 // @Param params body req.UpdateMenuIncrementalIds true "params"
@@ -169,7 +169,7 @@ func UpdateApiByRoleId(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Api
+// @Tags *Api
 // @Description BatchDeleteApiByIds
 // @Param ids body req.Ids true "ids"
 // @Router /api/delete/batch [DELETE]

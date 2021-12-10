@@ -13,7 +13,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Machine
+// @Tags *Machine
 // @Description FindMachine
 // @Param params query req.Machine true "params"
 // @Router /machine/list [GET]
@@ -41,7 +41,7 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Machine
+// @Tags *Machine
 // @Description CreateMachine
 // @Param params body req.CreateMachine true "params"
 // @Router /machine/create [POST]
@@ -64,7 +64,7 @@ func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Machine
+// @Tags *Machine
 // @Description UpdateMachineById
 // @Param id path uint true "id"
 // @Param params body req.UpdateMachine true "params"
@@ -88,7 +88,7 @@ func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Machine
+// @Tags *Machine
 // @Description ConnectMachineById
 // @Param id path uint true "id"
 // @Router /machine/connect/{id} [PATCH]
@@ -109,7 +109,7 @@ func ConnectMachineById(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Machine
+// @Tags *Machine
 // @Description BatchDeleteMachineByIds
 // @Param ids body req.Ids true "ids"
 // @Router /machine/delete/batch [DELETE]

@@ -13,7 +13,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags OperationLog
+// @Tags *OperationLog
 // @Description FindOperationLog
 // @Param params query req.OperationLog true "params"
 // @Router /operation/log/list [GET]
@@ -34,7 +34,7 @@ func FindOperationLog(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags OperationLog
+// @Tags *OperationLog
 // @Description BatchDeleteOperationLogByIds
 // @Param ids body req.Ids true "ids"
 // @Router /operation/log/delete/batch [DELETE]

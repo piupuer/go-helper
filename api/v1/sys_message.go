@@ -13,7 +13,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description FindMessage
 // @Param params query req.Message true "params"
 // @Router /message/list [GET]
@@ -75,7 +75,7 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description GetUnReadMessageCount
 // @Router /message/unRead/count [GET]
 func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
@@ -106,7 +106,7 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description PushMessage
 // @Param params body req.PushMessage true "params"
 // @Router /message/unRead/count [POST]
@@ -133,7 +133,7 @@ func PushMessage(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description BatchUpdateMessageRead
 // @Param ids body req.Ids true "ids"
 // @Router /message/read/batch [POST]
@@ -155,7 +155,7 @@ func BatchUpdateMessageRead(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description BatchUpdateMessageDeleted
 // @Param ids query req.Ids true "ids"
 // @Router /message/deleted/batch [PATCH]
@@ -177,7 +177,7 @@ func BatchUpdateMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description UpdateAllMessageRead
 // @Router /message/read/all [PATCH]
 func UpdateAllMessageRead(options ...func(*Options)) gin.HandlerFunc {
@@ -200,7 +200,7 @@ func UpdateAllMessageRead(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Message
+// @Tags *Message
 // @Description UpdateAllMessageDeleted
 // @Router /message/deleted/all [PATCH]
 func UpdateAllMessageDeleted(options ...func(*Options)) gin.HandlerFunc {

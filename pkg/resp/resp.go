@@ -17,7 +17,7 @@ type Base struct {
 // http resp structure
 type Resp struct {
 	Code      int         `json:"code" enums:"201,401,403,405,500"`                         // response code
-	Data      interface{} `json:"data" example:"object"`                                    // response data if code=201
+	Data      interface{} `json:"data" swaggertype:"string" example:"{}"`                   // response data if code=201
 	Msg       string      `json:"msg" example:"success"`                                    // response msg
 	RequestId string      `json:"requestId" example:"4cb6e3f6-1f52-4fba-9b7d-e65098600f02"` // request id
 }

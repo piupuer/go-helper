@@ -50,7 +50,7 @@ func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Base
+// @Tags *Base
 // @Description IdempotenceToken
 // @Router /base/idempotenceToken [GET]
 func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {

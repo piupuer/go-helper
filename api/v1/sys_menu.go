@@ -15,7 +15,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description GetMenuTree
 // @Router /menu/tree [GET]
 func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
@@ -47,7 +47,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description FindMenuByRoleId
 // @Param id path uint true "id"
 // @Router /menu/all/{id} [GET]
@@ -84,7 +84,7 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description FindMenu
 // @Param params query req.Menu true "params"
 // @Router /menu/list [GET]
@@ -116,7 +116,7 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description CreateMenu
 // @Param params body req.CreateMenu true "params"
 // @Router /menu/create [POST]
@@ -143,7 +143,7 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description UpdateMenuById
 // @Param id path uint true "id"
 // @Param params body req.UpdateMenu true "params"
@@ -168,7 +168,7 @@ func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description UpdateMenuByRoleId
 // @Param id path uint true "id"
 // @Param params body req.UpdateMenuIncrementalIds true "params"
@@ -204,7 +204,7 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Menu
+// @Tags *Menu
 // @Description BatchDeleteMenuByIds
 // @Param ids body req.Ids true "ids"
 // @Router /menu/delete/batch [DELETE]

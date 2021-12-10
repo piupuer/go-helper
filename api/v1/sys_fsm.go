@@ -13,7 +13,7 @@ import (
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description FindFsm
 // @Param params query req.FsmMachine true "params"
 // @Router /fsm/list [GET]
@@ -35,7 +35,7 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description FindFsmApprovingLog
 // @Param params query req.FsmPendingLog true "params"
 // @Router /fsm/approving/list [GET]
@@ -109,7 +109,7 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description FindFsmLogTrack
 // @Param params query req.FsmLog true "params"
 // @Router /fsm/log/track [GET]
@@ -131,7 +131,7 @@ func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description GetFsmSubmitterDetail
 // @Param params query req.FsmSubmitterDetail true "params"
 // @Router /fsm/submitter/detail [GET]
@@ -152,9 +152,9 @@ func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description UpdateFsmSubmitterDetail
-// @Param params query req.UpdateFsmSubmitterDetail true "params"
+// @Param params body req.UpdateFsmSubmitterDetail true "params"
 // @Router /fsm/submitter/detail [PATCH]
 func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
@@ -191,7 +191,7 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description FsmApproveLog
 // @Param params query req.FsmApproveLog true "params"
 // @Router /fsm/approve [PATCH]
@@ -219,7 +219,7 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description FsmCancelLogByUuids
 // @Param params query req.FsmCancelLog true "params"
 // @Router /fsm/cancel [PATCH]
@@ -247,7 +247,7 @@ func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description CreateFsm
 // @Param params body req.FsmCreateMachine true "params"
 // @Router /fsm/create [POST]
@@ -269,7 +269,7 @@ func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description UpdateFsmById
 // @Param id path uint true "id"
 // @Param params body req.FsmUpdateMachine true "params"
@@ -293,7 +293,7 @@ func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
-// @Tags Fsm
+// @Tags *Fsm
 // @Description BatchDeleteFsmByIds
 // @Param ids body req.Ids true "ids"
 // @Router /fsm/delete/batch [DELETE]
