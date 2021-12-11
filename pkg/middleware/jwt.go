@@ -244,7 +244,10 @@ func initJwt(ops JwtOptions) *jwt.GinJWTMiddleware {
 func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
 	ops.logger.Debug(c, "jwt auth check failed, err: %d, %+v", code, err)
 	msg := fmt.Sprintf("%v", err)
-	if msg == resp.LoginCheckErrorMsg || msg == resp.ForbiddenMsg || msg == resp.UserDisabledMsg {
+	if msg == resp.LoginCheckErrorMsg ||
+		msg == resp.ForbiddenMsg ||
+		msg == resp.UserDisabledMsg ||
+		msg == resp.UserLockedMsg {
 		ops.failWithMsg(msg)
 		return
 	}
@@ -301,9 +304,10 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	}
 
 	// custom password check
-	userId, pass := ops.loginPwdCheck(c, r.Username, string(decodePwd))
-	if !pass {
-		return nil, errors.Errorf(resp.LoginCheckErrorMsg)
+	var userId int64
+	userId, err = ops.loginPwdCheck(c, r.Username, string(decodePwd))
+	if err != nil {
+		return nil, err
 	}
 	return map[string]interface{}{
 		"user": fmt.Sprintf("%d", userId),

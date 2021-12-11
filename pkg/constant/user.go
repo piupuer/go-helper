@@ -1,6 +1,8 @@
 package constant
 
 const (
+	UserLoginDict                             = "UserLogin"
+	UserLoginCaptcha                          = "Captcha"
 	UserResetPwdDict                          = "UserResetPwd"
 	UserResetPwdFirstLogin                    = "FirstLogin"
 	UserResetPwdAfterSomeTime                 = "AfterSomeTime"

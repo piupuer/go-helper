@@ -2,7 +2,6 @@ package req
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -92,14 +91,14 @@ func validate(err error, custom map[string]string, ops ValidateOptions) (e error
 		// deep names
 		if len(names) > 1 {
 			if v, ok := custom[strings.Join(names[1:], ".")]; ok {
-				return fmt.Errorf(strings.Replace(tranStr, item.Field(), v, 1))
+				return errors.Errorf(strings.Replace(tranStr, item.Field(), v, 1))
 			}
 		}
 		// check whether it is in custom
 		if v, ok := custom[item.Field()]; ok {
-			return fmt.Errorf(strings.Replace(tranStr, item.Field(), v, 1))
+			return errors.Errorf(strings.Replace(tranStr, item.Field(), v, 1))
 		} else {
-			return fmt.Errorf(tranStr)
+			return errors.Errorf(tranStr)
 		}
 	}
 	return

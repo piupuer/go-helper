@@ -24,6 +24,7 @@ type Options struct {
 	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
 	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
 	beforeResetUserPwd         func(c *gin.Context, r *req.ResetUserPwd) error
+	getUserLoginStatus         func(c *gin.Context, r *req.UserStatus) error
 	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail
 	updateFsmSubmitterDetail   func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error
 	uploadSaveDir              string
@@ -121,6 +122,14 @@ func WithBeforeResetUserPwd(fun func(c *gin.Context, r *req.ResetUserPwd) error)
 	return func(options *Options) {
 		if fun != nil {
 			getOptionsOrSetDefault(options).beforeResetUserPwd = fun
+		}
+	}
+}
+
+func WithGetUserLoginStatus(fun func(c *gin.Context, r *req.UserStatus) error) func(*Options) {
+	return func(options *Options) {
+		if fun != nil {
+			getOptionsOrSetDefault(options).getUserLoginStatus = fun
 		}
 	}
 }

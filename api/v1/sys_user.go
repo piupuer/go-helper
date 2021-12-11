@@ -8,6 +8,30 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 )
 
+// GetUserStatus
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags *Base
+// @Description GetUserStatus
+// @Param params body req.UserStatus true "params"
+// @Router /base/user/status [POST]
+func GetUserStatus(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	if ops.getUserLoginStatus == nil {
+		panic("getUserLoginStatus is empty")
+	}
+	return func(c *gin.Context) {
+		var r req.UserStatus
+		req.ShouldBind(c, &r)
+		err := ops.getUserLoginStatus(c, &r)
+		resp.CheckErr(err)
+		ops.addCtx(c)
+		my := query.NewMySql(ops.dbOps...)
+		resp.SuccessWithData(my.GetUserStatus(r))
+	}
+}
+
 // ResetUserPwd
 // @Security Bearer
 // @Accept json
@@ -16,7 +40,7 @@ import (
 // @Tags *Base
 // @Description ResetUserPwd
 // @Param params body req.ResetUserPwd true "params"
-// @Router /base/user/reset [patch]
+// @Router /base/user/reset [PATCH]
 func ResetUserPwd(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {

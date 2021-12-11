@@ -9,6 +9,7 @@ func (rt Router) Base() {
 	if rt.ops.jwt {
 		router1 := rt.ops.group.Group("/base")
 		router2 := rt.Casbin("/base")
+		router1.POST("/user/status", v1.GetUserStatus(rt.ops.v1Ops...))
 		router1.POST("/login", middleware.JwtLogin(rt.ops.jwtOps...))
 		router1.POST("/logout", middleware.JwtLogout(rt.ops.jwtOps...))
 		router1.POST("/refreshToken", middleware.JwtRefresh(rt.ops.jwtOps...))

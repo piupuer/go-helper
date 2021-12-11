@@ -7,9 +7,24 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 )
+
+func (my MySql) GetUserStatus(r req.UserStatus) (rp resp.UserStatus) {
+	if r.Locked == constant.One {
+		rp.Locked = r.Locked
+		return
+	}
+	d := my.GetDictData(constant.UserLoginDict, constant.UserLoginCaptcha)
+	if d.Val != "" {
+		if r.Wrong >= utils.Str2Int(d.Val) {
+			rp.Captcha = "123456"
+		}
+	}
+	return
+}
 
 func (my MySql) UserNeedResetPwd(r req.UserNeedResetPwd) (flag bool) {
 	if r.First == constant.One {
@@ -48,7 +63,7 @@ func (my MySql) ResetUserPwd(r req.ResetUserPwd) error {
 		} else {
 			msg = fmt.Sprintf("%s: %s", resp.WeakPassword, msg)
 		}
-		return fmt.Errorf(msg)
+		return errors.Errorf(msg)
 	}
 	return my.Tx.
 		Table(my.Tx.NamingStrategy.TableName("sys_user")).

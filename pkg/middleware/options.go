@@ -10,6 +10,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -237,7 +238,7 @@ type JwtOptions struct {
 	successWithData    func(...interface{})
 	failWithMsg        func(format interface{}, a ...interface{})
 	failWithCodeAndMsg func(code int, format interface{}, a ...interface{})
-	loginPwdCheck      func(c *gin.Context, username, password string) (userId int64, pass bool)
+	loginPwdCheck      func(c *gin.Context, username, password string) (userId int64, err error)
 }
 
 func WithJwtLogger(l logger.Interface) func(*JwtOptions) {
@@ -334,7 +335,7 @@ func WithJwtFailWithCodeAndMsg(fun func(code int, format interface{}, a ...inter
 	}
 }
 
-func WithJwtLoginPwdCheck(fun func(c *gin.Context, username, password string) (userId int64, pass bool)) func(*JwtOptions) {
+func WithJwtLoginPwdCheck(fun func(c *gin.Context, username, password string) (userId int64, err error)) func(*JwtOptions) {
 	return func(options *JwtOptions) {
 		if fun != nil {
 			getJwtOptionsOrSetDefault(options).loginPwdCheck = fun
@@ -356,8 +357,8 @@ func getJwtOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 			successWithData:    resp.SuccessWithData,
 			failWithMsg:        resp.FailWithMsg,
 			failWithCodeAndMsg: resp.FailWithCodeAndMsg,
-			loginPwdCheck: func(c *gin.Context, username, password string) (userId int64, pass bool) {
-				return 0, true
+			loginPwdCheck: func(c *gin.Context, username, password string) (userId int64, err error) {
+				return 0, errors.Errorf(resp.LoginCheckErrorMsg)
 			},
 		}
 	}
