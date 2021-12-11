@@ -1,6 +1,9 @@
 package router
 
-import "github.com/piupuer/go-helper/pkg/middleware"
+import (
+	v1 "github.com/piupuer/go-helper/api/v1"
+	"github.com/piupuer/go-helper/pkg/middleware"
+)
 
 func (rt Router) Base() {
 	if rt.ops.jwt {
@@ -12,6 +15,7 @@ func (rt Router) Base() {
 		if rt.ops.idempotence {
 			// need login
 			router2.GET("/idempotenceToken", middleware.GetIdempotenceToken(rt.ops.idempotenceOps...))
+			router2.POST("/user/reset/pwd", v1.ResetUserPwd(rt.ops.v1Ops...))
 		}
 	}
 }

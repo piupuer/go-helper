@@ -117,3 +117,56 @@ func DecodeStrFromBase64(str string) string {
 	decodeBytes, _ := base64.StdEncoding.DecodeString(str)
 	return string(decodeBytes)
 }
+
+func RuneIsChinese(r rune) bool {
+	if unicode.Is(unicode.Han, r) || (regexp.MustCompile("[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b]").MatchString(string(r))) {
+		return true
+	}
+	return false
+}
+
+func StrContainsChinese(str string) (exists bool) {
+	rs := []rune(str)
+	for _, r := range rs {
+		if RuneIsChinese(r) {
+			exists = true
+			return
+		}
+	}
+	return
+}
+
+func StrContainsContinuousNum(str string) int {
+	arr := strings.Split(regexp.MustCompile("[^0-9]+").ReplaceAllString(str, ""), "")
+	l := len(arr)
+	maxCount := 0
+	if l > 0 {
+		count := 0
+		lastItem := Str2Int(arr[0])
+		direction := 0
+		for i := 1; i < l; i++ {
+			item := Str2Int(arr[i])
+			if item == lastItem+1 {
+				if direction == 1 && count >= 0 {
+					direction = 0
+					count = 0
+				}
+				count++
+			} else if item == lastItem-1 {
+				if direction == 0 && count >= 0 {
+					direction = 1
+					count = 0
+				}
+				count++
+			} else {
+				direction = 0
+				count = 0
+			}
+			lastItem = item
+			if count+1 > maxCount {
+				maxCount = count + 1
+			}
+		}
+	}
+	return maxCount
+}

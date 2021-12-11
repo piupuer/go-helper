@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -27,6 +28,7 @@ func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictDat
 		Model(&ms.SysDictData{}).
 		Preload("Dict").
 		Order("created_at DESC").
+		Where("status = ?", constant.One).
 		Find(&list)
 	for _, data := range list {
 		if data.Dict.Name == dictName && data.Key == dictDataKey {

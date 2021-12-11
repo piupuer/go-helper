@@ -22,6 +22,7 @@ const (
 	IdempotenceTokenEmptyMsg   = "idempotent token is empty"
 	IdempotenceTokenInvalidMsg = "idempotent token expired"
 	UserDisabledMsg            = "the account has been disabled"
+	WeakPassword               = "the password is too weak"
 )
 
 var CustomError = map[int]string{
