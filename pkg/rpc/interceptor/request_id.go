@@ -12,9 +12,9 @@ func RequestId(options ...func(*RequestIdOptions)) grpc.UnaryServerInterceptor {
 	for _, f := range options {
 		f(ops)
 	}
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		newContext := query.NewRequestIdWithMetaData(ctx, ops.ctxKey)
-		resp, err := handler(newContext, req)
+		resp, err := handler(newContext, r)
 		md := metadata.Pairs(ops.ctxKey, newContext.Value(ops.ctxKey).(string))
 		grpc.SendHeader(newContext, md)
 		return resp, err

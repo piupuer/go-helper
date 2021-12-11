@@ -13,7 +13,7 @@ import (
 )
 
 // find status!=ms.SysMessageLogStatusDeleted messages
-func (my MySql) FindUnDeleteMessage(req *req.Message) []resp.Message {
+func (my MySql) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	sysMessageLogTableName := my.Tx.NamingStrategy.TableName("sys_message_log")
 	sysMessageTableName := my.Tx.NamingStrategy.TableName("sys_message")
 	list := make([]resp.Message, 0)
@@ -34,27 +34,27 @@ func (my MySql) FindUnDeleteMessage(req *req.Message) []resp.Message {
 
 	q.
 		Order(fmt.Sprintf("%s.created_at DESC", sysMessageLogTableName)).
-		Where(fmt.Sprintf("%s.to_user_id = ?", sysMessageLogTableName), req.ToUserId)
-	title := strings.TrimSpace(req.Title)
+		Where(fmt.Sprintf("%s.to_user_id = ?", sysMessageLogTableName), r.ToUserId)
+	title := strings.TrimSpace(r.Title)
 	if title != "" {
 		q.Where(fmt.Sprintf("%s.title LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", title))
 	}
-	content := strings.TrimSpace(req.Title)
+	content := strings.TrimSpace(r.Title)
 	if content != "" {
 		q.Where(fmt.Sprintf("%s.content LIKE ?", sysMessageTableName), fmt.Sprintf("%%%s%%", content))
 	}
-	if req.Type != nil {
-		q.Where("type = ?", *req.Type)
+	if r.Type != nil {
+		q.Where("type = ?", *r.Type)
 	}
-	if req.Status != nil {
-		q.Where(fmt.Sprintf("%s.status = ?", sysMessageLogTableName), *req.Status)
+	if r.Status != nil {
+		q.Where(fmt.Sprintf("%s.status = ?", sysMessageLogTableName), *r.Status)
 	} else {
 		// un delete
 		q.Where(fmt.Sprintf("%s.status != ?", sysMessageLogTableName), ms.SysMessageLogStatusDeleted)
 	}
 
 	// multi tables use ScanWithPage not FindWithPage
-	my.ScanWithPage(q, &req.Page, &list)
+	my.ScanWithPage(q, &r.Page, &list)
 	return list
 }
 
@@ -143,25 +143,25 @@ func (my MySql) SyncMessageByUserIds(users []ms.User) error {
 	return nil
 }
 
-func (my MySql) CreateMessage(req *req.PushMessage) error {
-	if req.Type != nil {
+func (my MySql) CreateMessage(r *req.PushMessage) error {
+	if r.Type != nil {
 		message := ms.SysMessage{
-			FromUserId: req.FromUserId,
-			Title:      req.Title,
-			Content:    req.Content,
-			Type:       uint(*req.Type),
+			FromUserId: r.FromUserId,
+			Title:      r.Title,
+			Content:    r.Content,
+			Type:       uint(*r.Type),
 		}
-		switch uint(*req.Type) {
+		switch uint(*r.Type) {
 		case ms.SysMessageTypeOneToOne:
-			if len(req.ToUserIds) == 0 {
+			if len(r.ToUserIds) == 0 {
 				return errors.Errorf("to user is empty")
 			}
-			return my.BatchCreateOneToOneMessage(message, req.ToUserIds)
+			return my.BatchCreateOneToOneMessage(message, r.ToUserIds)
 		case ms.SysMessageTypeOneToMany:
-			if len(req.ToRoleIds) == 0 {
+			if len(r.ToRoleIds) == 0 {
 				return errors.Errorf("to role is empty")
 			}
-			return my.BatchCreateOneToManyMessage(message, req.ToRoleIds)
+			return my.BatchCreateOneToManyMessage(message, r.ToRoleIds)
 		case ms.SysMessageTypeSystem:
 			return my.CreateSystemMessage(message)
 		}

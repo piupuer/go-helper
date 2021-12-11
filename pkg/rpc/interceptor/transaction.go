@@ -13,10 +13,10 @@ func Transaction(options ...func(*TransactionOptions)) grpc.UnaryServerIntercept
 	if ops.dbNoTx == nil {
 		panic("dbNoTx is empty")
 	}
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		tx := ops.dbNoTx.Begin()
 		c := context.WithValue(ctx, ops.txCtxKey, tx)
-		resp, err := handler(c, req)
+		resp, err := handler(c, r)
 		if err != nil {
 			tx.Rollback()
 		} else {

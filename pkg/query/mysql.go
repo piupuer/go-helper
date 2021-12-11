@@ -349,9 +349,9 @@ func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 }
 
 // create data
-func (my MySql) Create(req interface{}, model interface{}) (err error) {
+func (my MySql) Create(r interface{}, model interface{}) (err error) {
 	i := model
-	v := reflect.ValueOf(req)
+	v := reflect.ValueOf(r)
 	if v.Kind() == reflect.Slice {
 		mv := reflect.Indirect(reflect.ValueOf(model))
 		if mv.Kind() == reflect.Struct {
@@ -364,13 +364,13 @@ func (my MySql) Create(req interface{}, model interface{}) (err error) {
 			i = arr.Interface()
 		}
 	}
-	utils.Struct2StructByJson(req, i)
+	utils.Struct2StructByJson(r, i)
 	err = my.Tx.Create(i).Error
 	return
 }
 
 // update data by id
-func (my MySql) UpdateById(id uint, req interface{}, model interface{}) error {
+func (my MySql) UpdateById(id uint, r interface{}, model interface{}) error {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Struct) {
 		return errors.Errorf("model must be a pointer")
@@ -381,7 +381,7 @@ func (my MySql) UpdateById(id uint, req interface{}, model interface{}) error {
 	}
 
 	m := make(map[string]interface{}, 0)
-	utils.CompareDiff2SnakeKey(rv.Elem().Interface(), req, &m)
+	utils.CompareDiff2SnakeKey(rv.Elem().Interface(), r, &m)
 
 	return q.Updates(&m).Error
 }

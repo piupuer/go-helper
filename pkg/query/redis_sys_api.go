@@ -10,24 +10,24 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindApi(req *req.Api) []ms.SysApi {
+func (rd Redis) FindApi(r *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
 	q := rd.
 		Table("sys_api").
 		Order("created_at DESC")
-	method := strings.TrimSpace(req.Method)
+	method := strings.TrimSpace(r.Method)
 	if method != "" {
 		q.Where("method", "contains", method)
 	}
-	path := strings.TrimSpace(req.Path)
+	path := strings.TrimSpace(r.Path)
 	if path != "" {
 		q.Where("path", "contains", path)
 	}
-	category := strings.TrimSpace(req.Category)
+	category := strings.TrimSpace(r.Category)
 	if category != "" {
 		q.Where("category", "contains", category)
 	}
-	rd.FindWithPage(q, &req.Page, &list)
+	rd.FindWithPage(q, &r.Page, &list)
 	return list
 }
 

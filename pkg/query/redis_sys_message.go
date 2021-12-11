@@ -9,12 +9,12 @@ import (
 )
 
 // find status!=ms.SysMessageLogStatusDeleted messages
-func (rd Redis) FindUnDeleteMessage(req *req.Message) []resp.Message {
+func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	currentUserAllLogs := make([]ms.SysMessageLog, 0)
 	rd.
 		Table("sys_message_log").
 		Preload("Message").
-		Where("to_user_id", "=", req.ToUserId).
+		Where("to_user_id", "=", r.ToUserId).
 		// un delete
 		Where("status", "!=", ms.SysMessageLogStatusDeleted).
 		Find(&currentUserAllLogs)
@@ -24,21 +24,21 @@ func (rd Redis) FindUnDeleteMessage(req *req.Message) []resp.Message {
 	q := rd.
 		FromString(utils.Struct2Json(currentUserAllLogs)).
 		Order("created_at DESC")
-	title := strings.TrimSpace(req.Title)
+	title := strings.TrimSpace(r.Title)
 	if title != "" {
 		q.Where("message.title", "contains", title)
 	}
-	content := strings.TrimSpace(req.Content)
+	content := strings.TrimSpace(r.Content)
 	if content != "" {
 		q.Where("message.content", "contains", content)
 	}
-	if req.Type != nil {
-		q.Where("type", "=", *req.Type)
+	if r.Type != nil {
+		q.Where("type", "=", *r.Type)
 	}
-	if req.Status != nil {
-		q.Where("status", "=", *req.Status)
+	if r.Status != nil {
+		q.Where("status", "=", *r.Status)
 	}
-	rd.FindWithPage(q, &req.Page, &messageLogs)
+	rd.FindWithPage(q, &r.Page, &messageLogs)
 	// convert to Message
 	list := make([]resp.Message, 0)
 	for _, log := range messageLogs {

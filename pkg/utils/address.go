@@ -8,13 +8,13 @@ import (
 
 // get real ip location by amap
 func GetIpRealLocation(ip, key string) string {
-	resp, err := http.Get(fmt.Sprintf("https://restapi.amap.com/v3/ip?ip=%s&key=%s", ip, key))
+	rp, err := http.Get(fmt.Sprintf("https://restapi.amap.com/v3/ip?ip=%s&key=%s", ip, key))
 	address := "unknown address"
 	if err != nil {
 		return address
 	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	defer rp.Body.Close()
+	data, err := ioutil.ReadAll(rp.Body)
 	if err != nil {
 		return address
 	}

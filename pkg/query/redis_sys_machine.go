@@ -6,22 +6,22 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindMachine(req *req.Machine) []ms.SysMachine {
+func (rd Redis) FindMachine(r *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
 	q := rd.
 		Table("sys_machine").
 		Order("created_at DESC")
-	host := strings.TrimSpace(req.Host)
+	host := strings.TrimSpace(r.Host)
 	if host != "" {
 		q.Where("host", "contains", host)
 	}
-	loginName := strings.TrimSpace(req.LoginName)
+	loginName := strings.TrimSpace(r.LoginName)
 	if loginName != "" {
 		q.Where("login_name", "contains", loginName)
 	}
-	if req.Status != nil {
-		q.Where("status", "=", *req.Status)
+	if r.Status != nil {
+		q.Where("status", "=", *r.Status)
 	}
-	rd.FindWithPage(q, &req.Page, &list)
+	rd.FindWithPage(q, &r.Page, &list)
 	return list
 }

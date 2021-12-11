@@ -10,27 +10,27 @@ import (
 	"strings"
 )
 
-func (my MySql) FindMachine(req *req.Machine) []ms.SysMachine {
+func (my MySql) FindMachine(r *req.Machine) []ms.SysMachine {
 	list := make([]ms.SysMachine, 0)
 	q := my.Tx.
 		Model(&ms.SysMachine{}).
 		Order("created_at DESC")
-	host := strings.TrimSpace(req.Host)
+	host := strings.TrimSpace(r.Host)
 	if host != "" {
 		q.Where("host LIKE ?", fmt.Sprintf("%%%s%%", host))
 	}
-	loginName := strings.TrimSpace(req.LoginName)
+	loginName := strings.TrimSpace(r.LoginName)
 	if loginName != "" {
 		q.Where("login_name LIKE ?", fmt.Sprintf("%%%s%%", loginName))
 	}
-	if req.Status != nil {
-		if *req.Status > 0 {
+	if r.Status != nil {
+		if *r.Status > 0 {
 			q.Where("status = ?", 1)
 		} else {
 			q.Where("status = ?", 0)
 		}
 	}
-	my.FindWithPage(q, &req.Page, &list)
+	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
 

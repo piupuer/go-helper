@@ -24,17 +24,17 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	for _, f := range options {
 		f(ops)
 	}
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		startTime := time.Now()
 		if ops.detail {
 			ops.logger.Info(
 				ctx,
 				"req: %s",
-				utils.Struct2Json(req),
+				utils.Struct2Json(r),
 			)
 		}
 
-		rp, err := handler(ctx, req)
+		rp, err := handler(ctx, r)
 
 		endTime := time.Now()
 		// calc request exec time

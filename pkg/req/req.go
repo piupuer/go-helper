@@ -12,8 +12,8 @@ import (
 )
 
 // bind request param
-func ShouldBind(c *gin.Context, req interface{}) {
-	err := c.ShouldBind(req)
+func ShouldBind(c *gin.Context, r interface{}) {
+	err := c.ShouldBind(r)
 	if err != nil {
 		resp.FailWithMsg("%s: %v", resp.InvalidParameterMsg, err)
 	}
@@ -60,24 +60,24 @@ func UintIdsWithErr(c *gin.Context) ([]uint, error) {
 }
 
 // validate request param
-func Validate(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
+func Validate(c context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
-	err := validate(ops.validator.Struct(req), trans, *ops)
+	err := validate(ops.validator.Struct(r), trans, *ops)
 	if err != nil {
 		resp.FailWithMsg("%s: %v", resp.IllegalParameterMsg, err)
 	}
 }
 
 // validate request param return err
-func ValidateWithErr(c context.Context, req interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
+func ValidateWithErr(c context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
-	err := validate(ops.validator.Struct(req), trans, *ops)
+	err := validate(ops.validator.Struct(r), trans, *ops)
 	return err
 }
 

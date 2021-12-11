@@ -58,64 +58,64 @@ func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
 	return newList, nil
 }
 
-func (my MySql) FindDict(req *req.Dict) []ms.SysDict {
+func (my MySql) FindDict(r *req.Dict) []ms.SysDict {
 	list := make([]ms.SysDict, 0)
 	q := my.Tx.
 		Model(&ms.SysDict{}).
 		Preload("DictDatas").
 		Order("created_at DESC")
-	name := strings.TrimSpace(req.Name)
+	name := strings.TrimSpace(r.Name)
 	if name != "" {
 		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
 	}
-	desc := strings.TrimSpace(req.Desc)
+	desc := strings.TrimSpace(r.Desc)
 	if desc != "" {
 		q.Where("desc = ?", desc)
 	}
-	if req.Status != nil {
-		q.Where("status = ?", *req.Status)
+	if r.Status != nil {
+		q.Where("status = ?", *r.Status)
 	}
-	my.FindWithPage(q, &req.Page, &list)
+	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
 
-func (my MySql) FindDictData(req *req.DictData) []ms.SysDictData {
+func (my MySql) FindDictData(r *req.DictData) []ms.SysDictData {
 	list := make([]ms.SysDictData, 0)
 	q := my.Tx.
 		Model(&ms.SysDictData{}).
 		Preload("Dict").
 		Order("created_at DESC")
-	key := strings.TrimSpace(req.Key)
+	key := strings.TrimSpace(r.Key)
 	if key != "" {
 		q.Where("key LIKE ?", fmt.Sprintf("%%%s%%", key))
 	}
-	val := strings.TrimSpace(req.Val)
+	val := strings.TrimSpace(r.Val)
 	if val != "" {
 		q.Where("val LIKE ?", fmt.Sprintf("%%%s%%", val))
 	}
-	attr := strings.TrimSpace(req.Attr)
+	attr := strings.TrimSpace(r.Attr)
 	if attr != "" {
 		q.Where("attr = ?", attr)
 	}
-	if req.Status != nil {
-		q.Where("status = ?", *req.Status)
+	if r.Status != nil {
+		q.Where("status = ?", *r.Status)
 	}
-	if req.DictId != nil {
-		q.Where("dict_id = ?", *req.DictId)
+	if r.DictId != nil {
+		q.Where("dict_id = ?", *r.DictId)
 	}
-	my.FindWithPage(q, &req.Page, &list)
+	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
 
-func (my MySql) CreateDict(req *req.CreateDict) (err error) {
-	err = my.Create(req, new(ms.SysDict))
+func (my MySql) CreateDict(r *req.CreateDict) (err error) {
+	err = my.Create(r, new(ms.SysDict))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return
 }
 
-func (my MySql) UpdateDictById(id uint, req req.UpdateDict) (err error) {
-	err = my.UpdateById(id, req, new(ms.SysDict))
+func (my MySql) UpdateDictById(id uint, r req.UpdateDict) (err error) {
+	err = my.UpdateById(id, r, new(ms.SysDict))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return
@@ -128,15 +128,15 @@ func (my MySql) DeleteDictByIds(ids []uint) (err error) {
 	return
 }
 
-func (my MySql) CreateDictData(req *req.CreateDictData) (err error) {
-	err = my.Create(req, new(ms.SysDictData))
+func (my MySql) CreateDictData(r *req.CreateDictData) (err error) {
+	err = my.Create(r, new(ms.SysDictData))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return
 }
 
-func (my MySql) UpdateDictDataById(id uint, req req.UpdateDictData) (err error) {
-	err = my.UpdateById(id, req, new(ms.SysDictData))
+func (my MySql) UpdateDictDataById(id uint, r req.UpdateDictData) (err error) {
+	err = my.UpdateById(id, r, new(ms.SysDictData))
 	my.CacheFlushDictName(my.Ctx)
 	my.CacheFlushDictNameAndKey(my.Ctx)
 	return

@@ -11,24 +11,24 @@ import (
 	"strings"
 )
 
-func (my MySql) FindApi(req *req.Api) []ms.SysApi {
+func (my MySql) FindApi(r *req.Api) []ms.SysApi {
 	list := make([]ms.SysApi, 0)
 	q := my.Tx.
 		Model(&ms.SysApi{}).
 		Order("created_at DESC")
-	method := strings.TrimSpace(req.Method)
+	method := strings.TrimSpace(r.Method)
 	if method != "" {
 		q.Where("method LIKE ?", fmt.Sprintf("%%%s%%", method))
 	}
-	path := strings.TrimSpace(req.Path)
+	path := strings.TrimSpace(r.Path)
 	if path != "" {
 		q.Where("path LIKE ?", fmt.Sprintf("%%%s%%", path))
 	}
-	category := strings.TrimSpace(req.Category)
+	category := strings.TrimSpace(r.Category)
 	if category != "" {
 		q.Where("category LIKE ?", fmt.Sprintf("%%%s%%", category))
 	}
-	my.FindWithPage(q, &req.Page, &list)
+	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
 
@@ -104,16 +104,16 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 	return tree, accessIds, err
 }
 
-func (my MySql) CreateApi(req *req.CreateApi) (err error) {
+func (my MySql) CreateApi(r *req.CreateApi) (err error) {
 	api := new(ms.SysApi)
-	err = my.Create(req, new(ms.SysApi))
+	err = my.Create(r, new(ms.SysApi))
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if len(req.RoleKeywords) > 0 {
+	if len(r.RoleKeywords) > 0 {
 		// generate casbin rules
 		cs := make([]ms.SysRoleCasbin, 0)
-		for _, keyword := range req.RoleKeywords {
+		for _, keyword := range r.RoleKeywords {
 			cs = append(cs, ms.SysRoleCasbin{
 				Keyword: keyword,
 				Path:    api.Path,
@@ -125,7 +125,7 @@ func (my MySql) CreateApi(req *req.CreateApi) (err error) {
 	return
 }
 
-func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
+func (my MySql) UpdateApiById(id uint, r req.UpdateApi) (err error) {
 	var api ms.SysApi
 	q := my.Tx.Model(&api).Where("id = ?", id).First(&api)
 	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
@@ -133,7 +133,7 @@ func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	}
 
 	m := make(map[string]interface{}, 0)
-	utils.CompareDiff2SnakeKey(api, req, &m)
+	utils.CompareDiff2SnakeKey(api, r, &m)
 
 	oldApi := api
 	err = q.Updates(m).Error
@@ -172,11 +172,11 @@ func (my MySql) UpdateApiById(id uint, req req.UpdateApi) (err error) {
 	return
 }
 
-func (my MySql) UpdateApiByRoleKeyword(keyword string, req req.UpdateMenuIncrementalIds) (err error) {
-	if len(req.Delete) > 0 {
+func (my MySql) UpdateApiByRoleKeyword(keyword string, r req.UpdateMenuIncrementalIds) (err error) {
+	if len(r.Delete) > 0 {
 		deleteApis := make([]ms.SysApi, 0)
 		my.Tx.
-			Where("id IN (?)", req.Delete).
+			Where("id IN (?)", r.Delete).
 			Find(&deleteApis)
 		cs := make([]ms.SysRoleCasbin, 0)
 		for _, api := range deleteApis {
@@ -188,10 +188,10 @@ func (my MySql) UpdateApiByRoleKeyword(keyword string, req req.UpdateMenuIncreme
 		}
 		_, err = my.BatchDeleteRoleCasbin(cs)
 	}
-	if len(req.Create) > 0 {
+	if len(r.Create) > 0 {
 		createApis := make([]ms.SysApi, 0)
 		my.Tx.
-			Where("id IN (?)", req.Create).
+			Where("id IN (?)", r.Create).
 			Find(&createApis)
 		cs := make([]ms.SysRoleCasbin, 0)
 		for _, api := range createApis {

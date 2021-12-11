@@ -108,9 +108,9 @@ func FindChildrenId(parentId uint, allMenu []ms.SysMenu) []uint {
 	return childrenIds
 }
 
-func FindIncrementalMenu(req req.UpdateMenuIncrementalIds, oldMenuIds []uint, allMenu []ms.SysMenu) []uint {
-	createIds := FindCheckedMenuId(req.Create, allMenu)
-	deleteIds := FindCheckedMenuId(req.Delete, allMenu)
+func FindIncrementalMenu(r req.UpdateMenuIncrementalIds, oldMenuIds []uint, allMenu []ms.SysMenu) []uint {
+	createIds := FindCheckedMenuId(r.Create, allMenu)
+	deleteIds := FindCheckedMenuId(r.Delete, allMenu)
 	newList := make([]uint, 0)
 	for _, oldItem := range oldMenuIds {
 		// not in delete
@@ -133,14 +133,14 @@ func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMen
 	return
 }
 
-func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, req req.UpdateMenuIncrementalIds) (err error) {
+func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, r req.UpdateMenuIncrementalIds) (err error) {
 	allMenu := my.FindMenu(currentRoleId, currentRoleSort)
 	roleMenus := my.findMenuByRoleId(targetRoleId, constant.Zero)
 	menuIds := make([]uint, 0)
 	for _, menu := range roleMenus {
 		menuIds = append(menuIds, menu.Id)
 	}
-	incremental := FindIncrementalMenu(req, menuIds, allMenu)
+	incremental := FindIncrementalMenu(r, menuIds, allMenu)
 	incrementalMenus := make([]ms.SysMenu, 0)
 	my.Tx.
 		Model(&ms.SysMenu{}).

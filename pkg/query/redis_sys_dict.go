@@ -6,51 +6,51 @@ import (
 	"strings"
 )
 
-func (rd Redis) FindDict(req *req.Dict) []ms.SysDict {
+func (rd Redis) FindDict(r *req.Dict) []ms.SysDict {
 	list := make([]ms.SysDict, 0)
 	q := rd.
 		Table("sys_dict").
 		Preload("DictDatas").
 		Order("created_at DESC")
-	name := strings.TrimSpace(req.Name)
+	name := strings.TrimSpace(r.Name)
 	if name != "" {
 		q.Where("name", "contains", name)
 	}
-	desc := strings.TrimSpace(req.Desc)
+	desc := strings.TrimSpace(r.Desc)
 	if desc != "" {
 		q.Where("desc", "=", desc)
 	}
-	if req.Status != nil {
-		q.Where("status", "=", *req.Status)
+	if r.Status != nil {
+		q.Where("status", "=", *r.Status)
 	}
-	rd.FindWithPage(q, &req.Page, &list)
+	rd.FindWithPage(q, &r.Page, &list)
 	return list
 }
 
-func (rd Redis) FindDictData(req *req.DictData) []ms.SysDictData {
+func (rd Redis) FindDictData(r *req.DictData) []ms.SysDictData {
 	list := make([]ms.SysDictData, 0)
 	q := rd.
 		Table("sys_dict_data").
 		Preload("Dict").
 		Order("created_at DESC")
-	key := strings.TrimSpace(req.Key)
+	key := strings.TrimSpace(r.Key)
 	if key != "" {
 		q.Where("key", "contains", key)
 	}
-	val := strings.TrimSpace(req.Val)
+	val := strings.TrimSpace(r.Val)
 	if val != "" {
 		q.Where("val", "contains", val)
 	}
-	attr := strings.TrimSpace(req.Attr)
+	attr := strings.TrimSpace(r.Attr)
 	if attr != "" {
 		q.Where("attr", "=", attr)
 	}
-	if req.Status != nil {
-		q.Where("status", "=", *req.Status)
+	if r.Status != nil {
+		q.Where("status", "=", *r.Status)
 	}
-	if req.DictId != nil {
-		q.Where("dict_id", "=", *req.DictId)
+	if r.DictId != nil {
+		q.Where("dict_id", "=", *r.DictId)
 	}
-	rd.FindWithPage(q, &req.Page, &list)
+	rd.FindWithPage(q, &r.Page, &list)
 	return list
 }

@@ -7,27 +7,27 @@ import (
 	"strings"
 )
 
-func (my MySql) FindOperationLog(req *req.OperationLog) []ms.SysOperationLog {
+func (my MySql) FindOperationLog(r *req.OperationLog) []ms.SysOperationLog {
 	list := make([]ms.SysOperationLog, 0)
 	q := my.Tx.
 		Model(&ms.SysOperationLog{}).
 		Order("created_at DESC")
-	method := strings.TrimSpace(req.Method)
+	method := strings.TrimSpace(r.Method)
 	if method != "" {
 		q.Where("method LIKE ?", fmt.Sprintf("%%%s%%", method))
 	}
-	path := strings.TrimSpace(req.Path)
+	path := strings.TrimSpace(r.Path)
 	if path != "" {
 		q.Where("path LIKE ?", fmt.Sprintf("%%%s%%", path))
 	}
-	ip := strings.TrimSpace(req.Ip)
+	ip := strings.TrimSpace(r.Ip)
 	if ip != "" {
 		q.Where("ip LIKE ?", fmt.Sprintf("%%%s%%", ip))
 	}
-	status := strings.TrimSpace(req.Status)
+	status := strings.TrimSpace(r.Status)
 	if status != "" {
 		q.Where("status LIKE ?", fmt.Sprintf("%%%s%%", status))
 	}
-	my.FindWithPage(q, &req.Page, &list)
+	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
