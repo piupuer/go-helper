@@ -11,20 +11,20 @@ import (
 	"github.com/pkg/errors"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func (my MySql) GetUserStatus(r req.UserStatus) (rp resp.UserStatus) {
-	if r.Locked == constant.One {
-		rp.Locked = r.Locked
-		return
-	}
+	timestamp := time.Now().Unix()
 	flag := my.UserNeedCaptcha(req.UserNeedCaptcha{
 		Wrong: r.Wrong,
 	})
 	if flag {
 		rp.Captcha = my.GetCaptcha()
 	}
-	rp.Locked = r.Locked
+	if r.Locked == constant.One && (r.LockExpire == 0 || timestamp < r.LockExpire) {
+		rp.Locked = r.Locked
+	}
 	return
 }
 

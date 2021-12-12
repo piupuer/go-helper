@@ -3,9 +3,10 @@ package req
 import "github.com/golang-module/carbon"
 
 type UserStatus struct {
-	Username string `json:"username" form:"username"`
-	Wrong    int
-	Locked   uint
+	Username   string `json:"username" form:"username"`
+	Wrong      int
+	Locked     uint
+	LockExpire int64
 }
 
 type UserNeedCaptcha struct {
