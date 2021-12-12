@@ -8,13 +8,29 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 )
 
+// GetCaptcha
+// @Accept json
+// @Produce json
+// @Success 201 {object} resp.Resp "success"
+// @Tags *Base
+// @Description GetCaptcha
+// @Router /base/captcha [GET]
+func GetCaptcha(options ...func(*Options)) gin.HandlerFunc {
+	ops := ParseOptions(options...)
+	return func(c *gin.Context) {
+		ops.addCtx(c)
+		my := query.NewMySql(ops.dbOps...)
+		resp.SuccessWithData(my.GetCaptcha())
+	}
+}
+
 // GetUserStatus
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
 // @Tags *Base
 // @Description GetUserStatus
-// @Param params body req.UserStatus true "params"
+// @Param params query req.UserStatus true "params"
 // @Router /base/user/status [POST]
 func GetUserStatus(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)

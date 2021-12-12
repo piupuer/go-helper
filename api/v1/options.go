@@ -225,6 +225,9 @@ func ParseOptions(options ...func(*Options)) *Options {
 		}
 		query.NewRedis(ops.binlogOps...)
 	}
+	if ops.redis != nil {
+		ops.dbOps = append(ops.dbOps, query.WithMysqlRedis(ops.redis))
+	}
 	query.NewMySql(ops.dbOps...)
 	return ops
 }

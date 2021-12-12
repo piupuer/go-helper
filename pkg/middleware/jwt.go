@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	v4 "github.com/golang-jwt/jwt/v4"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
@@ -247,7 +248,8 @@ func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
 	if msg == resp.LoginCheckErrorMsg ||
 		msg == resp.ForbiddenMsg ||
 		msg == resp.UserDisabledMsg ||
-		msg == resp.UserLockedMsg {
+		msg == resp.UserLockedMsg ||
+		msg == resp.InvalidCaptchaMsg {
 		ops.failWithMsg(msg)
 		return
 	}
@@ -280,14 +282,9 @@ func payload(data interface{}) jwt.MapClaims {
 	return jwt.MapClaims{}
 }
 
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 // custom login check
 func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
-	var r User
+	var r req.LoginCheck
 	c.ShouldBind(&r)
 	r.Username = strings.TrimSpace(r.Username)
 	r.Password = strings.TrimSpace(r.Password)
@@ -302,10 +299,11 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	r.Password = string(decodePwd)
 
 	// custom password check
 	var userId int64
-	userId, err = ops.loginPwdCheck(c, r.Username, string(decodePwd))
+	userId, err = ops.loginPwdCheck(c, r)
 	if err != nil {
 		return nil, err
 	}

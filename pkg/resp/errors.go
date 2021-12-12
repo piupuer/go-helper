@@ -24,6 +24,7 @@ const (
 	UserDisabledMsg            = "the account has been disabled"
 	WeakPassword               = "the password is too weak"
 	UserLockedMsg              = "the account has been locked"
+	InvalidCaptchaMsg          = "the verification code is invalid or expired"
 )
 
 var CustomError = map[int]string{

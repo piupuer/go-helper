@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/captcha"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -17,13 +18,39 @@ func (my MySql) GetUserStatus(r req.UserStatus) (rp resp.UserStatus) {
 		rp.Locked = r.Locked
 		return
 	}
+	flag := my.UserNeedCaptcha(req.UserNeedCaptcha{
+		Wrong: r.Wrong,
+	})
+	if flag {
+		rp.Captcha = my.GetCaptcha()
+	}
+	rp.Locked = r.Locked
+	return
+}
+
+func (my MySql) UserNeedCaptcha(r req.UserNeedCaptcha) (flag bool) {
 	d := my.GetDictData(constant.UserLoginDict, constant.UserLoginCaptcha)
 	if d.Val != "" {
 		if r.Wrong >= utils.Str2Int(d.Val) {
-			rp.Captcha = "123456"
+			flag = true
 		}
 	}
 	return
+}
+
+func (my MySql) GetCaptcha() (rp resp.Captcha) {
+	rp.Id, rp.Img = captcha.New(
+		captcha.WithRedis(my.ops.redis),
+		captcha.WithCtx(my.ops.ctx),
+	).Get()
+	return rp
+}
+
+func (my MySql) VerifyCaptcha(r req.LoginCheck) bool {
+	return captcha.New(
+		captcha.WithRedis(my.ops.redis),
+		captcha.WithCtx(my.ops.ctx),
+	).Verify(r.CaptchaId, r.CaptchaAnswer)
 }
 
 func (my MySql) UserNeedResetPwd(r req.UserNeedResetPwd) (flag bool) {
