@@ -161,6 +161,9 @@ func getRows(ops Options, table string, model interface{}) ([]map[string]interfa
 					case reflect.Int:
 						f, _ := strconv.Atoi(vs)
 						s = f
+					case reflect.Int64:
+						f, _ := strconv.ParseInt(vs, 10, 64)
+						s = f
 					case reflect.Float64:
 						f, _ := strconv.ParseFloat(vs, 64)
 						s = f
