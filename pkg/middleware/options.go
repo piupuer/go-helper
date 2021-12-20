@@ -376,7 +376,7 @@ type OperationLogOptions struct {
 	skipGetOrOptionsMethod bool
 	skipPaths              []string
 	singleFileMaxSize      int64
-	getUserInfo            func(c *gin.Context) (username, roleName string)
+	getCurrentUser         func(c *gin.Context) ms.User
 	save                   func(c *gin.Context, list []OperationRecord)
 	maxCountBeforeSave     int
 	findApi                func(c *gin.Context) []OperationApi
@@ -442,10 +442,10 @@ func WithOperationLogSingleFileMaxSize(size int64) func(*OperationLogOptions) {
 	}
 }
 
-func WithOperationLogGetUserInfo(fun func(c *gin.Context) (username, roleName string)) func(*OperationLogOptions) {
+func WithOperationLogGetCurrentUser(fun func(c *gin.Context) ms.User) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
 		if fun != nil {
-			getOperationLogOptionsOrSetDefault(options).getUserInfo = fun
+			getOperationLogOptionsOrSetDefault(options).getCurrentUser = fun
 		}
 	}
 }
@@ -483,8 +483,8 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.maxCountBeforeSave = constant.MiddlewareOperationLogMaxCountBeforeSave
 		options.singleFileMaxSize = 100
-		options.getUserInfo = func(c *gin.Context) (username, roleName string) {
-			return constant.MiddlewareOperationLogNotLogin, constant.MiddlewareOperationLogNotLogin
+		options.getCurrentUser = func(c *gin.Context) ms.User {
+			return ms.User{}
 		}
 		options.save = func(c *gin.Context, list []OperationRecord) {
 			options.logger.Warn(c, "operation log save is empty")

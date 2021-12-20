@@ -126,13 +126,13 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			}
 			record.CreatedAt = endTime
 
-			username, roleName := ops.getUserInfo(c)
+			u := ops.getCurrentUser(c)
 
 			record.Username = constant.MiddlewareOperationLogNotLogin
 			record.RoleName = constant.MiddlewareOperationLogNotLogin
-			if username != "" {
-				record.Username = username
-				record.RoleName = roleName
+			if u.RoleName != "" {
+				record.Username = u.Username
+				record.RoleName = u.RoleName
 			}
 
 			record.ApiDesc = getApiDesc(c, record.Method, record.Path, *ops)

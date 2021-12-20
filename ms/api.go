@@ -6,6 +6,7 @@ type User struct {
 	Mobile          string `json:"mobile"`
 	Nickname        string `json:"nickname"`
 	RoleId          uint   `json:"roleId"`
+	RoleName        string `json:"roleName"`
 	RoleSort        uint   `json:"roleSort"`
 	RoleKeyword     string `json:"roleKeyword"`
 	PathRoleId      uint   `json:"pathRoleId"`
