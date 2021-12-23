@@ -18,5 +18,5 @@ func FailWithMsg(format interface{}, a ...interface{}) error {
 	if f == "" {
 		code = codes.OK
 	}
-	return status.Errorf(code, f, a)
+	return status.Errorf(code, f, a...)
 }
