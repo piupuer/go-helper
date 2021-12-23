@@ -58,6 +58,15 @@ func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 	return tx
 }
 
+// force commit
+func (my MySql) ForceCommit() {
+	if my.ops.ctx != nil {
+		if c, ok := my.ops.ctx.(*gin.Context); ok {
+			c.Set(constant.MiddlewareTransactionForceCommitCtxKey, true)
+		}
+	}
+}
+
 // get one data by id
 // model must be pointer
 func (my MySql) GetById(id uint, model interface{}, options ...func(*MysqlReadOptions)) {

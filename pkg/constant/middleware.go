@@ -12,4 +12,5 @@ const (
 	MiddlewareRequestIdHeaderName            = "X-Request-Id"
 	MiddlewareRequestIdCtxKey                = "RequestId"
 	MiddlewareTransactionTxCtxKey            = "tx"
+	MiddlewareTransactionForceCommitCtxKey   = "ForceCommitTx"
 )

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"gorm.io/gorm"
 	"net/http"
@@ -28,7 +29,7 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 			if err := recover(); err != nil {
 				if rp, ok := err.(resp.Resp); ok {
 					if !noTransaction {
-						if rp.Code == resp.Ok {
+						if rp.Code == resp.Ok || c.GetBool(constant.MiddlewareTransactionForceCommitCtxKey) {
 							// commit transaction
 							tx.Commit()
 						} else {
