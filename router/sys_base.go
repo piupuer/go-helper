@@ -21,3 +21,10 @@ func (rt Router) Base() {
 		}
 	}
 }
+
+func (rt Router) BaseOnlyIdempotence() {
+	router1 := rt.ops.group.Group("/base")
+	if rt.ops.idempotence {
+		router1.GET("/idempotenceToken", middleware.GetIdempotenceToken(rt.ops.idempotenceOps...))
+	}
+}
