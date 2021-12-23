@@ -10,7 +10,7 @@ import (
 func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
 	cs := make([]ms.SysRoleCasbin, 0)
 	if my.ops.enforcer == nil {
-		my.ops.logger.Warn(my.ops.ctx, "casbin enforcer is empty")
+		my.ops.logger.Warn(my.Ctx, "casbin enforcer is empty")
 		return cs
 	}
 	policies := my.ops.enforcer.GetFilteredPolicy(0, c.Keyword, c.Path, c.Method)

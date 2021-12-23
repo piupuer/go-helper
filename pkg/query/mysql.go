@@ -32,7 +32,6 @@ func NewMySql(options ...func(*MysqlOptions)) MySql {
 	my := MySql{}
 	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
 	my.Ctx = rc
-	ops.ctx = rc
 	tx := getTx(ops.db, *ops)
 	my.Tx = tx.WithContext(rc)
 	my.Db = ops.db.WithContext(rc)
@@ -92,13 +91,13 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 	newIdsRv := reflect.ValueOf(newIds)
 	newIdsIsArr := false
 	if idsRv.Kind() == reflect.Ptr {
-		my.ops.logger.Warn(my.ops.ctx, "ids cannot be pointer")
+		my.ops.logger.Warn(my.Ctx, "ids cannot be pointer")
 		return
 	}
 	// get model val
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		my.ops.logger.Warn(my.Ctx, "model must be a pointer")
 		return
 	}
 	// check param/value len
@@ -155,7 +154,7 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 		if rv.Elem().Kind() != reflect.Slice {
 			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, preload, ops.column, utils.Struct2Json(newIds))
 		}
-		oldCache, cacheErr := my.ops.redis.Get(my.ops.ctx, cacheKey).Result()
+		oldCache, cacheErr := my.ops.redis.Get(my.Ctx, cacheKey).Result()
 		if cacheErr == nil {
 			// model = oldCache
 			crv := reflect.ValueOf(oldCache)
@@ -207,9 +206,9 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 			// column not primary, value maybe array
 			newArr := reflect.MakeSlice(rv.Elem().Type(), rv.Elem().Len(), rv.Elem().Len())
 			reflect.Copy(newArr, rv.Elem())
-			my.ops.redis.Set(my.ops.ctx, cacheKey, newArr.Interface(), expiration)
+			my.ops.redis.Set(my.Ctx, cacheKey, newArr.Interface(), expiration)
 		} else {
-			my.ops.redis.Set(my.ops.ctx, cacheKey, rv.Elem().Interface(), expiration)
+			my.ops.redis.Set(my.Ctx, cacheKey, rv.Elem().Interface(), expiration)
 		}
 	}
 	return
@@ -226,7 +225,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 	}
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		my.ops.logger.Warn(my.Ctx, "model must be a pointer")
 		return
 	}
 
@@ -242,7 +241,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 			// SQL statement as cache key
 			cacheKey := my.Tx.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
 			if ops.cache && countCache {
-				oldCount, cacheErr := my.ops.redis.Get(my.ops.ctx, cacheKey).Result()
+				oldCount, cacheErr := my.ops.redis.Get(my.Ctx, cacheKey).Result()
 				if cacheErr == nil {
 					total := utils.Str2Int64(oldCount)
 					page.Total = total
@@ -252,10 +251,10 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 			if !fromCache {
 				q.Count(&page.Total)
 				if ops.cache && page.Total > 0 {
-					my.ops.redis.Set(my.ops.ctx, cacheKey, page.Total, time.Duration(ops.cacheExpire)*time.Second)
+					my.ops.redis.Set(my.Ctx, cacheKey, page.Total, time.Duration(ops.cacheExpire)*time.Second)
 				}
 			} else {
-				my.ops.logger.Debug(my.ops.ctx, "hit count cache: %s, total: %d", cacheKey, page.Total)
+				my.ops.logger.Debug(my.Ctx, "hit count cache: %s, total: %d", cacheKey, page.Total)
 			}
 		}
 		if page.Total > 0 || page.SkipCount {
@@ -267,7 +266,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 				if q.Statement.Model != nil {
 					err := q.Statement.Parse(q.Statement.Model)
 					if err != nil {
-						my.ops.logger.Warn(my.ops.ctx, "parse model err: %+v", err)
+						my.ops.logger.Warn(my.Ctx, "parse model err: %+v", err)
 						return
 					}
 				}
@@ -302,7 +301,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		my.ops.logger.Warn(my.Ctx, "model must be a pointer")
 		return
 	}
 	countCache := false
@@ -330,7 +329,7 @@ func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{
 func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn(my.ops.ctx, "model must be a pointer")
+		my.ops.logger.Warn(my.Ctx, "model must be a pointer")
 		return
 	}
 

@@ -41,7 +41,7 @@ func (my MySql) UserNeedCaptcha(r req.UserNeedCaptcha) (flag bool) {
 func (my MySql) GetCaptcha() (rp resp.Captcha) {
 	rp.Id, rp.Img = captcha.New(
 		captcha.WithRedis(my.ops.redis),
-		captcha.WithCtx(my.ops.ctx),
+		captcha.WithCtx(my.Ctx),
 	).Get()
 	return rp
 }
@@ -49,7 +49,7 @@ func (my MySql) GetCaptcha() (rp resp.Captcha) {
 func (my MySql) VerifyCaptcha(r req.LoginCheck) bool {
 	return captcha.New(
 		captcha.WithRedis(my.ops.redis),
-		captcha.WithCtx(my.ops.ctx),
+		captcha.WithCtx(my.Ctx),
 	).Verify(r.CaptchaId, r.CaptchaAnswer)
 }
 
