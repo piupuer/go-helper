@@ -5,7 +5,8 @@ import (
 	"github.com/go-playground/locales/zh"
 	ut "github.com/go-playground/universal-translator"
 	"gopkg.in/go-playground/validator.v9"
-	translations "gopkg.in/go-playground/validator.v9/translations/zh"
+	enTranslations "gopkg.in/go-playground/validator.v9/translations/en"
+	cnTranslations "gopkg.in/go-playground/validator.v9/translations/zh"
 )
 
 type ValidateOptions struct {
@@ -36,7 +37,7 @@ func WithValidateCn(options *ValidateOptions) {
 	trans, _ := uni.GetTranslator("zh")
 	validate := validator.New()
 
-	_ = translations.RegisterDefaultTranslations(validate, trans)
+	_ = cnTranslations.RegisterDefaultTranslations(validate, trans)
 	options.validator = validate
 	options.translator = trans
 }
@@ -47,7 +48,7 @@ func getValidateOptionsOrSetDefault(options *ValidateOptions) *ValidateOptions {
 		uni := ut.New(e, e)
 		trans, _ := uni.GetTranslator("en")
 		v := validator.New()
-		_ = translations.RegisterDefaultTranslations(v, trans)
+		_ = enTranslations.RegisterDefaultTranslations(v, trans)
 		return &ValidateOptions{
 			validator:  v,
 			translator: trans,
