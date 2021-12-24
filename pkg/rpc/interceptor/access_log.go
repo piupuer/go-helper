@@ -2,22 +2,12 @@ package interceptor
 
 import (
 	"context"
-	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"time"
 )
-
-type errResp struct {
-	Error errCode `json:"error"`
-}
-
-type errCode struct {
-	Code int64  `json:"code"`
-	Msg  string `json:"msg"`
-}
 
 func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	ops := getAccessLogOptionsOrSetDefault(nil)
@@ -26,13 +16,11 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	}
 	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		startTime := time.Now()
-		if ops.detail {
-			ops.logger.Info(
-				ctx,
-				"req: %s",
-				utils.Struct2Json(r),
-			)
-		}
+		ops.logger.Info(
+			ctx,
+			"req: %s",
+			utils.Struct2Json(r),
+		)
 
 		rp, err := handler(ctx, r)
 
@@ -46,8 +34,6 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 			addr = p.Addr.String()
 		}
 		code := status.Code(err).String()
-		var e errResp
-		utils.Struct2StructByJson(rp, &e)
 		if err != nil {
 			ops.logger.Error(
 				ctx,
@@ -62,30 +48,15 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 			if ops.detail {
 				ops.logger.Info(
 					ctx,
-					"resp: %s",
+					"RPC code: '%s', resp: %s",
+					code,
 					utils.Struct2Json(rp),
 				)
-			}
-			if e.Error.Code == resp.Ok {
+			} else {
 				ops.logger.Info(
 					ctx,
-					"%s %s %s RPC code: '%s', APP code: '%d'",
-					fullMethod,
-					execTime,
-					addr,
+					"RPC code: '%s'",
 					code,
-					e.Error.Code,
-				)
-			} else {
-				ops.logger.Error(
-					ctx,
-					"%s %s %s RPC code: '%s', APP code: '%d', APP err: '%s'",
-					fullMethod,
-					execTime,
-					addr,
-					code,
-					e.Error.Code,
-					e.Error.Msg,
 				)
 			}
 		}
