@@ -2,9 +2,9 @@ package mq
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
 	"time"
 )
@@ -166,7 +166,7 @@ func (co *Consume) newContext(ctx context.Context) context.Context {
 		ctx = context.Background()
 	}
 	if co.ops.autoRequestId {
-		ctx = context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, uuid.NewV4().String())
+		ctx = context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, uuid.NewString())
 	}
 	return ctx
 }

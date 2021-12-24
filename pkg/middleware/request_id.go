@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 func RequestId(options ...func(*RequestIdOptions)) gin.HandlerFunc {
@@ -15,8 +15,7 @@ func RequestId(options ...func(*RequestIdOptions)) gin.HandlerFunc {
 		requestId := c.Request.Header.Get(ops.headerName)
 
 		if requestId == "" {
-			uuid4 := uuid.NewV4()
-			requestId = uuid4.String()
+			requestId = uuid.NewString()
 		}
 
 		// set to context

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"time"
 )
 
@@ -78,7 +78,7 @@ func (rd *RedisClientDriver) RegisterServiceNode(serviceName string) (nodeID str
 }
 
 func (rd *RedisClientDriver) randNodeID(serviceName string) (nodeID string) {
-	return rd.getKeyPre(serviceName) + uuid.NewV4().String()
+	return rd.getKeyPre(serviceName) + uuid.NewString()
 }
 
 func (rd *RedisClientDriver) registerServiceNode(nodeID string) error {

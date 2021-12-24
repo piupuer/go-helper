@@ -15,6 +15,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-module/carbon v1.5.4
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hibiken/asynq v0.18.6
@@ -26,7 +27,6 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.2.0
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/streadway/amqp v1.0.0
@@ -55,7 +55,6 @@ require (
 	github.com/gobuffalo/packd v0.3.0 // indirect
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/google/uuid v1.2.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
@@ -75,6 +74,7 @@ require (
 	github.com/pingcap/parser v0.0.0-20210415081931-48e7f467fd74 // indirect
 	github.com/rogpeppe/go-internal v1.3.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect

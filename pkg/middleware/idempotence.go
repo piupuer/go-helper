@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/resp"
-	uuid "github.com/satori/go.uuid"
 	"strings"
 	"time"
 )
@@ -65,7 +65,7 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 
 // generate token by redis
 func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
-	token := uuid.NewV4().String()
+	token := uuid.NewString()
 	if ops.redis != nil {
 		ops.redis.Set(c, ops.prefix+token, true, time.Duration(ops.expire)*time.Hour)
 	} else {

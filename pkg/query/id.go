@@ -3,8 +3,8 @@ package query
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/utils"
-	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -20,8 +20,7 @@ func NewRequestId(ctx context.Context, ctxKey string) context.Context {
 	}
 	// gen uuid
 	if requestId == "" {
-		uuid4 := uuid.NewV4()
-		requestId = uuid4.String()
+		requestId = uuid.NewString()
 	}
 	return context.WithValue(ctx, ctxKey, requestId)
 }
@@ -48,8 +47,7 @@ func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Contex
 	}
 	// gen uuid
 	if requestId == "" {
-		uuid4 := uuid.NewV4()
-		requestId = uuid4.String()
+		requestId = uuid.NewString()
 	}
 	md.Set(ctxKey, requestId)
 	ctx = metadata.NewIncomingContext(ctx, md)
