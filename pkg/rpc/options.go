@@ -13,12 +13,30 @@ import (
 )
 
 type GrpcOptions struct {
+	logger      logger.Interface
+	ctx         context.Context
 	serverName  string
 	caPem       []byte
 	clientPem   []byte
 	clientKey   []byte
 	timeout     int
 	healthCheck bool
+}
+
+func WithGrpcLogger(l logger.Interface) func(*GrpcOptions) {
+	return func(options *GrpcOptions) {
+		if l != nil {
+			getGrpcOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithGrpcCtx(ctx context.Context) func(*GrpcOptions) {
+	return func(options *GrpcOptions) {
+		if !utils.InterfaceIsNil(ctx) {
+			getGrpcOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
 }
 
 func WithGrpcServerName(name string) func(*GrpcOptions) {
@@ -89,7 +107,30 @@ func WithGrpcHealthCheck(flag bool) func(*GrpcOptions) {
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 	if options == nil {
 		return &GrpcOptions{
+			logger:  logger.DefaultLogger(),
+			ctx:     context.Background(),
 			timeout: constant.GrpcTimeout,
+		}
+	}
+	return options
+}
+
+type GrpcHealthCheckOptions struct {
+	ctx context.Context
+}
+
+func WithGrpcHealthCheckCtx(ctx context.Context) func(*GrpcHealthCheckOptions) {
+	return func(options *GrpcHealthCheckOptions) {
+		if !utils.InterfaceIsNil(ctx) {
+			getGrpcHealthCheckOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
+}
+
+func getGrpcHealthCheckOptionsOrSetDefault(options *GrpcHealthCheckOptions) *GrpcHealthCheckOptions {
+	if options == nil {
+		return &GrpcHealthCheckOptions{
+			ctx: context.Background(),
 		}
 	}
 	return options
