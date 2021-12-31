@@ -41,10 +41,6 @@ func (rd Redis) FindDictData(r *req.DictData) []ms.SysDictData {
 	if val != "" {
 		q.Where("val", "contains", val)
 	}
-	attr := strings.TrimSpace(r.Attr)
-	if attr != "" {
-		q.Where("attr", "=", attr)
-	}
 	if r.Status != nil {
 		q.Where("status", "=", *r.Status)
 	}

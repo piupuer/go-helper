@@ -21,6 +21,7 @@ type FsmCreateEvent struct {
 }
 
 type FsmUpdateMachine struct {
+	Category                   *NullUint        `json:"category"`
 	Name                       *string          `json:"name"`
 	SubmitterName              *string          `json:"submitterName"`
 	SubmitterEditFields        *string          `json:"submitterEditFields"`
