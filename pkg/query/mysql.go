@@ -164,6 +164,7 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 		if rv.Elem().Kind() != reflect.Slice {
 			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, pre, ops.column, utils.Struct2Json(newIds))
 		}
+		cacheKey = fmt.Sprintf("%s_%s", my.ops.cachePrefix, cacheKey)
 		oldCache, cacheErr := my.ops.redis.Get(my.Ctx, cacheKey).Result()
 		if cacheErr == nil {
 			list := gojsonq.New().FromString(oldCache).Get()

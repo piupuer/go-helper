@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	CachePrefix               = "mysql_cache"
 	CacheSuffixDictName       = "dict_name"
 	CacheSuffixDictNameAndKey = "dict_name_and_key"
 )
@@ -16,7 +15,7 @@ const (
 // get dict name from cache by uid
 func (my MySql) CacheGetDictName(c context.Context, name string) ([]ms.SysDictData, bool) {
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictName), name).Result()
+		res, err := my.ops.redis.HGet(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictName), name).Result()
 		if err == nil && res != "" {
 			list := make([]ms.SysDictData, 0)
 			utils.Json2Struct(res, &list)
@@ -29,28 +28,28 @@ func (my MySql) CacheGetDictName(c context.Context, name string) ([]ms.SysDictDa
 // set dict name to cache by uid
 func (my MySql) CacheSetDictName(c context.Context, name string, data []ms.SysDictData) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictName), name, utils.Struct2Json(data))
+		my.ops.redis.HSet(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictName), name, utils.Struct2Json(data))
 	}
 }
 
 // delete dict name
 func (my MySql) CacheDeleteDictName(c context.Context, name string) {
 	if my.ops.redis != nil {
-		my.ops.redis.HDel(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictName), name)
+		my.ops.redis.HDel(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictName), name)
 	}
 }
 
 // clear dict name cache
 func (my MySql) CacheFlushDictName(c context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictName))
+		my.ops.redis.Del(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictName))
 	}
 }
 
 // get dict name and key from cache by uid
 func (my MySql) CacheGetDictNameAndKey(c context.Context, name, key string) (*ms.SysDictData, bool) {
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key)).Result()
+		res, err := my.ops.redis.HGet(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key)).Result()
 		if err == nil && res != "" {
 			item := ms.SysDictData{}
 			utils.Json2Struct(res, &item)
@@ -63,20 +62,20 @@ func (my MySql) CacheGetDictNameAndKey(c context.Context, name, key string) (*ms
 // set dict name and key to cache by uid
 func (my MySql) CacheSetDictNameAndKey(c context.Context, name, key string, data ms.SysDictData) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key), utils.Struct2Json(data))
+		my.ops.redis.HSet(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key), utils.Struct2Json(data))
 	}
 }
 
 // delete dict name and key
 func (my MySql) CacheDeleteDictNameAndKey(c context.Context, name, key string) {
 	if my.ops.redis != nil {
-		my.ops.redis.HDel(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key))
+		my.ops.redis.HDel(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictNameAndKey), fmt.Sprintf("%s_%s", name, key))
 	}
 }
 
 // clear dict name and key cache
 func (my MySql) CacheFlushDictNameAndKey(c context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(c, fmt.Sprintf("%s_%s", CachePrefix, CacheSuffixDictNameAndKey))
+		my.ops.redis.Del(c, fmt.Sprintf("%s_%s", my.ops.cachePrefix, CacheSuffixDictNameAndKey))
 	}
 }

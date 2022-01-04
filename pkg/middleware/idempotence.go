@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -67,7 +68,7 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
 	token := uuid.NewString()
 	if ops.redis != nil {
-		ops.redis.Set(c, ops.prefix+token, true, time.Duration(ops.expire)*time.Hour)
+		ops.redis.Set(c, fmt.Sprintf("%s_%s", ops.cachePrefix, token), true, time.Duration(ops.expire)*time.Hour)
 	} else {
 		ops.logger.Warn(c, "please enable redis, otherwise the idempotence is invalid")
 	}
@@ -77,7 +78,7 @@ func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
 // check token by exec redis lua script
 func CheckIdempotenceToken(c context.Context, token string, ops IdempotenceOptions) bool {
 	if ops.redis != nil {
-		res, err := ops.redis.Eval(c, lua, []string{ops.prefix + token}).Result()
+		res, err := ops.redis.Eval(c, lua, []string{fmt.Sprintf("%s_%s", ops.cachePrefix, token)}).Result()
 		if err != nil || res != "1" {
 			return false
 		}

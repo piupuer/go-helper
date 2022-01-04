@@ -143,7 +143,7 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 type IdempotenceOptions struct {
 	logger          logger.Interface
 	redis           redis.UniversalClient
-	prefix          string
+	cachePrefix     string
 	expire          int
 	tokenName       string
 	successWithData func(...interface{})
@@ -166,9 +166,9 @@ func WithIdempotenceRedis(rd redis.UniversalClient) func(*IdempotenceOptions) {
 	}
 }
 
-func WithIdempotencePrefix(prefix string) func(*IdempotenceOptions) {
+func WithIdempotenceCachePrefix(prefix string) func(*IdempotenceOptions) {
 	return func(options *IdempotenceOptions) {
-		getIdempotenceOptionsOrSetDefault(options).prefix = prefix
+		getIdempotenceOptionsOrSetDefault(options).cachePrefix = prefix
 	}
 }
 
@@ -214,7 +214,7 @@ func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *Idempotence
 	if options == nil {
 		return &IdempotenceOptions{
 			logger:          logger.DefaultLogger(),
-			prefix:          constant.MiddlewareIdempotencePrefix,
+			cachePrefix:     constant.MiddlewareIdempotencePrefix,
 			expire:          constant.MiddlewareIdempotenceExpire,
 			tokenName:       constant.MiddlewareIdempotenceTokenName,
 			successWithData: resp.SuccessWithData,
@@ -370,7 +370,7 @@ type OperationLogOptions struct {
 	logger                 logger.Interface
 	redis                  redis.UniversalClient
 	ctxKey                 string
-	apiCacheKey            string
+	cachePrefix            string
 	urlPrefix              string
 	realIpKey              string
 	skipGetOrOptionsMethod bool
@@ -404,9 +404,9 @@ func WithOperationLogCtxKey(key string) func(*OperationLogOptions) {
 	}
 }
 
-func WithOperationLogApiCacheKey(key string) func(*OperationLogOptions) {
+func WithOperationLogCachePrefix(prefix string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOrSetDefault(options).apiCacheKey = key
+		getOperationLogOptionsOrSetDefault(options).cachePrefix = prefix
 	}
 }
 
@@ -479,7 +479,7 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 		options = &OperationLogOptions{}
 		options.logger = logger.DefaultLogger()
 		options.ctxKey = constant.MiddlewareOperationLogCtxKey
-		options.apiCacheKey = constant.MiddlewareOperationLogApiCacheKey
+		options.cachePrefix = constant.MiddlewareOperationLogApiCacheKey
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.maxCountBeforeSave = constant.MiddlewareOperationLogMaxCountBeforeSave
 		options.singleFileMaxSize = 100

@@ -2,12 +2,12 @@ package constant
 
 const (
 	MiddlewareUrlPrefix                      = "api"
-	MiddlewareIdempotencePrefix              = "idempotence_"
+	MiddlewareIdempotencePrefix              = "idempotence"
 	MiddlewareIdempotenceExpire              = 24
 	MiddlewareIdempotenceTokenName           = "api-idempotence-token"
 	MiddlewareOperationLogCtxKey             = "operation_log_response"
 	MiddlewareOperationLogNotLogin           = "not login"
-	MiddlewareOperationLogApiCacheKey        = "OPERATION_LOG_API"
+	MiddlewareOperationLogApiCacheKey        = "operation_log_api"
 	MiddlewareOperationLogMaxCountBeforeSave = 100
 	MiddlewareRequestIdHeaderName            = "X-Request-Id"
 	MiddlewareRequestIdCtxKey                = "RequestId"

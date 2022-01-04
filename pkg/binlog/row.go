@@ -168,7 +168,7 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 }
 
 func PosChange(ops Options, pos mysql.Position) {
-	err := ops.redis.Set(ops.ctx, fmt.Sprintf("%s_%s", ops.binlogPos, ops.dsn.DBName), utils.Struct2Json(pos), 0).Err()
+	err := ops.redis.Set(ops.ctx, fmt.Sprintf("%s_%s", ops.dsn.DBName, ops.binlogPos), utils.Struct2Json(pos), 0).Err()
 	if err != nil {
 		ops.logger.Error(ops.ctx, "[binlog pos change]err: %+v, %v", err, pos)
 	}

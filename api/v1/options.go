@@ -18,6 +18,7 @@ type Options struct {
 	binlogOps                  []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
 	redis                      redis.UniversalClient
+	cachePrefix                string
 	operationAllowedToDelete   bool
 	getCurrentUser             func(c *gin.Context) ms.User
 	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
@@ -77,6 +78,12 @@ func WithRedis(rd redis.UniversalClient) func(*Options) {
 		if rd != nil {
 			getOptionsOrSetDefault(options).redis = rd
 		}
+	}
+}
+
+func WithCachePrefix(prefix string) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).cachePrefix = prefix
 	}
 }
 
@@ -203,6 +210,7 @@ func getOptionsOrSetDefault(options *Options) *Options {
 		return &Options{
 			logger:                     logger.DefaultLogger(),
 			binlog:                     false,
+			cachePrefix:                "v1_cache",
 			operationAllowedToDelete:   true,
 			uploadSaveDir:              "upload",
 			uploadSingleMaxSize:        32,

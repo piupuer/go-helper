@@ -19,6 +19,7 @@ type MysqlOptions struct {
 	logger          logger.Interface
 	db              *gorm.DB
 	redis           redis.UniversalClient
+	cachePrefix     string
 	ctx             context.Context
 	enforcer        *casbin.Enforcer
 	txCtxKey        string
@@ -50,6 +51,12 @@ func WithMysqlRedis(rd redis.UniversalClient) func(*MysqlOptions) {
 	}
 }
 
+func WithMysqlCachePrefix(prefix string) func(*MysqlOptions) {
+	return func(options *MysqlOptions) {
+		getMysqlOptionsOrSetDefault(options).cachePrefix = prefix
+	}
+}
+
 func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if !utils.InterfaceIsNil(ctx) {
@@ -78,6 +85,7 @@ func getMysqlOptionsOrSetDefault(options *MysqlOptions) *MysqlOptions {
 	if options == nil {
 		return &MysqlOptions{
 			logger:          logger.DefaultLogger(),
+			cachePrefix:     constant.QueryCachePrefix,
 			ctx:             context.Background(),
 			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,

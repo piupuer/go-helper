@@ -174,7 +174,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 func getApiDesc(c *gin.Context, method, path string, ops OperationLogOptions) string {
 	desc := "no desc"
 	if ops.redis != nil {
-		oldCache, _ := ops.redis.HGet(c, ops.apiCacheKey, fmt.Sprintf("%s_%s", method, path)).Result()
+		oldCache, _ := ops.redis.HGet(c, ops.cachePrefix, fmt.Sprintf("%s_%s", method, path)).Result()
 		if oldCache != "" {
 			return oldCache
 		}
@@ -190,7 +190,7 @@ func getApiDesc(c *gin.Context, method, path string, ops OperationLogOptions) st
 	if ops.redis != nil {
 		pipe := ops.redis.Pipeline()
 		for _, api := range apis {
-			pipe.HSet(c, ops.apiCacheKey, fmt.Sprintf("%s_%s", api.Method, api.Path), api.Desc)
+			pipe.HSet(c, ops.cachePrefix, fmt.Sprintf("%s_%s", api.Method, api.Path), api.Desc)
 		}
 		pipe.Exec(c)
 	}
