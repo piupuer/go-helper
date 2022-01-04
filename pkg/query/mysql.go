@@ -8,6 +8,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
+	"github.com/thedevsaddam/gojsonq/v2"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
@@ -154,44 +155,50 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 		} else {
 			structName = strings.ToLower(rv.Elem().Type().String())
 		}
-		preload := "preload_nothing"
+		pre := "preload_nothing"
 		if len(ops.preloads) > 0 {
-			preload = "preload_" + strings.ToLower(strings.Join(ops.preloads, "_"))
+			pre = "preload_" + strings.ToLower(strings.Join(ops.preloads, "_"))
 		}
 		// cache key: table+preloads+key+ids+modelIsArr
-		cacheKey = fmt.Sprintf("%s_%s_%s_%s_find", structName, preload, ops.column, utils.Struct2Json(newIds))
+		cacheKey = fmt.Sprintf("%s_%s_%s_%s_find", structName, pre, ops.column, utils.Struct2Json(newIds))
 		if rv.Elem().Kind() != reflect.Slice {
-			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, preload, ops.column, utils.Struct2Json(newIds))
+			cacheKey = fmt.Sprintf("%s_%s_%s_%s_first", structName, pre, ops.column, utils.Struct2Json(newIds))
 		}
 		oldCache, cacheErr := my.ops.redis.Get(my.Ctx, cacheKey).Result()
 		if cacheErr == nil {
-			// model = oldCache
-			crv := reflect.ValueOf(oldCache)
-			if rv.Elem().Kind() == reflect.Struct && crv.Kind() == reflect.Slice {
-				rv.Elem().Set(crv.Index(0))
-			} else if rv.Elem().Kind() == reflect.Slice && crv.Kind() == reflect.Struct {
-				// set first value
-				newArr1 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
-				v := newArr1.Index(0)
-				v.Set(crv)
-				// copy new array
-				newArr2 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
-				reflect.Copy(newArr2, newArr1)
-				rv.Elem().Set(newArr2)
-			} else if rv.Elem().Kind() == reflect.Slice && crv.Kind() == reflect.Slice {
-				// copy new array
-				newArr := reflect.MakeSlice(rv.Elem().Type(), crv.Len(), crv.Len())
-				reflect.Copy(newArr, crv)
-				rv.Elem().Set(newArr)
-			} else {
-				rv.Elem().Set(crv)
+			list := gojsonq.New().FromString(oldCache).Get()
+			if list != nil {
+				arr := false
+				switch list.(type) {
+				case []interface{}:
+					v, _ := list.([]interface{})
+					if len(v) > 0 {
+						arr = true
+					}
+				}
+				if rv.Elem().Kind() == reflect.Struct && arr {
+					utils.Struct2StructByJson(list.([]interface{})[0], model)
+				} else if rv.Elem().Kind() == reflect.Slice && !arr {
+					// set first value
+					newArr1 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
+					v := newArr1.Index(0)
+					i := reflect.New(rv.Elem().Type()).Interface()
+					utils.Struct2StructByJson(list.([]interface{})[0], i)
+					v.Set(reflect.ValueOf(i))
+					// copy new array
+					newArr2 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
+					reflect.Copy(newArr2, newArr1)
+					rv.Elem().Set(newArr2)
+				} else {
+					utils.Struct2StructByJson(list, model)
+				}
+				return
 			}
-			return
 		}
 	}
 	q := my.Tx
-	for _, preload := range ops.preloads {
-		q.Preload(preload)
+	for _, item := range ops.preloads {
+		q.Preload(item)
 	}
 	if !newIdsIsArr {
 		q.
@@ -215,9 +222,9 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 			// column not primary, value maybe array
 			newArr := reflect.MakeSlice(rv.Elem().Type(), rv.Elem().Len(), rv.Elem().Len())
 			reflect.Copy(newArr, rv.Elem())
-			my.ops.redis.Set(my.Ctx, cacheKey, newArr.Interface(), expiration)
+			my.ops.redis.Set(my.Ctx, cacheKey, utils.Struct2Json(newArr.Interface()), expiration)
 		} else {
-			my.ops.redis.Set(my.Ctx, cacheKey, rv.Elem().Interface(), expiration)
+			my.ops.redis.Set(my.Ctx, cacheKey, utils.Struct2Json(rv.Elem().Interface()), expiration)
 		}
 	}
 	return
