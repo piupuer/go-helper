@@ -19,7 +19,7 @@ func (my MySql) GetDictData(dictName, dictDataKey string) ms.SysDictData {
 }
 
 func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictData, error) {
-	oldCache, ok := my.CacheGetDictNameAndKey(my.Ctx, dictName, dictDataKey)
+	oldCache, ok := my.CacheDictDataItem(my.Ctx, dictName, dictDataKey)
 	if ok {
 		return oldCache, nil
 	}
@@ -32,7 +32,7 @@ func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictDat
 		Find(&list)
 	for _, data := range list {
 		if data.Dict.Name == dictName && data.Key == dictDataKey {
-			my.CacheSetDictNameAndKey(my.Ctx, dictName, dictDataKey, data)
+			my.CacheSetDictDataItem(my.Ctx, dictName, dictDataKey, data)
 			return &data, nil
 		}
 	}
@@ -40,7 +40,7 @@ func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictDat
 }
 
 func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
-	oldCache, ok := my.CacheGetDictName(my.Ctx, name)
+	oldCache, ok := my.CacheDictDataList(my.Ctx, name)
 	if ok {
 		return oldCache, nil
 	}
@@ -56,8 +56,32 @@ func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
 			newList = append(newList, data)
 		}
 	}
-	my.CacheSetDictName(my.Ctx, name, newList)
+	if len(newList) > 0 {
+		my.CacheSetDictDataList(my.Ctx, name, newList)
+	}
 	return newList, nil
+}
+
+func (my MySql) FindDictDataValByName(name string) []string {
+	oldCache, ok := my.CacheDictDataValList(my.Ctx, name)
+	if ok {
+		return oldCache
+	}
+	list := make([]ms.SysDictData, 0)
+	my.Tx.
+		Model(&ms.SysDictData{}).
+		Preload("Dict").
+		Find(&list)
+	newList := make([]string, 0)
+	for _, data := range list {
+		if data.Dict.Name == name {
+			newList = append(newList, data.Val)
+		}
+	}
+	if len(newList) > 0 {
+		my.CacheSetDictDataValList(my.Ctx, name, newList)
+	}
+	return newList
 }
 
 func (my MySql) FindDict(r *req.Dict) []ms.SysDict {
@@ -107,42 +131,48 @@ func (my MySql) FindDictData(r *req.DictData) []ms.SysDictData {
 
 func (my MySql) CreateDict(r *req.CreateDict) (err error) {
 	err = my.Create(r, new(ms.SysDict))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
 
 func (my MySql) UpdateDictById(id uint, r req.UpdateDict) (err error) {
 	err = my.UpdateById(id, r, new(ms.SysDict))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
 
 func (my MySql) DeleteDictByIds(ids []uint) (err error) {
 	err = my.DeleteByIds(ids, new(ms.SysDict))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
 
 func (my MySql) CreateDictData(r *req.CreateDictData) (err error) {
 	err = my.Create(r, new(ms.SysDictData))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
 
 func (my MySql) UpdateDictDataById(id uint, r req.UpdateDictData) (err error) {
 	err = my.UpdateById(id, r, new(ms.SysDictData))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
 
 func (my MySql) DeleteDictDataByIds(ids []uint) (err error) {
 	err = my.DeleteByIds(ids, new(ms.SysDictData))
-	my.CacheFlushDictName(my.Ctx)
-	my.CacheFlushDictNameAndKey(my.Ctx)
+	my.CacheFlushDictDataList(my.Ctx)
+	my.CacheFlushDictDataValList(my.Ctx)
+	my.CacheFlushDictDataItem(my.Ctx)
 	return
 }
