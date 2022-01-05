@@ -14,4 +14,5 @@ const (
 	MiddlewareRequestIdCtxKey                = "RequestId"
 	MiddlewareTransactionTxCtxKey            = "tx"
 	MiddlewareTransactionForceCommitCtxKey   = "ForceCommitTx"
+	MiddlewareJwtUserCtxKey                  = "user"
 )

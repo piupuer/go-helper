@@ -63,8 +63,6 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 		}
 		// find request params
 		reqParams := c.Request.URL.Query()
-		// get current user
-		u := ops.getCurrentUser(c)
 		defer func() {
 			if ops.skipGetOrOptionsMethod {
 				// skip GET/OPTIONS
@@ -133,6 +131,8 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 
 			record.Username = constant.MiddlewareOperationLogNotLogin
 			record.RoleName = constant.MiddlewareOperationLogNotLogin
+			// get current user
+			u := ops.getCurrentUser(c)
 			if u.RoleName != "" {
 				record.Username = u.Username
 				record.RoleName = u.RoleName

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	v4 "github.com/golang-jwt/jwt/v4"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -260,7 +261,7 @@ func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
 func authorizator(data interface{}, c *gin.Context) bool {
 	if v, ok := data.(string); ok {
 		userId := utils.Str2Int64(v)
-		c.Set("user", userId)
+		c.Set(constant.MiddlewareJwtUserCtxKey, userId)
 		return true
 	}
 	return false
@@ -275,8 +276,8 @@ func identity(c *gin.Context) interface{} {
 func payload(data interface{}) jwt.MapClaims {
 	if v, ok := data.(map[string]interface{}); ok {
 		return jwt.MapClaims{
-			jwt.IdentityKey: v["user"],
-			"user":          v["user"],
+			jwt.IdentityKey:                  v[constant.MiddlewareJwtUserCtxKey],
+			constant.MiddlewareJwtUserCtxKey: v[constant.MiddlewareJwtUserCtxKey],
 		}
 	}
 	return jwt.MapClaims{}
@@ -308,7 +309,7 @@ func login(c *gin.Context, ops JwtOptions) (interface{}, error) {
 		return nil, err
 	}
 	return map[string]interface{}{
-		"user": fmt.Sprintf("%d", userId),
+		constant.MiddlewareJwtUserCtxKey: fmt.Sprintf("%d", userId),
 	}, nil
 }
 
