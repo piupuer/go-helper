@@ -374,7 +374,7 @@ type OperationLogOptions struct {
 	urlPrefix              string
 	realIpKey              string
 	skipGetOrOptionsMethod bool
-	skipPaths              []string
+	findSkipPath           func(c *gin.Context) []string
 	singleFileMaxSize      int64
 	getCurrentUser         func(c *gin.Context) ms.User
 	save                   func(c *gin.Context, list []OperationRecord)
@@ -428,9 +428,11 @@ func WithOperationLogSkipGetOrOptionsMethod(flag bool) func(*OperationLogOptions
 	}
 }
 
-func WithOperationLogSkipPaths(paths ...string) func(*OperationLogOptions) {
+func WithOperationLogFindSkipPath(fun func(c *gin.Context) []string) func(*OperationLogOptions) {
 	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOrSetDefault(options).skipPaths = append(getOperationLogOptionsOrSetDefault(options).skipPaths, paths...)
+		if fun != nil {
+			getOperationLogOptionsOrSetDefault(options).findSkipPath = fun
+		}
 	}
 }
 

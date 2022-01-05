@@ -74,9 +74,12 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				}
 			}
 			// custom skip path
-			for _, s := range ops.skipPaths {
-				if strings.Contains(c.Request.URL.Path, s) {
-					return
+			if ops.findSkipPath != nil {
+				list := ops.findSkipPath(c)
+				for _, item := range list {
+					if strings.Contains(c.Request.URL.Path, item) {
+						return
+					}
 				}
 			}
 

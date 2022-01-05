@@ -8,6 +8,7 @@ const (
 	MiddlewareOperationLogCtxKey             = "operation_log_response"
 	MiddlewareOperationLogNotLogin           = "not login"
 	MiddlewareOperationLogApiCacheKey        = "operation_log_api"
+	MiddlewareOperationLogSkipPathDict       = "OperationLogSkipPath"
 	MiddlewareOperationLogMaxCountBeforeSave = 100
 	MiddlewareRequestIdHeaderName            = "X-Request-Id"
 	MiddlewareRequestIdCtxKey                = "RequestId"
