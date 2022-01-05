@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"strings"
 )
@@ -28,6 +29,7 @@ func (my MySql) FindOperationLog(r *req.OperationLog) []ms.SysOperationLog {
 	if status != "" {
 		q.Where("status LIKE ?", fmt.Sprintf("%%%s%%", status))
 	}
+	r.LimitPrimary = constant.QueryPrimaryKey
 	my.FindWithPage(q, &r.Page, &list)
 	return list
 }
