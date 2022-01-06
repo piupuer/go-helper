@@ -22,16 +22,16 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		execTime := endTime.Sub(startTime).String()
 
 		reqMethod := c.Request.Method
-		reqUri := c.Request.RequestURI
+		reqPath := c.Request.URL.Path
 		statusCode := c.Writer.Status()
 		clientIP := c.ClientIP()
 
-		if reqMethod == "OPTIONS" || reqUri == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
+		if reqMethod == "OPTIONS" || reqPath == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
 			ops.logger.Debug(
 				c,
 				"%s %s %d %s %s",
 				reqMethod,
-				reqUri,
+				reqPath,
 				statusCode,
 				execTime,
 				clientIP,
@@ -41,7 +41,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 				c,
 				"%s %s %d %s %s",
 				reqMethod,
-				reqUri,
+				reqPath,
 				statusCode,
 				execTime,
 				clientIP,
