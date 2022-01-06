@@ -175,6 +175,107 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 	return options
 }
 
+type SignOptions struct {
+	logger          logger.Interface
+	expire          string
+	findSkipPath    func(c *gin.Context) []string
+	getSignUser     func(c *gin.Context, appId string) ms.SignUser
+	headerKey       []string
+	ctxKey          []string
+	valKey          []string
+	requestIdCtxKey string
+	separator       string
+	checkScope      bool
+}
+
+func WithSignLogger(l logger.Interface) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if l != nil {
+			getSignOptionsOrSetDefault(options).logger = l
+		}
+	}
+}
+
+func WithSignExpire(duration string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		getSignOptionsOrSetDefault(options).expire = duration
+	}
+}
+
+func WithSignFindSkipPath(fun func(c *gin.Context) []string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if fun != nil {
+			getSignOptionsOrSetDefault(options).findSkipPath = fun
+		}
+	}
+}
+
+func WithSignGetSignUser(fun func(c *gin.Context, appId string) ms.SignUser) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if fun != nil {
+			getSignOptionsOrSetDefault(options).getSignUser = fun
+		}
+	}
+}
+
+func WithSignHeaderKey(arr ...string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if len(arr) == 3 {
+			getSignOptionsOrSetDefault(options).headerKey = arr
+		}
+	}
+}
+
+func WithSignCtxKey(arr ...string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if len(arr) == 3 {
+			getSignOptionsOrSetDefault(options).ctxKey = arr
+		}
+	}
+}
+
+func WithSignValKey(arr ...string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		if len(arr) == 3 {
+			getSignOptionsOrSetDefault(options).valKey = arr
+		}
+	}
+}
+
+func WithSignRequestIdCtxKey(key string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		getSignOptionsOrSetDefault(options).requestIdCtxKey = key
+	}
+}
+
+func WithSignSeparator(s string) func(*SignOptions) {
+	return func(options *SignOptions) {
+		getSignOptionsOrSetDefault(options).separator = s
+	}
+}
+
+func WithSignCheckScope(flag bool) func(*SignOptions) {
+	return func(options *SignOptions) {
+		getSignOptionsOrSetDefault(options).checkScope = flag
+	}
+}
+
+func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
+	if options == nil {
+		return &SignOptions{
+			logger:          logger.DefaultLogger(),
+			expire:          "60s",
+			headerKey:       []string{constant.MiddlewareSignIdHeaderKey, constant.MiddlewareSignTimestampHeaderKey, constant.MiddlewareSignTokenHeaderKey},
+			ctxKey:          []string{constant.MiddlewareParamsBodyCtxKey, constant.MiddlewareParamsFormCtxKey, constant.MiddlewareParamsQueryCtxKey},
+			valKey:          []string{"body", "form", "query"},
+			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			separator:       constant.MiddlewareSignSeparator,
+			checkScope:      true,
+		}
+	}
+	return options
+}
+
 type IdempotenceOptions struct {
 	logger          logger.Interface
 	redis           redis.UniversalClient

@@ -18,4 +18,8 @@ const (
 	MiddlewareParamsBodyCtxKey               = "RBody"
 	MiddlewareParamsFormCtxKey               = "RForm"
 	MiddlewareParamsQueryCtxKey              = "RQuery"
+	MiddlewareSignSeparator                  = "|"
+	MiddlewareSignIdHeaderKey                = "X-Sign-Id"
+	MiddlewareSignTimestampHeaderKey         = "X-Sign-Timestamp"
+	MiddlewareSignTokenHeaderKey             = "X-Sign-Token"
 )

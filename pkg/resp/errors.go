@@ -25,6 +25,12 @@ const (
 	WeakPassword               = "the password is too weak"
 	UserLockedMsg              = "the account has been locked"
 	InvalidCaptchaMsg          = "the verification code is invalid or expired"
+	InvalidSignIdMsg           = "invalid app id"
+	IllegalSignIdMsg           = "illegal app id"
+	InvalidSignTokenMsg        = "invalid token"
+	IllegalSignTokenMsg        = "illegal token"
+	InvalidSignTimestampMsg    = "invalid timestamp"
+	InvalidSignScopeMsg        = "invalid scope"
 )
 
 var CustomError = map[int]string{
