@@ -15,4 +15,7 @@ const (
 	MiddlewareTransactionTxCtxKey            = "tx"
 	MiddlewareTransactionForceCommitCtxKey   = "ForceCommitTx"
 	MiddlewareJwtUserCtxKey                  = "user"
+	MiddlewareParamsBodyCtxKey               = "RBody"
+	MiddlewareParamsFormCtxKey               = "RForm"
+	MiddlewareParamsQueryCtxKey              = "RQuery"
 )
