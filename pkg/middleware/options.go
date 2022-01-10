@@ -16,41 +16,6 @@ import (
 	"strings"
 )
 
-type ParamsOptions struct {
-	bodyCtxKey  string
-	queryCtxKey string
-	formCtxKey  string
-}
-
-func WithParamsBodyCtxKey(s string) func(*ParamsOptions) {
-	return func(options *ParamsOptions) {
-		getParamsOptionsOrSetDefault(options).bodyCtxKey = s
-	}
-}
-
-func WithParamsQueryCtxKey(s string) func(*ParamsOptions) {
-	return func(options *ParamsOptions) {
-		getParamsOptionsOrSetDefault(options).queryCtxKey = s
-	}
-}
-
-func WithParamsFormCtxKey(s string) func(*ParamsOptions) {
-	return func(options *ParamsOptions) {
-		getParamsOptionsOrSetDefault(options).formCtxKey = s
-	}
-}
-
-func getParamsOptionsOrSetDefault(options *ParamsOptions) *ParamsOptions {
-	if options == nil {
-		return &ParamsOptions{
-			bodyCtxKey:  constant.MiddlewareParamsBodyCtxKey,
-			queryCtxKey: constant.MiddlewareParamsQueryCtxKey,
-			formCtxKey:  constant.MiddlewareParamsFormCtxKey,
-		}
-	}
-	return options
-}
-
 type AccessLogOptions struct {
 	logger    logger.Interface
 	urlPrefix string
