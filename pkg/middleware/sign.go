@@ -25,6 +25,15 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		panic("getSignUser is empty")
 	}
 	return func(c *gin.Context) {
+		if ops.findSkipPath != nil {
+			list := ops.findSkipPath(c)
+			for _, item := range list {
+				if strings.Contains(c.Request.URL.Path, item) {
+					c.Next()
+					return
+				}
+			}
+		}
 		// token
 		token := c.Request.Header.Get(ops.headerKey[0])
 		if token == "" {
