@@ -5,15 +5,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
+	"io/ioutil"
 	"net/http"
-	"net/url"
+	"regexp"
+	"strings"
 )
 
 func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
@@ -25,15 +25,33 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		panic("getSignUser is empty")
 	}
 	return func(c *gin.Context) {
-		// id
-		appId := c.Request.Header.Get(ops.headerKey[0])
+		// token
+		token := c.Request.Header.Get(ops.headerKey[0])
+		if token == "" {
+			ops.logger.Warn(c, resp.InvalidSignTokenMsg)
+			abort(c, *ops, resp.InvalidSignTokenMsg)
+			return
+		}
+		list := strings.Split(token, ",")
+		re := regexp.MustCompile(`"[\D\d].*"`)
+		var appId, timestamp, signature string
+		for _, item := range list {
+			ms := re.FindAllString(item, -1)
+			if len(ms) == 1 {
+				if strings.HasPrefix(item, ops.headerKey[1]) {
+					appId = strings.Trim(ms[0], `"`)
+				} else if strings.HasPrefix(item, ops.headerKey[2]) {
+					timestamp = strings.Trim(ms[0], `"`)
+				} else if strings.HasPrefix(item, ops.headerKey[3]) {
+					signature = strings.Trim(ms[0], `"`)
+				}
+			}
+		}
 		if appId == "" {
 			ops.logger.Warn(c, resp.InvalidSignIdMsg)
 			abort(c, *ops, resp.InvalidSignIdMsg)
 			return
 		}
-		// timestamp
-		timestamp := c.Request.Header.Get(ops.headerKey[1])
 		if timestamp == "" {
 			ops.logger.Warn(c, resp.InvalidSignTimestampMsg)
 			abort(c, *ops, resp.InvalidSignTimestampMsg)
@@ -45,13 +63,6 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		if t.AddDuration(ops.expire).Lt(now) {
 			ops.logger.Warn(c, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			abort(c, *ops, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
-			return
-		}
-		// token
-		token := c.Request.Header.Get(ops.headerKey[2])
-		if token == "" {
-			ops.logger.Warn(c, resp.InvalidSignTokenMsg)
-			abort(c, *ops, resp.InvalidSignTokenMsg)
 			return
 		}
 		// query user by app id
@@ -67,8 +78,9 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			return
 		}
 		// scope
+		reqMethod := c.Request.Method
+		reqUri := c.Request.RequestURI
 		if ops.checkScope {
-			reqMethod := c.Request.Method
 			reqPath := c.Request.URL.Path
 			exists := false
 			for _, item := range u.Scopes {
@@ -84,18 +96,21 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			}
 		}
 
-		// set params
-		contentType := c.ContentType()
-		params := make(url.Values)
-		switch contentType {
-		case binding.MIMEJSON:
-			params.Set(ops.valKey[0], c.GetString(ops.ctxKey[0]))
-		case binding.MIMEPOSTForm:
-			params.Set(ops.valKey[1], c.GetString(ops.ctxKey[1]))
+		// read body
+		var body []byte
+		if reqMethod == http.MethodPost || reqMethod == http.MethodPut || reqMethod == http.MethodPatch {
+			var err error
+			body, err = ioutil.ReadAll(c.Request.Body)
+			if err == nil {
+				// write back to gin request body
+				c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			}
 		}
-		params.Set(ops.valKey[2], c.GetString(ops.ctxKey[2]))
+		if len(body) == 0 {
+			body = []byte("{}")
+		}
 		// verify signature
-		if !verifySign(*ops, u.AppSecret, token, timestamp, params) {
+		if !verifySign(*ops, u.AppSecret, signature, reqMethod, reqUri, timestamp, string(body)) {
 			ops.logger.Warn(c, "%s: %s", resp.IllegalSignTokenMsg, token)
 			abort(c, *ops, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
@@ -104,21 +119,19 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 	}
 }
 
-func verifySign(ops SignOptions, secret, sign, timestamp string, params url.Values) (flag bool) {
-	p, err := url.QueryUnescape(params.Encode())
-	if err != nil {
-		return
-	}
+func verifySign(ops SignOptions, secret, signature, method, uri, timestamp, body string) (flag bool) {
 	b := bytes.NewBuffer(nil)
+	b.WriteString(method)
+	b.WriteString(ops.separator)
+	b.WriteString(uri)
 	b.WriteString(ops.separator)
 	b.WriteString(timestamp)
 	b.WriteString(ops.separator)
-	b.WriteString(p)
+	b.WriteString(utils.JsonWithSort(body))
 	hash := hmac.New(sha256.New, []byte(secret))
 	hash.Write(b.Bytes())
 	digest := base64.StdEncoding.EncodeToString(hash.Sum(nil))
-	fmt.Println(digest)
-	flag = digest == sign
+	flag = digest == signature
 	return
 }
 

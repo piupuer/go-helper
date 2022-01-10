@@ -146,8 +146,6 @@ type SignOptions struct {
 	findSkipPath    func(c *gin.Context) []string
 	getSignUser     func(c *gin.Context, appId string) ms.SignUser
 	headerKey       []string
-	ctxKey          []string
-	valKey          []string
 	requestIdCtxKey string
 	separator       string
 	checkScope      bool
@@ -185,24 +183,18 @@ func WithSignGetSignUser(fun func(c *gin.Context, appId string) ms.SignUser) fun
 
 func WithSignHeaderKey(arr ...string) func(*SignOptions) {
 	return func(options *SignOptions) {
-		if len(arr) == 3 {
+		switch len(arr) {
+		case 1:
+			getSignOptionsOrSetDefault(options).headerKey[0] = arr[0]
+		case 2:
+			getSignOptionsOrSetDefault(options).headerKey[0] = arr[0]
+			getSignOptionsOrSetDefault(options).headerKey[1] = arr[1]
+		case 3:
+			getSignOptionsOrSetDefault(options).headerKey[0] = arr[0]
+			getSignOptionsOrSetDefault(options).headerKey[1] = arr[1]
+			getSignOptionsOrSetDefault(options).headerKey[2] = arr[2]
+		case 4:
 			getSignOptionsOrSetDefault(options).headerKey = arr
-		}
-	}
-}
-
-func WithSignCtxKey(arr ...string) func(*SignOptions) {
-	return func(options *SignOptions) {
-		if len(arr) == 3 {
-			getSignOptionsOrSetDefault(options).ctxKey = arr
-		}
-	}
-}
-
-func WithSignValKey(arr ...string) func(*SignOptions) {
-	return func(options *SignOptions) {
-		if len(arr) == 3 {
-			getSignOptionsOrSetDefault(options).valKey = arr
 		}
 	}
 }
@@ -228,11 +220,14 @@ func WithSignCheckScope(flag bool) func(*SignOptions) {
 func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
 	if options == nil {
 		return &SignOptions{
-			logger:          logger.DefaultLogger(),
-			expire:          "60s",
-			headerKey:       []string{constant.MiddlewareSignIdHeaderKey, constant.MiddlewareSignTimestampHeaderKey, constant.MiddlewareSignTokenHeaderKey},
-			ctxKey:          []string{constant.MiddlewareParamsBodyCtxKey, constant.MiddlewareParamsFormCtxKey, constant.MiddlewareParamsQueryCtxKey},
-			valKey:          []string{"body", "form", "query"},
+			logger: logger.DefaultLogger(),
+			expire: "60s",
+			headerKey: []string{
+				constant.MiddlewareSignTokenHeaderKey,
+				constant.MiddlewareSignAppIdHeaderKey,
+				constant.MiddlewareSignTimestampHeaderKey,
+				constant.MiddlewareSignSignatureHeaderKey,
+			},
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 			separator:       constant.MiddlewareSignSeparator,
 			checkScope:      true,

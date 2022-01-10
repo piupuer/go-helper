@@ -25,3 +25,10 @@ func Struct2StructByJson(struct1 interface{}, struct2 interface{}) {
 	jsonStr := Struct2Json(struct1)
 	Json2Struct(jsonStr, struct2)
 }
+
+// sort json keys
+func JsonWithSort(str string) string {
+	m := make(map[string]interface{})
+	Json2Struct(str, &m)
+	return Struct2Json(m)
+}
