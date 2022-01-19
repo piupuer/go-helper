@@ -9,14 +9,14 @@ import (
 )
 
 type Options struct {
-	logger logger.Interface
+	logger *logger.Wrapper
 	ctx    context.Context
 	redis  redis.UniversalClient
 	prefix string
 	expire int
 }
 
-func WithLogger(l logger.Interface) func(*Options) {
+func WithLogger(l *logger.Wrapper) func(*Options) {
 	return func(options *Options) {
 		if l != nil {
 			getOptionsOrSetDefault(options).logger = l
@@ -28,6 +28,7 @@ func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
 		if !utils.InterfaceIsNil(ctx) {
 			getOptionsOrSetDefault(options).ctx = ctx
+			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -57,7 +58,7 @@ func WithExpire(min int) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger: logger.DefaultLogger(),
+			logger: logger.NewDefaultWrapper(),
 			ctx:    context.Background(),
 			prefix: constant.CaptchaPrefix,
 			expire: 10,

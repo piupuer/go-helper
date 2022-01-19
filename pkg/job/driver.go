@@ -52,12 +52,12 @@ func (rd *RedisClientDriver) heartBeat(nodeID string) {
 	for range tickers.C {
 		keyExist, err := rd.do("EXPIRE", key, int(rd.timeout/time.Second))
 		if err != nil {
-			rd.ops.logger.Warn(rd.ops.ctx, "redis expire err: %+v", err)
+			rd.ops.logger.Warn("redis expire err: %+v", err)
 			continue
 		}
 		if keyExist == int64(0) {
 			if err := rd.registerServiceNode(nodeID); err != nil {
-				rd.ops.logger.Warn(rd.ops.ctx, "register service node err: %+v", err)
+				rd.ops.logger.Warn("register service node err: %+v", err)
 			}
 		}
 	}

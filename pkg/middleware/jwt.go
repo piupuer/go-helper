@@ -244,7 +244,7 @@ func initJwt(ops JwtOptions) *jwt.GinJWTMiddleware {
 
 // check auth failed
 func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
-	ops.logger.Debug(c, "jwt auth check failed, err: %d, %+v", code, err)
+	ops.logger.Debug("jwt auth check failed, err: %d, %+v", code, err)
 	msg := fmt.Sprintf("%v", err)
 	if msg == resp.LoginCheckErrorMsg ||
 		msg == resp.ForbiddenMsg ||

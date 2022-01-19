@@ -9,7 +9,7 @@ import (
 )
 
 type Options struct {
-	logger         logger.Interface
+	logger         *logger.Wrapper
 	redis          redis.UniversalClient
 	redisBinlog    bool
 	group          *gin.RouterGroup
@@ -22,21 +22,11 @@ type Options struct {
 	v1Ops          []func(options *v1.Options)
 }
 
-func WithLogger(l logger.Interface) func(*Options) {
+func WithLogger(l *logger.Wrapper) func(*Options) {
 	return func(options *Options) {
 		if l != nil {
 			getOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithLoggerLevel(level logger.Level) func(*Options) {
-	return func(options *Options) {
-		l := options.logger
-		if options.logger == nil {
-			l = getOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -105,7 +95,7 @@ func WithV1Ops(ops ...func(options *v1.Options)) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:      logger.DefaultLogger(),
+			logger:      logger.NewDefaultWrapper(),
 			redisBinlog: false,
 			jwt:         true,
 			casbin:      true,

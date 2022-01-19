@@ -77,7 +77,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
-		job.ops.logger.Warn(job.ops.ctx, "initialize redis failed, switch singe mode, err: %+v", err)
+		job.ops.logger.Warn("initialize redis failed, switch singe mode, err: %+v", err)
 		return &job, nil
 	}
 
@@ -125,7 +125,7 @@ func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.singleTasks[task.Name]; ok {
-		g.ops.logger.Warn(g.ops.ctx, "task %s already exists, skip", task.Name)
+		g.ops.logger.Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -147,7 +147,7 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
-		g.ops.logger.Warn(g.ops.ctx, "task %s already exists, skip", task.Name)
+		g.ops.logger.Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -264,7 +264,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.singleTasks, taskName)
 					break
 				} else {
-					g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
+					g.ops.logger.Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}
@@ -278,7 +278,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.tasks, taskName)
 					break
 				} else {
-					g.ops.logger.Warn(g.ops.ctx, "task %s is not running, skip", task.Name)
+					g.ops.logger.Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}

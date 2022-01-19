@@ -39,12 +39,12 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					if handler(ctx, co.qu.ops.name, msg) {
 						err := msg.Ack(false)
 						if err != nil {
-							co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %+v", errors.WithStack(err))
+							co.qu.ex.rb.ops.logger.Error("consume ack err: %+v", errors.WithStack(err))
 						}
 					} else {
 						err := msg.Nack(false, co.ops.nackRequeue)
 						if err != nil {
-							co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %+v", errors.WithStack(err))
+							co.qu.ex.rb.ops.logger.Error("consume nack err: %+v", errors.WithStack(err))
 						}
 					}
 				}
@@ -64,7 +64,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 				}
 				d, err := co.consume(ctx)
 				if err != nil {
-					co.qu.ex.rb.ops.logger.Error(ctx, "reconsume err: %+v", errors.WithStack(err))
+					co.qu.ex.rb.ops.logger.Error("reconsume err: %+v", errors.WithStack(err))
 					return
 				}
 				delivery = d
@@ -97,12 +97,12 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 	if handler(ctx, co.qu.ops.name, msg) {
 		err := msg.Ack(false)
 		if err != nil {
-			co.qu.ex.rb.ops.logger.Error(ctx, "consume ack err: %+v", err)
+			co.qu.ex.rb.ops.logger.Error("consume ack err: %+v", err)
 		}
 	} else {
 		err := msg.Nack(false, co.ops.nackRequeue)
 		if err != nil {
-			co.qu.ex.rb.ops.logger.Error(ctx, "consume nack err: %+v", err)
+			co.qu.ex.rb.ops.logger.Error("consume nack err: %+v", err)
 		}
 	}
 	return nil

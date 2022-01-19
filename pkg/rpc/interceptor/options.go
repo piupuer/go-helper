@@ -7,10 +7,10 @@ import (
 )
 
 type ExceptionOptions struct {
-	logger logger.Interface
+	logger *logger.Wrapper
 }
 
-func WithExceptionLogger(l logger.Interface) func(*ExceptionOptions) {
+func WithExceptionLogger(l *logger.Wrapper) func(*ExceptionOptions) {
 	return func(options *ExceptionOptions) {
 		if l != nil {
 			getExceptionOptionsOrSetDefault(options).logger = l
@@ -21,7 +21,7 @@ func WithExceptionLogger(l logger.Interface) func(*ExceptionOptions) {
 func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
 	if options == nil {
 		return &ExceptionOptions{
-			logger: logger.DefaultLogger(),
+			logger: logger.NewDefaultWrapper(),
 		}
 	}
 	return options
@@ -75,11 +75,11 @@ func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOption
 }
 
 type AccessLogOptions struct {
-	logger logger.Interface
+	logger *logger.Wrapper
 	detail bool
 }
 
-func WithAccessLogLogger(l logger.Interface) func(*AccessLogOptions) {
+func WithAccessLogLogger(l *logger.Wrapper) func(*AccessLogOptions) {
 	return func(options *AccessLogOptions) {
 		if l != nil {
 			getAccessLogOptionsOrSetDefault(options).logger = l
@@ -96,7 +96,7 @@ func WithAccessLogDetail(flag bool) func(*AccessLogOptions) {
 func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
 	if options == nil {
 		return &AccessLogOptions{
-			logger: logger.DefaultLogger(),
+			logger: logger.NewDefaultWrapper(),
 			detail: true,
 		}
 	}

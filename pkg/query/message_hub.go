@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/ch"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -78,8 +79,9 @@ type MessageHub struct {
 
 // The message client is used to store connection information
 type MessageClient struct {
-	hub *MessageHub
-	ctx context.Context
+	hub    *MessageHub
+	ctx    context.Context
+	logger *logger.Wrapper
 	// websocket key
 	Key string
 	// websocket connection
@@ -127,13 +129,14 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 // websocket handler
 func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key string, user ms.User, ip string) {
 	client := &MessageClient{
-		hub:  h,
-		ctx:  ctx,
-		Key:  key,
-		Conn: conn,
-		User: user,
-		Ip:   ip,
-		Send: ch.NewCh(),
+		hub:    h,
+		ctx:    ctx,
+		logger: h.ops.logger.WithRequestId(ctx),
+		Key:    key,
+		Conn:   conn,
+		User:   user,
+		Ip:     ip,
+		Send:   ch.NewCh(),
 	}
 
 	go client.register()
@@ -195,7 +198,7 @@ func (h *MessageHub) count() {
 			for _, client := range h.getClients() {
 				infos = append(infos, fmt.Sprintf("%d-%s", client.User.Id, client.Ip))
 			}
-			h.ops.logger.Debug(h.ops.dbNoTx.Ctx, "[Message]active connection: %v", strings.Join(infos, ","))
+			h.ops.logger.Debug("[Message]active connection: %v", strings.Join(infos, ","))
 		}
 	}
 }
@@ -211,7 +214,7 @@ func (c *MessageClient) receive() {
 	defer func() {
 		c.close()
 		if err := recover(); err != nil {
-			c.hub.ops.logger.Error(c.ctx, "[Message][receiver][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			c.hub.ops.logger.Error("[Message][receiver][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
 		}
 	}()
 	for {
@@ -227,7 +230,7 @@ func (c *MessageClient) receive() {
 		// decompress data
 		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
-		c.hub.ops.logger.Debug(c.ctx, "[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
+		c.hub.ops.logger.Debug("[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
 		var r req.MessageWs
 		utils.Json2Struct(data, &r)
 		switch r.Type {
@@ -322,7 +325,7 @@ func (c *MessageClient) send() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			c.hub.ops.logger.Error(c.ctx, "[Message][sender][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			c.hub.ops.logger.Error("[Message][sender][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
 		}
 	}()
 	for {
@@ -352,7 +355,7 @@ func (c MessageClient) writeMessage(messageType int, data string) error {
 	// compress
 	// s, _ := utils.CompressStrByZlib(data)
 	s := &data
-	c.hub.ops.logger.Debug(c.ctx, "[Message][sender][%s] %v", c.Key, *s)
+	c.hub.ops.logger.Debug("[Message][sender][%s] %v", c.Key, *s)
 	return c.Conn.WriteMessage(messageType, []byte(*s))
 }
 
@@ -363,7 +366,7 @@ func (c *MessageClient) heartBeat() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			c.hub.ops.logger.Error(c.ctx, "[Message][heartbeat][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			c.hub.ops.logger.Error("[Message][heartbeat][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
 		}
 	}()
 	for {
@@ -399,7 +402,7 @@ func (c *MessageClient) register() {
 		if !utils.ContainsUint(c.hub.userIds, c.User.Id) {
 			c.hub.userIds = append(c.hub.userIds, c.User.Id)
 		}
-		c.hub.ops.logger.Debug(c.ctx, "[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		c.hub.ops.logger.Debug("[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 		go func() {
 			c.hub.refreshUserMessage.SafeSend([]uint{c.User.Id})
 		}()
@@ -427,7 +430,7 @@ func (c *MessageClient) close() {
 	if _, ok := c.hub.clients[c.Key]; ok {
 		delete(c.hub.clients, c.Key)
 		c.Send.SafeClose()
-		c.hub.ops.logger.Debug(c.ctx, "[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		c.hub.ops.logger.Debug("[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 	}
 
 	c.Conn.Close()

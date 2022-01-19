@@ -1,27 +1,27 @@
 package logger
 
 import (
-	"github.com/natefinch/lumberjack"
-	"github.com/piupuer/go-helper/pkg/constant"
-	"go.uber.org/zap/zapcore"
+	"context"
+	"github.com/piupuer/go-helper/pkg/utils"
+	"github.com/sirupsen/logrus"
+	"io"
 )
 
 type Options struct {
-	level           Level
-	requestIdCtxKey string
-	colorful        bool
-	lineNumPrefix   string
-	lineNumLevel    int
-	keepSourceDir   bool
-	keepVersion     bool
-	lumber          bool
-	lumberOps       LumberjackOption
+	ctx      context.Context
+	level    Level
+	category string
+	json     bool
+	lineNum  bool
+	output   io.Writer
 }
 
-type LumberjackOption struct {
-	lumberjack.Logger
-	LogPath   string
-	LogSuffix string
+func WithCtx(ctx context.Context) func(*Options) {
+	return func(options *Options) {
+		if !utils.InterfaceIsNil(ctx) {
+			getOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
 }
 
 func WithLevel(level Level) func(*Options) {
@@ -30,73 +30,37 @@ func WithLevel(level Level) func(*Options) {
 	}
 }
 
-func WithRequestIdCtxKey(key string) func(*Options) {
+func WithCategory(s string) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).requestIdCtxKey = key
+		getOptionsOrSetDefault(options).category = s
 	}
 }
 
-func WithColorful(flag bool) func(*Options) {
+func WithJson(flag bool) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).colorful = flag
+		getOptionsOrSetDefault(options).json = flag
 	}
 }
 
-func WithLineNumPrefix(prefix string) func(*Options) {
+func WithLineNum(flag bool) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).lineNumPrefix = prefix
+		getOptionsOrSetDefault(options).lineNum = flag
 	}
 }
 
-func WithLineNumLevel(level int) func(*Options) {
+func WithOutput(output io.Writer) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).lineNumLevel = level
-	}
-}
-
-func WithLumber(flag bool) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).lumber = flag
-	}
-}
-
-func WithKeepSourceDir(flag bool) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).keepSourceDir = flag
-	}
-}
-
-func WithKeepVersion(flag bool) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).keepVersion = flag
-	}
-}
-
-func WithLumberjackOption(option LumberjackOption) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).lumberOps = option
+		getOptionsOrSetDefault(options).output = output
 	}
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			level:           Level(zapcore.DebugLevel),
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			lineNumLevel:    1,
-			keepVersion:     true,
-			lumber:          true,
-			lumberOps: LumberjackOption{
-				Logger: lumberjack.Logger{
-					MaxSize:    50,
-					MaxAge:     30,
-					MaxBackups: 100,
-					LocalTime:  true,
-					Compress:   true,
-				},
-				LogPath:   "logs",
-				LogSuffix: ".log",
-			},
+			ctx:     context.Background(),
+			level:   Level(logrus.DebugLevel),
+			lineNum: true,
+			json:    false,
 		}
 	}
 	return options

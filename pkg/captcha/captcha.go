@@ -27,7 +27,7 @@ func (ca Captcha) Get() (id, img string) {
 	var err error
 	id, img, err = ca.c.Generate()
 	if err != nil {
-		ca.ops.logger.Warn(ca.ops.ctx, "get captcha failed: %v", err)
+		ca.ops.logger.Warn("get captcha failed: %v", err)
 	}
 	return
 }

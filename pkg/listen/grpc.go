@@ -34,17 +34,17 @@ func Grpc(options ...func(*GrpcOptions)) {
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		ops.logger.Error(ops.ctx, "[%s][grpc server]failed to listen: %v", ops.proName, err)
+		ops.logger.Error("[%s][grpc server]failed to listen: %v", ops.proName, err)
 		return
 	}
 
 	go func() {
 		if err = srv.Serve(lis); err != nil {
-			ops.logger.Error(ops.ctx, "[%s][grpc server]failed to serve: %v", ops.proName, err)
+			ops.logger.Error("[%s][grpc server]failed to serve: %v", ops.proName, err)
 		}
 	}()
 
-	ops.logger.Info(ops.ctx, "[%s][grpc server]running at %s:%d", ops.proName, host, port)
+	ops.logger.Info("[%s][grpc server]running at %s:%d", ops.proName, host, port)
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
@@ -54,8 +54,8 @@ func Grpc(options ...func(*GrpcOptions)) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	ops.logger.Info(ops.ctx, "[%s][grpc server]shutting down...", ops.proName)
+	ops.logger.Info("[%s][grpc server]shutting down...", ops.proName)
 
 	srv.GracefulStop()
-	ops.logger.Info(ops.ctx, "[%s][grpc server]exiting", ops.proName)
+	ops.logger.Info("[%s][grpc server]exiting", ops.proName)
 }

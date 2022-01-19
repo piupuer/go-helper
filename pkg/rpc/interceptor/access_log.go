@@ -36,7 +36,6 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 		code := status.Code(err).String()
 		if err != nil {
 			ops.logger.Error(
-				ctx,
 				"%s %s %s RPC code: '%s', RPC err: '%v'",
 				fullMethod,
 				execTime,
@@ -47,14 +46,12 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 		} else {
 			if ops.detail {
 				ops.logger.Info(
-					ctx,
 					"RPC code: '%s', resp: %s",
 					code,
 					utils.Struct2Json(rp),
 				)
 			} else {
 				ops.logger.Info(
-					ctx,
 					"RPC code: '%s'",
 					code,
 				)

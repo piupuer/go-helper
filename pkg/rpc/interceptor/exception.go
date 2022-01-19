@@ -15,7 +15,7 @@ func Exception(options ...func(*ExceptionOptions)) grpc.UnaryServerInterceptor {
 	return grpc_recovery.UnaryServerInterceptor(
 		grpc_recovery.WithRecoveryHandlerContext(
 			func(ctx context.Context, p interface{}) (err error) {
-				ops.logger.Error(ctx, "runtime err: %+v", p)
+				ops.logger.Error("runtime err: %+v", p)
 				return errors.Errorf("%+v", p)
 			},
 		),

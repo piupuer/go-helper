@@ -19,9 +19,9 @@ func newDCronLogger(options ...func(*CronOptions)) *dcronLogger {
 
 func (c dcronLogger) Printf(format string, args ...interface{}) {
 	if strings.HasPrefix(format, dcronInfoPrefix) {
-		c.ops.logger.Info(c.ops.ctx, strings.TrimPrefix(format, dcronInfoPrefix), args...)
+		c.ops.logger.Info(append([]interface{}{strings.TrimPrefix(format, dcronInfoPrefix)}, args...)...)
 	} else if strings.HasPrefix(format, dcronErrorPrefix) {
-		c.ops.logger.Error(c.ops.ctx, strings.TrimPrefix(format, dcronErrorPrefix), args...)
+		c.ops.logger.Error(append([]interface{}{strings.TrimPrefix(format, dcronErrorPrefix)}, args...)...)
 	}
 }
 
@@ -30,7 +30,7 @@ type CronLogger struct {
 }
 
 func (cl CronLogger) Printf(msg string, args ...interface{}) {
-	cl.ops.logger.Info(cl.ops.ctx, msg, args...)
+	cl.ops.logger.Info(append([]interface{}{msg}, args...)...)
 }
 
 func NewCronLogger(options ...func(*CronOptions)) cron.Logger {

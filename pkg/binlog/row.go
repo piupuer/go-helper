@@ -121,12 +121,12 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	}
 	compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 	if err != nil {
-		ops.logger.Error(ops.ctx, "[binlog row change]compress err: %+v, %v", err, e)
+		ops.logger.Error("[binlog row change]compress err: %+v, %v", err, e)
 		return
 	}
 	err = ops.redis.Set(ops.ctx, cacheKey, compress, 0).Err()
 	if err != nil {
-		ops.logger.Error(ops.ctx, "[binlog row change]set to redis err: %+v, %v", err, e)
+		ops.logger.Error("[binlog row change]set to redis err: %+v, %v", err, e)
 	}
 }
 
@@ -162,7 +162,7 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 		}
 	}
 	if count != len(table.Columns) {
-		ops.logger.Warn(ops.ctx, "[binlog get row], columns: %v, data: %v", table.Columns, data)
+		ops.logger.Warn("[binlog get row], columns: %v, data: %v", table.Columns, data)
 	}
 	return row
 }
@@ -170,6 +170,6 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 func PosChange(ops Options, pos mysql.Position) {
 	err := ops.redis.Set(ops.ctx, fmt.Sprintf("%s_%s", ops.dsn.DBName, ops.binlogPos), utils.Struct2Json(pos), 0).Err()
 	if err != nil {
-		ops.logger.Error(ops.ctx, "[binlog pos change]err: %+v, %v", err, pos)
+		ops.logger.Error("[binlog pos change]err: %+v, %v", err, pos)
 	}
 }

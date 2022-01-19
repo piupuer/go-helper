@@ -13,7 +13,7 @@ import (
 )
 
 type Options struct {
-	logger                     logger.Interface
+	logger                     *logger.Wrapper
 	binlog                     bool
 	binlogOps                  []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
@@ -37,21 +37,11 @@ type Options struct {
 	messageHubOps              []func(options *query.MessageHubOptions)
 }
 
-func WithLogger(l logger.Interface) func(*Options) {
+func WithLogger(l *logger.Wrapper) func(*Options) {
 	return func(options *Options) {
 		if l != nil {
 			getOptionsOrSetDefault(options).logger = l
 		}
-	}
-}
-
-func WithLoggerLevel(level logger.Level) func(*Options) {
-	return func(options *Options) {
-		l := options.logger
-		if options.logger == nil {
-			l = getOptionsOrSetDefault(options).logger
-		}
-		options.logger = l.LogLevel(level)
 	}
 }
 
@@ -208,7 +198,7 @@ func WithMessageHubOps(ops ...func(options *query.MessageHubOptions)) func(*Opti
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:                     logger.DefaultLogger(),
+			logger:                     logger.NewDefaultWrapper(),
 			binlog:                     false,
 			cachePrefix:                "v1_cache",
 			operationAllowedToDelete:   true,

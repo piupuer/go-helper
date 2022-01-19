@@ -15,7 +15,7 @@ func Exception(options ...func(*ExceptionOptions)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				ops.logger.Error(c, "[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+				ops.logger.Error("[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
 				rp := resp.Resp{
 					Code:      resp.InternalServerError,
 					Data:      map[string]interface{}{},
@@ -55,7 +55,7 @@ func ExceptionWithNoTransaction(options ...func(*ExceptionOptions)) gin.HandlerF
 					rp = item
 					rp.RequestId = rid
 				} else {
-					ops.logger.Error(c, "[exception middleware]runtime err: %+v", err, string(debug.Stack()))
+					ops.logger.Error("[exception middleware]runtime err: %+v", err, string(debug.Stack()))
 				}
 				// set json data
 				c.JSON(http.StatusOK, rp)

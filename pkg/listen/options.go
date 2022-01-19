@@ -10,7 +10,7 @@ import (
 )
 
 type HttpOptions struct {
-	logger    logger.Interface
+	logger    *logger.Wrapper
 	ctx       context.Context
 	host      string
 	port      int
@@ -20,7 +20,7 @@ type HttpOptions struct {
 	handler   http.Handler
 }
 
-func WithHttpLogger(l logger.Interface) func(*HttpOptions) {
+func WithHttpLogger(l *logger.Wrapper) func(*HttpOptions) {
 	return func(options *HttpOptions) {
 		if l != nil {
 			getHttpOptionsOrSetDefault(options).logger = l
@@ -32,6 +32,7 @@ func WithHttpCtx(ctx context.Context) func(*HttpOptions) {
 	return func(options *HttpOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getHttpOptionsOrSetDefault(options).ctx = ctx
+			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -75,7 +76,7 @@ func WithHttpHandler(h http.Handler) func(*HttpOptions) {
 func getHttpOptionsOrSetDefault(options *HttpOptions) *HttpOptions {
 	if options == nil {
 		return &HttpOptions{
-			logger:    logger.DefaultLogger(),
+			logger:    logger.NewDefaultWrapper(),
 			host:      "0.0.0.0",
 			port:      8080,
 			urlPrefix: "api",
@@ -86,7 +87,7 @@ func getHttpOptionsOrSetDefault(options *HttpOptions) *HttpOptions {
 }
 
 type GrpcOptions struct {
-	logger    logger.Interface
+	logger    *logger.Wrapper
 	ctx       context.Context
 	host      string
 	port      int
@@ -95,7 +96,7 @@ type GrpcOptions struct {
 	register  func(g *grpc.Server)
 }
 
-func WithGrpcLogger(l logger.Interface) func(*GrpcOptions) {
+func WithGrpcLogger(l *logger.Wrapper) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		if l != nil {
 			getGrpcOptionsOrSetDefault(options).logger = l
@@ -107,6 +108,7 @@ func WithGrpcCtx(ctx context.Context) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getGrpcOptionsOrSetDefault(options).ctx = ctx
+			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -146,7 +148,7 @@ func WithGrpcRegister(fun func(g *grpc.Server)) func(*GrpcOptions) {
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 	if options == nil {
 		return &GrpcOptions{
-			logger:  logger.DefaultLogger(),
+			logger:  logger.NewDefaultWrapper(),
 			host:    "0.0.0.0",
 			port:    9090,
 			proName: "project",

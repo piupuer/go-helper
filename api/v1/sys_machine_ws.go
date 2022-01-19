@@ -32,7 +32,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 
 		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			ops.logger.Error(c, "upgrade websocket failed: %+v", err)
+			ops.logger.Error("upgrade websocket failed: %+v", err)
 			return
 		}
 		defer conn.Close()
@@ -47,7 +47,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			LoginPwd:  r.LoginPwd,
 		})
 		if err != nil {
-			ops.logger.Error(c, "connect ssh failed: %+v", err)
+			ops.logger.Error("connect ssh failed: %+v", err)
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -55,7 +55,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		// open ssh channel
 		channel, incomingRequests, err := client.Conn.OpenChannel("session", nil)
 		if err != nil {
-			ops.logger.Error(c, "connect ssh failed: %+v", err)
+			ops.logger.Error("connect ssh failed: %+v", err)
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -99,14 +99,14 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		}
 		ok, err := channel.SendRequest("pty-req", true, ssh.Marshal(&ptyReq))
 		if !ok || err != nil {
-			ops.logger.Error(c, "send pseudo terminal request failed: %+v", err)
+			ops.logger.Error("send pseudo terminal request failed: %+v", err)
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
 
 		ok, err = channel.SendRequest("shell", true, nil)
 		if !ok || err != nil {
-			ops.logger.Error(c, "send shell failed: %+v", err)
+			ops.logger.Error("send shell failed: %+v", err)
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -123,7 +123,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 				for {
 					x, size, err := br.ReadRune()
 					if err != nil {
-						ops.logger.Warn(c, "read shell failed: %+v", errors.WithStack(err))
+						ops.logger.Warn("read shell failed: %+v", errors.WithStack(err))
 						break
 					}
 					if size > 0 {
@@ -139,7 +139,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 						err = conn.WriteMessage(websocket.TextMessage, buf)
 						buf = []byte{}
 						if err != nil {
-							ops.logger.Error(c, "write msg to %s failed: %+v", conn.RemoteAddr(), err)
+							ops.logger.Error("write msg to %s failed: %+v", conn.RemoteAddr(), err)
 							return
 						}
 					}
@@ -186,7 +186,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			m, p, err := conn.ReadMessage()
 			active = time.Now()
 			if err != nil {
-				ops.logger.Warn(c, "connection %s lost", conn.RemoteAddr())
+				ops.logger.Warn("connection %s lost", conn.RemoteAddr())
 				break
 			}
 
@@ -198,7 +198,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 					if err := utils.IsSafetyCmd(cmd); err != nil {
 						err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%v\r\n\r\n", err)))
 						if err != nil {
-							ops.logger.Warn(c, "write msg failed: %+v", err)
+							ops.logger.Warn("write msg failed: %+v", err)
 							break
 						}
 						// write Ctrl C

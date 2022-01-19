@@ -381,7 +381,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		fs.ops.logger.Warn("%s", ErrTransitionNil)
 		return &rp, nil
 	}
 	return &rp, fs.ops.transition(fs.ops.ctx, rp)
@@ -421,7 +421,7 @@ func (fs Fsm) CancelLog(category uint) error {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		fs.ops.logger.Warn("%s", ErrTransitionNil)
 		return nil
 	}
 	return fs.ops.transition(fs.ops.ctx, list...)
@@ -463,7 +463,7 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn(fs.ops.ctx, "%s", ErrTransitionNil)
+		fs.ops.logger.Warn("%s", ErrTransitionNil)
 		return nil
 	}
 	return fs.ops.transition(fs.ops.ctx, list...)

@@ -13,7 +13,7 @@ type RabbitOptions struct {
 	reconnectMaxRetryCount int
 	channelMaxLostCount    int
 	timeout                int
-	logger                 logger.Interface
+	logger                 *logger.Wrapper
 	ctx                    context.Context
 }
 
@@ -49,7 +49,7 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
-func WithLogger(l logger.Interface) func(*RabbitOptions) {
+func WithLogger(l *logger.Wrapper) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if l != nil {
 			getRabbitOptionsOrSetDefault(options).logger = l
@@ -61,6 +61,7 @@ func WithCtx(ctx context.Context) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getRabbitOptionsOrSetDefault(options).ctx = ctx
+			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -72,7 +73,7 @@ func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 			reconnectMaxRetryCount: 3,
 			channelMaxLostCount:    5,
 			reconnectInterval:      5,
-			logger:                 logger.DefaultLogger(),
+			logger:                 logger.NewDefaultWrapper(),
 		}
 	}
 	return options

@@ -28,7 +28,6 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 
 		if reqMethod == "OPTIONS" || reqPath == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
 			ops.logger.Debug(
-				c,
 				"%s %s %d %s %s",
 				reqMethod,
 				reqPath,
@@ -38,7 +37,6 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 			)
 		} else {
 			ops.logger.Info(
-				c,
 				"%s %s %d %s %s",
 				reqMethod,
 				reqPath,
