@@ -8,19 +8,22 @@ import (
 	"gorm.io/gorm/logger"
 	"os"
 	"path"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 )
 
 var (
-	sourceDir = ""
+	logDir    = ""
+	helperDir = ""
 )
 
 func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
-	sourceDir = strings.TrimSuffix(file, fmt.Sprintf("go-helper%spkg%slogger%slogger.go", string(os.PathSeparator), string(os.PathSeparator), string(os.PathSeparator)))
+	logDir = regexp.MustCompile(`logger\.go`).ReplaceAllString(file, "")
+	helperDir = regexp.MustCompile(`go-helper.pkg.logger.logger\.go`).ReplaceAllString(file, "")
 }
 
 // Interface logger interface
@@ -65,7 +68,7 @@ func fileWithLineNum() string {
 	// the second caller usually from gorm internal, so set i start from 2
 	for i := 2; i < 15; i++ {
 		_, file, line, ok := runtime.Caller(i)
-		if ok && (!strings.HasPrefix(file, sourceDir) || strings.HasSuffix(file, "_test.go")) {
+		if ok && (!strings.HasPrefix(file, logDir) || strings.HasSuffix(file, "_test.go")) && !strings.Contains(file, "src/runtime") {
 			return file + ":" + strconv.FormatInt(int64(line), 10)
 		}
 	}
@@ -76,8 +79,11 @@ func fileWithLineNum() string {
 func removePrefix(s1 string, s2 string) string {
 	res1 := removeBaseDir(s1)
 	res2 := removeBaseDir(s2)
+	if strings.HasPrefix(s1, logDir) {
+		return res2
+	}
 	f1 := len(res1) <= len(res2)
-	f2 := strings.HasPrefix(s1, sourceDir)
+	f2 := strings.HasPrefix(s1, logDir)
 	// src/runtime may be in go routine
 	if strings.Contains(res2, "src/runtime") || (f1 || !f1 && f2) {
 		return res1
@@ -87,8 +93,8 @@ func removePrefix(s1 string, s2 string) string {
 
 func removeBaseDir(s string) string {
 	sep := string(os.PathSeparator)
-	if strings.HasPrefix(s, sourceDir) {
-		s = strings.TrimPrefix(s, path.Dir(sourceDir)+"/")
+	if strings.HasPrefix(s, helperDir) {
+		s = strings.TrimPrefix(s, path.Dir(helperDir)+"/")
 	}
 	arr := strings.Split(s, "@")
 	if len(arr) == 2 {

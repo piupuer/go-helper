@@ -14,7 +14,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -212,7 +211,7 @@ func (c *MessageClient) receive() {
 	defer func() {
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][receiver][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			logger.WithRequestId(c.ctx).Error("[Message][receiver][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
@@ -323,7 +322,7 @@ func (c *MessageClient) send() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][sender][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			logger.WithRequestId(c.ctx).Error("[Message][sender][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
@@ -364,7 +363,7 @@ func (c *MessageClient) heartBeat() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][heartbeat][%s]connection may have been lost: %v, %s", c.Key, err, string(debug.Stack()))
+			logger.WithRequestId(c.ctx).Error("[Message][heartbeat][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
