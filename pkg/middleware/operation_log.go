@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"io/ioutil"
@@ -56,7 +57,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 		var body []byte
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
-			ops.logger.Error("read body err: %+v", err)
+			logger.WithRequestId(c).Error("read body err: %+v", err)
 		} else {
 			// write back to gin request body
 			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))

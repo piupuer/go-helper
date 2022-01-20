@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -77,13 +78,12 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
-		job.ops.logger.Warn("initialize redis failed, switch singe mode, err: %+v", err)
+		logger.WithRequestId(job.ops.ctx).Warn("initialize redis failed, switch singe mode, err: %+v", err)
 		return &job, nil
 	}
 
 	drv, err := NewDriver(
 		job.redis,
-		WithDriverLogger(job.ops.logger),
 		WithDriverCtx(job.ops.ctx),
 		WithDriverPrefix(job.ops.prefix),
 	)
@@ -125,7 +125,7 @@ func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.singleTasks[task.Name]; ok {
-		g.ops.logger.Warn("task %s already exists, skip", task.Name)
+		logger.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -147,7 +147,7 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
-		g.ops.logger.Warn("task %s already exists, skip", task.Name)
+		logger.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -155,7 +155,6 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 		task.Name,
 		g.driver,
 		dcron.WithLogger(newDCronLogger(
-			WithCronLogger(g.ops.logger),
 			WithCronCtx(g.ops.ctx),
 		)),
 		dcron.CronOptionChain(g.parseWrapper(task)...),
@@ -171,7 +170,6 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 
 func (g GoodJob) parseWrapper(task GoodTask) []cron.JobWrapper {
 	cronLogger := NewCronLogger(
-		WithCronLogger(g.ops.logger),
 		WithCronCtx(g.ops.ctx),
 	)
 	if task.SkipIfStillRunning {
@@ -264,7 +262,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.singleTasks, taskName)
 					break
 				} else {
-					g.ops.logger.Warn("task %s is not running, skip", task.Name)
+					logger.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}
@@ -278,7 +276,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.tasks, taskName)
 					break
 				} else {
-					g.ops.logger.Warn("task %s is not running, skip", task.Name)
+					logger.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}

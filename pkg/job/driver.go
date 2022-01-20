@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/pkg/errors"
 	"time"
 )
 
 type RedisClientDriver struct {
+	ops     DriverOptions
 	client  redis.UniversalClient
 	timeout time.Duration
 	Key     string
-	ops     DriverOptions
 }
 
 func NewDriver(client redis.UniversalClient, options ...func(*DriverOptions)) (*RedisClientDriver, error) {
@@ -52,12 +53,12 @@ func (rd *RedisClientDriver) heartBeat(nodeID string) {
 	for range tickers.C {
 		keyExist, err := rd.do("EXPIRE", key, int(rd.timeout/time.Second))
 		if err != nil {
-			rd.ops.logger.Warn("redis expire err: %+v", err)
+			logger.WithRequestId(rd.ops.ctx).Warn("redis expire err: %+v", err)
 			continue
 		}
 		if keyExist == int64(0) {
 			if err := rd.registerServiceNode(nodeID); err != nil {
-				rd.ops.logger.Warn("register service node err: %+v", err)
+				logger.WithRequestId(rd.ops.ctx).Warn("register service node err: %+v", err)
 			}
 		}
 	}

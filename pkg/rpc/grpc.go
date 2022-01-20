@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -94,11 +95,11 @@ func (gr Grpc) HealthCheck(options ...func(*GrpcHealthCheckOptions)) (err error)
 	ctx, _ := context.WithTimeout(ops.ctx, time.Duration(gr.ops.timeout)*time.Second)
 	h, err = client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 	if err != nil {
-		gr.ops.logger.Warn("health check %s failed: %v", gr.uri, err)
+		logger.WithRequestId(ctx).Warn("health check %s failed: %v", gr.uri, err)
 		return errors.Wrapf(err, "health check %s failed", gr.uri)
 	}
 	if h.Status != grpc_health_v1.HealthCheckResponse_SERVING {
-		gr.ops.logger.Warn("health check %s not SERVING: %v", gr.uri, h.Status)
+		logger.WithRequestId(ctx).Warn("health check %s not SERVING: %v", gr.uri, h.Status)
 		return errors.Errorf("health check %s not SERVING", gr.uri)
 	}
 	return

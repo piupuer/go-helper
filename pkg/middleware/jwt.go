@@ -7,6 +7,7 @@ import (
 	v4 "github.com/golang-jwt/jwt/v4"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -244,7 +245,7 @@ func initJwt(ops JwtOptions) *jwt.GinJWTMiddleware {
 
 // check auth failed
 func unauthorized(c *gin.Context, code int, err error, ops JwtOptions) {
-	ops.logger.Debug("jwt auth check failed, err: %d, %+v", code, err)
+	logger.WithRequestId(c).Debug("jwt auth check failed, err: %d, %+v", code, err)
 	msg := fmt.Sprintf("%v", err)
 	if msg == resp.LoginCheckErrorMsg ||
 		msg == resp.ForbiddenMsg ||

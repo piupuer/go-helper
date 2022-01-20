@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"strings"
 	"time"
@@ -70,7 +71,7 @@ func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
 	if ops.redis != nil {
 		ops.redis.Set(c, fmt.Sprintf("%s_%s", ops.cachePrefix, token), true, time.Duration(ops.expire)*time.Hour)
 	} else {
-		ops.logger.Warn("please enable redis, otherwise the idempotence is invalid")
+		logger.WithRequestId(c).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return token
 }
@@ -83,7 +84,7 @@ func CheckIdempotenceToken(c context.Context, token string, ops IdempotenceOptio
 			return false
 		}
 	} else {
-		ops.logger.Warn("please enable redis, otherwise the idempotence is invalid")
+		logger.WithRequestId(c).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return true
 }

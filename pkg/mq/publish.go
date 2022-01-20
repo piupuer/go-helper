@@ -2,6 +2,7 @@ package mq
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"time"
@@ -128,10 +129,10 @@ func (pu *Publish) publish() error {
 			}
 			index++
 		case r := <-returnCh:
-			pu.ex.rb.ops.logger.Error("publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
+			logger.WithRequestId(ctx).Error("publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
 			return errors.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
 		case <-timer.C:
-			pu.ex.rb.ops.logger.Warn("publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
+			logger.WithRequestId(ctx).Warn("publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
 			return errors.Errorf("publish timeout: %ds", pu.ex.rb.ops.timeout)
 		}
 		if index == count {

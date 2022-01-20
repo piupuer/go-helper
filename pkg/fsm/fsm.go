@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/looplab/fsm"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -14,8 +15,8 @@ import (
 )
 
 type Fsm struct {
-	session *gorm.DB
 	ops     Options
+	session *gorm.DB
 	Error   error
 }
 
@@ -381,7 +382,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn("%s", ErrTransitionNil)
+		logger.WithRequestId(fs.ops.ctx).Warn("%s", ErrTransitionNil)
 		return &rp, nil
 	}
 	return &rp, fs.ops.transition(fs.ops.ctx, rp)
@@ -421,7 +422,7 @@ func (fs Fsm) CancelLog(category uint) error {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn("%s", ErrTransitionNil)
+		logger.WithRequestId(fs.ops.ctx).Warn("%s", ErrTransitionNil)
 		return nil
 	}
 	return fs.ops.transition(fs.ops.ctx, list...)
@@ -463,7 +464,7 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 	}
 	// status transition
 	if fs.ops.transition == nil {
-		fs.ops.logger.Warn("%s", ErrTransitionNil)
+		logger.WithRequestId(fs.ops.ctx).Warn("%s", ErrTransitionNil)
 		return nil
 	}
 	return fs.ops.transition(fs.ops.ctx, list...)

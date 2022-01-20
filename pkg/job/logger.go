@@ -1,6 +1,7 @@
 package job
 
 import (
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/robfig/cron/v3"
 	"strings"
 )
@@ -19,9 +20,9 @@ func newDCronLogger(options ...func(*CronOptions)) *dcronLogger {
 
 func (c dcronLogger) Printf(format string, args ...interface{}) {
 	if strings.HasPrefix(format, dcronInfoPrefix) {
-		c.ops.logger.Info(append([]interface{}{strings.TrimPrefix(format, dcronInfoPrefix)}, args...)...)
+		logger.WithRequestId(c.ops.ctx).Info(append([]interface{}{strings.TrimPrefix(format, dcronInfoPrefix)}, args...)...)
 	} else if strings.HasPrefix(format, dcronErrorPrefix) {
-		c.ops.logger.Error(append([]interface{}{strings.TrimPrefix(format, dcronErrorPrefix)}, args...)...)
+		logger.WithRequestId(c.ops.ctx).Error(append([]interface{}{strings.TrimPrefix(format, dcronErrorPrefix)}, args...)...)
 	}
 }
 
@@ -30,7 +31,7 @@ type CronLogger struct {
 }
 
 func (cl CronLogger) Printf(msg string, args ...interface{}) {
-	cl.ops.logger.Info(append([]interface{}{msg}, args...)...)
+	logger.WithRequestId(cl.ops.ctx).Info(append([]interface{}{msg}, args...)...)
 }
 
 func NewCronLogger(options ...func(*CronOptions)) cron.Logger {

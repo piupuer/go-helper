@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"os"
@@ -12,25 +13,25 @@ import (
 )
 
 type Rabbit struct {
+	ops              RabbitOptions
 	dsn              string           // connection url
 	connLock         int32            // lock when create connect
 	conn             *amqp.Connection // connection instance
 	lost             bool             // connection is lost
 	channelLostCount int              // can't get channel count
 	lostCh           chan error       // When the connection is lost, an error is sent to this channel
-	ops              RabbitOptions
 	Error            error
 }
 
 type Exchange struct {
-	rb    *Rabbit
 	ops   ExchangeOptions
+	rb    *Rabbit
 	Error error
 }
 
 type Queue struct {
-	ex    *Exchange
 	ops   QueueOptions
+	ex    *Exchange
 	Error error
 }
 
@@ -57,7 +58,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		// kill -2 is syscall.SIGINT
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		rb.ops.logger.Warn("process is exiting")
+		logger.WithRequestId(ctx).Warn("process is exiting")
 		if rb.conn != nil {
 			rb.conn.Close()
 		}
@@ -92,7 +93,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 		case err := <-connLost:
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
-				rb.ops.logger.Warn("connection is lost: %+v", errors.WithStack(err))
+				logger.WithRequestId(ctx).Warn("connection is lost: %+v", errors.WithStack(err))
 				rb.lost = true
 				rb.lostCh <- err
 			}
@@ -104,7 +105,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 // get a channel
 func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
 	if rb.channelLostCount > rb.ops.channelMaxLostCount {
-		rb.ops.logger.Warn("get channel failed %d retries, connection maybe lost", rb.channelLostCount)
+		logger.WithRequestId(ctx).Warn("get channel failed %d retries, connection maybe lost", rb.channelLostCount)
 		rb.lost = true
 	}
 	if rb.lost == true {

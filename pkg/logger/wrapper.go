@@ -12,15 +12,10 @@ type Wrapper struct {
 	fields map[string]interface{}
 }
 
-func NewDefaultWrapper() *Wrapper {
-	return &Wrapper{
-		log: New(),
-	}
-}
-
 func NewWrapper(l Interface) *Wrapper {
 	return &Wrapper{
-		log: l,
+		log:    l,
+		fields: map[string]interface{}{},
 	}
 }
 

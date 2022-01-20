@@ -6,6 +6,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/golang-module/carbon"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"reflect"
@@ -191,12 +192,12 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			eh.ops.logger.Error("[binlog row change]runtime err: %+v\nstack: %v", err, string(debug.Stack()))
+			logger.WithRequestId(eh.ops.ctx).Error("[binlog row change]runtime err: %+v\nstack: %v", err, string(debug.Stack()))
 			return
 		}
 	}()
 	RowChange(eh.ops, e)
-	eh.ops.logger.Debug("[binlog row change]%s %v", e.Action, e.Rows)
+	logger.WithRequestId(eh.ops.ctx).Debug("[binlog row change]%s %v", e.Action, e.Rows)
 	return nil
 }
 
@@ -212,9 +213,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				eh.ops.logger.Error("[binlog ddl]drop table %s sync to redis err: %+v", table, err)
+				logger.WithRequestId(eh.ops.ctx).Error("[binlog ddl]drop table %s sync to redis err: %+v", table, err)
 			} else {
-				eh.ops.logger.Debug("[binlog ddl]drop table %s success", table)
+				logger.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]drop table %s success", table)
 			}
 		}
 	}
@@ -231,9 +232,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				eh.ops.logger.Error("[binlog ddl]truncate table %s sync to redis err: %+v", table, err)
+				logger.WithRequestId(eh.ops.ctx).Error("[binlog ddl]truncate table %s sync to redis err: %+v", table, err)
 			} else {
-				eh.ops.logger.Debug("[binlog ddl]truncate table %s success", table)
+				logger.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]truncate table %s success", table)
 			}
 		}
 	}
@@ -244,12 +245,12 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) error {
 	defer func() {
 		if err := recover(); err != nil {
-			eh.ops.logger.Error("[binlog pos change]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+			logger.WithRequestId(eh.ops.ctx).Error("[binlog pos change]runtime err: %v\nstack: %v", err, string(debug.Stack()))
 			return
 		}
 	}()
 	PosChange(eh.ops, pos)
-	eh.ops.logger.Debug("[binlog pos change]%s %v %t", pos, set, force)
+	logger.WithRequestId(eh.ops.ctx).Debug("[binlog pos change]%s %v %t", pos, set, force)
 	return nil
 }
 

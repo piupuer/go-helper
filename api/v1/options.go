@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/oss"
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
@@ -13,7 +12,6 @@ import (
 )
 
 type Options struct {
-	logger                     *logger.Wrapper
 	binlog                     bool
 	binlogOps                  []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
@@ -35,14 +33,6 @@ type Options struct {
 	uploadMinioBucket          string
 	MessageHub                 bool
 	messageHubOps              []func(options *query.MessageHubOptions)
-}
-
-func WithLogger(l *logger.Wrapper) func(*Options) {
-	return func(options *Options) {
-		if l != nil {
-			getOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithBinlog(flag bool) func(*Options) {
@@ -198,7 +188,6 @@ func WithMessageHubOps(ops ...func(options *query.MessageHubOptions)) func(*Opti
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:                     logger.NewDefaultWrapper(),
 			binlog:                     false,
 			cachePrefix:                "v1_cache",
 			operationAllowedToDelete:   true,

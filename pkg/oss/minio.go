@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/pkg/errors"
 	"io"
 	"net/url"
@@ -49,9 +50,9 @@ func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, loca
 		// Check to see if we already own this bucket (which happens if you run this twice)
 		exists, errBucketExists := mo.client.BucketExists(ctx, bucketName)
 		if errBucketExists == nil && exists {
-			mo.ops.logger.Warn("bucket %s(location %s) already exists", bucketName, location)
+			logger.WithRequestId(ctx).Warn("bucket %s(location %s) already exists", bucketName, location)
 		} else {
-			mo.ops.logger.Error("make bucket failed: %+v", err)
+			logger.WithRequestId(ctx).Error("make bucket failed: %+v", err)
 		}
 	}
 }

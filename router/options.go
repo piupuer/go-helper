@@ -4,12 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	v1 "github.com/piupuer/go-helper/api/v1"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
 )
 
 type Options struct {
-	logger         *logger.Wrapper
 	redis          redis.UniversalClient
 	redisBinlog    bool
 	group          *gin.RouterGroup
@@ -20,14 +18,6 @@ type Options struct {
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
 	v1Ops          []func(options *v1.Options)
-}
-
-func WithLogger(l *logger.Wrapper) func(*Options) {
-	return func(options *Options) {
-		if l != nil {
-			getOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithGroup(group *gin.RouterGroup) func(*Options) {
@@ -95,7 +85,6 @@ func WithV1Ops(ops ...func(options *v1.Options)) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:      logger.NewDefaultWrapper(),
 			redisBinlog: false,
 			jwt:         true,
 			casbin:      true,

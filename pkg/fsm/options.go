@@ -3,31 +3,20 @@ package fsm
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type Options struct {
-	logger     *logger.Wrapper
-	prefix     string
 	ctx        context.Context
+	prefix     string
 	transition func(ctx context.Context, logs ...resp.FsmApprovalLog) error
-}
-
-func WithLogger(l *logger.Wrapper) func(*Options) {
-	return func(options *Options) {
-		if l != nil {
-			getOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
 		if !utils.InterfaceIsNil(ctx) {
 			getOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -49,7 +38,7 @@ func WithTransition(fun func(ctx context.Context, logs ...resp.FsmApprovalLog) e
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger: logger.NewDefaultWrapper(),
+			ctx:    context.Background(),
 			prefix: constant.FsmPrefix,
 		}
 	}

@@ -2,27 +2,15 @@ package interceptor
 
 import (
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"gorm.io/gorm"
 )
 
 type ExceptionOptions struct {
-	logger *logger.Wrapper
-}
-
-func WithExceptionLogger(l *logger.Wrapper) func(*ExceptionOptions) {
-	return func(options *ExceptionOptions) {
-		if l != nil {
-			getExceptionOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
 	if options == nil {
-		return &ExceptionOptions{
-			logger: logger.NewDefaultWrapper(),
-		}
+		return &ExceptionOptions{}
 	}
 	return options
 }
@@ -75,16 +63,7 @@ func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOption
 }
 
 type AccessLogOptions struct {
-	logger *logger.Wrapper
 	detail bool
-}
-
-func WithAccessLogLogger(l *logger.Wrapper) func(*AccessLogOptions) {
-	return func(options *AccessLogOptions) {
-		if l != nil {
-			getAccessLogOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithAccessLogDetail(flag bool) func(*AccessLogOptions) {
@@ -96,7 +75,6 @@ func WithAccessLogDetail(flag bool) func(*AccessLogOptions) {
 func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
 	if options == nil {
 		return &AccessLogOptions{
-			logger: logger.NewDefaultWrapper(),
 			detail: true,
 		}
 	}

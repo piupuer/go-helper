@@ -2,19 +2,25 @@ package mq
 
 import (
 	"context"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/streadway/amqp"
 	"github.com/thoas/go-funk"
 )
 
 type RabbitOptions struct {
+	ctx                    context.Context
 	reconnectInterval      int
 	reconnectMaxRetryCount int
 	channelMaxLostCount    int
 	timeout                int
-	logger                 *logger.Wrapper
-	ctx                    context.Context
+}
+
+func WithCtx(ctx context.Context) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if !utils.InterfaceIsNil(ctx) {
+			getRabbitOptionsOrSetDefault(options).ctx = ctx
+		}
+	}
 }
 
 func WithReconnectInterval(second int) func(*RabbitOptions) {
@@ -49,31 +55,14 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
-func WithLogger(l *logger.Wrapper) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		if l != nil {
-			getRabbitOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
-func WithCtx(ctx context.Context) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		if !utils.InterfaceIsNil(ctx) {
-			getRabbitOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
-		}
-	}
-}
-
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
+			ctx:                    context.Background(),
 			timeout:                10,
 			reconnectMaxRetryCount: 3,
 			channelMaxLostCount:    5,
 			reconnectInterval:      5,
-			logger:                 logger.NewDefaultWrapper(),
 		}
 	}
 	return options
@@ -263,6 +252,7 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 }
 
 type PublishOptions struct {
+	ctx                  context.Context
 	routeKeys            []string
 	contentType          string
 	headers              amqp.Table
@@ -270,7 +260,6 @@ type PublishOptions struct {
 	mandatory            bool
 	immediate            bool
 	expiration           string
-	ctx                  context.Context
 	deadLetter           bool
 	deadLetterFirstQueue string
 }
@@ -323,8 +312,8 @@ func WithPublishDeadLetterFirstQueue(q string) func(*PublishOptions) {
 func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 	if options == nil {
 		return &PublishOptions{
-			contentType: "text/plain",
 			ctx:         context.Background(),
+			contentType: "text/plain",
 			headers:     amqp.Table{},
 		}
 	}

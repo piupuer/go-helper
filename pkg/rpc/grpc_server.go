@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -27,7 +28,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.tls {
 		t, err := NewGrpcServerTls(ops.tlsOps...)
 		if err != nil {
-			ops.logger.Warn("load tls failed: %v", err)
+			logger.WithRequestId(ops.ctx).Warn("load tls failed: %v", err)
 		} else {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}
@@ -38,7 +39,6 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
 	}
 	if ops.accessLog {
-		ops.accessLogOps = append(ops.accessLogOps, interceptor.WithAccessLogLogger(ops.logger))
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.AccessLog(ops.accessLogOps...)))
 	}
 	if ops.tag {
@@ -48,7 +48,6 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 		so = append(so, grpc.ChainUnaryInterceptor(grpc_opentracing.UnaryServerInterceptor(ops.opentracingOps...)))
 	}
 	if ops.exception {
-		ops.exceptionOps = append(ops.exceptionOps, interceptor.WithExceptionLogger(ops.logger))
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.Exception(ops.exceptionOps...)))
 	}
 	if ops.transaction {

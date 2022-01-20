@@ -4,13 +4,11 @@ import (
 	"context"
 	"github.com/go-redis/redis/v8"
 	"github.com/go-sql-driver/mysql"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 )
 
 type Options struct {
-	logger        *logger.Wrapper
 	ctx           context.Context
 	dsn           *mysql.Config
 	db            *gorm.DB
@@ -22,19 +20,10 @@ type Options struct {
 	binlogPos     string
 }
 
-func WithLogger(l *logger.Wrapper) func(*Options) {
-	return func(options *Options) {
-		if l != nil {
-			getOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
 func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
 		if !utils.InterfaceIsNil(ctx) {
 			getOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -98,7 +87,7 @@ func WithBinlogPos(key string) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:        logger.NewWrapper(logger.New()),
+			ctx:           context.Background(),
 			ignores:       []string{},
 			serverId:      100,
 			executionPath: "mysqldump",

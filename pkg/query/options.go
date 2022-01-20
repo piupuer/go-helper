@@ -7,7 +7,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/middleware"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -16,23 +15,14 @@ import (
 )
 
 type MysqlOptions struct {
-	logger          *logger.Wrapper
+	ctx             context.Context
 	db              *gorm.DB
 	redis           redis.UniversalClient
 	cachePrefix     string
-	ctx             context.Context
 	enforcer        *casbin.Enforcer
 	txCtxKey        string
 	requestIdCtxKey string
 	fsmTransition   func(ctx context.Context, logs ...resp.FsmApprovalLog) error
-}
-
-func WithMysqlLogger(l *logger.Wrapper) func(*MysqlOptions) {
-	return func(options *MysqlOptions) {
-		if l != nil {
-			getMysqlOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithMysqlDb(db *gorm.DB) func(*MysqlOptions) {
@@ -61,7 +51,6 @@ func WithMysqlCtx(ctx context.Context) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getMysqlOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -85,9 +74,8 @@ func WithMysqlFsmTransition(fun func(ctx context.Context, logs ...resp.FsmApprov
 func getMysqlOptionsOrSetDefault(options *MysqlOptions) *MysqlOptions {
 	if options == nil {
 		return &MysqlOptions{
-			logger:          logger.NewDefaultWrapper(),
-			cachePrefix:     constant.QueryCachePrefix,
 			ctx:             context.Background(),
+			cachePrefix:     constant.QueryCachePrefix,
 			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 		}
@@ -142,21 +130,12 @@ func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOption
 }
 
 type RedisOptions struct {
-	logger          *logger.Wrapper
-	redis           redis.UniversalClient
 	ctx             context.Context
+	redis           redis.UniversalClient
 	enforcer        *casbin.Enforcer
 	requestIdCtxKey string
 	database        string
 	namingStrategy  schema.Namer
-}
-
-func WithRedisLogger(l *logger.Wrapper) func(*RedisOptions) {
-	return func(options *RedisOptions) {
-		if l != nil {
-			getRedisOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
@@ -171,7 +150,6 @@ func WithRedisCtx(ctx context.Context) func(*RedisOptions) {
 	return func(options *RedisOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getRedisOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -205,7 +183,6 @@ func WithRedisNamingStrategy(name schema.Namer) func(*RedisOptions) {
 func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 	if options == nil {
 		return &RedisOptions{
-			logger:          logger.NewDefaultWrapper(),
 			ctx:             context.Background(),
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 			database:        "query_redis",
@@ -215,20 +192,11 @@ func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 }
 
 type MessageHubOptions struct {
-	logger         *logger.Wrapper
 	dbNoTx         *MySql
 	rd             *Redis
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
 	findUserByIds  func(c *gin.Context, userIds []uint) []ms.User
-}
-
-func WithMessageHubLogger(l *logger.Wrapper) func(*MessageHubOptions) {
-	return func(options *MessageHubOptions) {
-		if l != nil {
-			getMessageHubOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithMessageHubDbNoTx(dbNoTx *MySql) func(*MessageHubOptions) {
@@ -269,9 +237,7 @@ func WithMessageHubFindUserByIds(fun func(c *gin.Context, userIds []uint) []ms.U
 
 func getMessageHubOptionsOrSetDefault(options *MessageHubOptions) *MessageHubOptions {
 	if options == nil {
-		return &MessageHubOptions{
-			logger: logger.NewDefaultWrapper(),
-		}
+		return &MessageHubOptions{}
 	}
 	return options
 }

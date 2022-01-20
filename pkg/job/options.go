@@ -3,12 +3,10 @@ package job
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type Options struct {
-	logger          *logger.Wrapper
 	ctx             context.Context
 	prefix          string
 	requestIdCtxKey string
@@ -16,19 +14,10 @@ type Options struct {
 	autoRequestId   bool
 }
 
-func WithLogger(l *logger.Wrapper) func(*Options) {
-	return func(options *Options) {
-		if l != nil {
-			getOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
 func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
 		if !utils.InterfaceIsNil(ctx) {
 			getOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -54,7 +43,7 @@ func WithAutoRequestId(flag bool) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			logger:          logger.NewDefaultWrapper(),
+			ctx:             context.Background(),
 			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
 			taskNameCtxKey:  constant.JobTaskNameCtxKey,
 		}
@@ -63,24 +52,14 @@ func getOptionsOrSetDefault(options *Options) *Options {
 }
 
 type DriverOptions struct {
-	logger *logger.Wrapper
 	ctx    context.Context
 	prefix string
-}
-
-func WithDriverLogger(l *logger.Wrapper) func(*DriverOptions) {
-	return func(options *DriverOptions) {
-		if l != nil {
-			getDriverOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithDriverCtx(ctx context.Context) func(*DriverOptions) {
 	return func(options *DriverOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getDriverOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -94,7 +73,7 @@ func WithDriverPrefix(prefix string) func(*DriverOptions) {
 func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 	if options == nil {
 		return &DriverOptions{
-			logger: logger.NewDefaultWrapper(),
+			ctx:    context.Background(),
 			prefix: constant.JobDriverPrefix,
 		}
 	}
@@ -102,23 +81,13 @@ func getDriverOptionsOrSetDefault(options *DriverOptions) *DriverOptions {
 }
 
 type CronOptions struct {
-	logger *logger.Wrapper
-	ctx    context.Context
-}
-
-func WithCronLogger(l *logger.Wrapper) func(*CronOptions) {
-	return func(options *CronOptions) {
-		if l != nil {
-			getCronOptionsOrSetDefault(options).logger = l
-		}
-	}
+	ctx context.Context
 }
 
 func WithCronCtx(ctx context.Context) func(*CronOptions) {
 	return func(options *CronOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getCronOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -126,8 +95,7 @@ func WithCronCtx(ctx context.Context) func(*CronOptions) {
 func getCronOptionsOrSetDefault(options *CronOptions) *CronOptions {
 	if options == nil {
 		return &CronOptions{
-			logger: logger.NewDefaultWrapper(),
-			ctx:    context.Background(),
+			ctx: context.Background(),
 		}
 	}
 	return options

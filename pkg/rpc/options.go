@@ -5,7 +5,6 @@ import (
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc"
@@ -13,7 +12,6 @@ import (
 )
 
 type GrpcOptions struct {
-	logger      *logger.Wrapper
 	ctx         context.Context
 	serverName  string
 	caPem       []byte
@@ -23,19 +21,10 @@ type GrpcOptions struct {
 	healthCheck bool
 }
 
-func WithGrpcLogger(l *logger.Wrapper) func(*GrpcOptions) {
-	return func(options *GrpcOptions) {
-		if l != nil {
-			getGrpcOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
 func WithGrpcCtx(ctx context.Context) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getGrpcOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -108,7 +97,6 @@ func WithGrpcHealthCheck(flag bool) func(*GrpcOptions) {
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 	if options == nil {
 		return &GrpcOptions{
-			logger:  logger.NewDefaultWrapper(),
 			ctx:     context.Background(),
 			timeout: constant.GrpcTimeout,
 		}
@@ -138,7 +126,6 @@ func getGrpcHealthCheckOptionsOrSetDefault(options *GrpcHealthCheckOptions) *Grp
 }
 
 type GrpcServerOptions struct {
-	logger         *logger.Wrapper
 	ctx            context.Context
 	tls            bool
 	tlsOps         []func(*GrpcServerTlsOptions)
@@ -159,19 +146,10 @@ type GrpcServerOptions struct {
 	customs        []grpc.ServerOption
 }
 
-func WithGrpcServerLogger(l *logger.Wrapper) func(*GrpcServerOptions) {
-	return func(options *GrpcServerOptions) {
-		if l != nil {
-			getGrpcServerOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
 func WithGrpcServerCtx(ctx context.Context) func(*GrpcServerOptions) {
 	return func(options *GrpcServerOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getGrpcServerOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -281,7 +259,6 @@ func WithGrpcServerCustom(ops ...grpc.ServerOption) func(*GrpcServerOptions) {
 func getGrpcServerOptionsOrSetDefault(options *GrpcServerOptions) *GrpcServerOptions {
 	if options == nil {
 		return &GrpcServerOptions{
-			logger:      logger.NewDefaultWrapper(),
 			ctx:         context.Background(),
 			tls:         true,
 			requestId:   true,

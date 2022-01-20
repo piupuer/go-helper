@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -16,7 +17,7 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	}
 	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		startTime := time.Now()
-		ops.logger.Info(
+		logger.WithRequestId(ctx).Info(
 			ctx,
 			"req: %s",
 			utils.Struct2Json(r),
@@ -35,7 +36,7 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 		}
 		code := status.Code(err).String()
 		if err != nil {
-			ops.logger.Error(
+			logger.WithRequestId(ctx).Error(
 				"%s %s %s RPC code: '%s', RPC err: '%v'",
 				fullMethod,
 				execTime,
@@ -45,13 +46,13 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 			)
 		} else {
 			if ops.detail {
-				ops.logger.Info(
+				logger.WithRequestId(ctx).Info(
 					"RPC code: '%s', resp: %s",
 					code,
 					utils.Struct2Json(rp),
 				)
 			} else {
-				ops.logger.Info(
+				logger.WithRequestId(ctx).Info(
 					"RPC code: '%s'",
 					code,
 				)

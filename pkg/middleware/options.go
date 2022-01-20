@@ -17,16 +17,7 @@ import (
 )
 
 type AccessLogOptions struct {
-	logger    *logger.Wrapper
 	urlPrefix string
-}
-
-func WithAccessLogLogger(l *logger.Wrapper) func(*AccessLogOptions) {
-	return func(options *AccessLogOptions) {
-		if l != nil {
-			getAccessLogOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
@@ -38,7 +29,6 @@ func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
 func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
 	if options == nil {
 		return &AccessLogOptions{
-			logger:    logger.NewDefaultWrapper(),
 			urlPrefix: constant.MiddlewareUrlPrefix,
 		}
 	}
@@ -46,19 +36,10 @@ func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOption
 }
 
 type CasbinOptions struct {
-	logger         *logger.Wrapper
 	urlPrefix      string
 	getCurrentUser func(c *gin.Context) ms.User
 	Enforcer       *casbin.Enforcer
 	failWithCode   func(code int)
-}
-
-func WithCasbinLogger(l *logger.Wrapper) func(*CasbinOptions) {
-	return func(options *CasbinOptions) {
-		if l != nil {
-			getCasbinOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithCasbinUrlPrefix(prefix string) func(*CasbinOptions) {
@@ -102,7 +83,6 @@ func ParseCasbinOptions(options ...func(*CasbinOptions)) *CasbinOptions {
 func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	if options == nil {
 		options = &CasbinOptions{}
-		options.logger = logger.NewDefaultWrapper()
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.failWithCode = resp.FailWithCode
 	}
@@ -110,17 +90,8 @@ func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 }
 
 type ExceptionOptions struct {
-	logger             *logger.Wrapper
 	operationLogCtxKey string
 	requestIdCtxKey    string
-}
-
-func WithExceptionLogger(l *logger.Wrapper) func(*ExceptionOptions) {
-	return func(options *ExceptionOptions) {
-		if l != nil {
-			getExceptionOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithExceptionOperationLogCtxKey(key string) func(*ExceptionOptions) {
@@ -132,7 +103,6 @@ func WithExceptionOperationLogCtxKey(key string) func(*ExceptionOptions) {
 func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
 	if options == nil {
 		return &ExceptionOptions{
-			logger:             logger.NewDefaultWrapper(),
 			operationLogCtxKey: constant.MiddlewareOperationLogCtxKey,
 			requestIdCtxKey:    constant.MiddlewareRequestIdCtxKey,
 		}
@@ -141,7 +111,6 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 }
 
 type SignOptions struct {
-	logger          *logger.Wrapper
 	expire          string
 	findSkipPath    func(c *gin.Context) []string
 	getSignUser     func(c *gin.Context, appId string) ms.SignUser
@@ -149,14 +118,6 @@ type SignOptions struct {
 	requestIdCtxKey string
 	separator       string
 	checkScope      bool
-}
-
-func WithSignLogger(l *logger.Wrapper) func(*SignOptions) {
-	return func(options *SignOptions) {
-		if l != nil {
-			getSignOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithSignExpire(duration string) func(*SignOptions) {
@@ -220,7 +181,6 @@ func WithSignCheckScope(flag bool) func(*SignOptions) {
 func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
 	if options == nil {
 		return &SignOptions{
-			logger: logger.NewDefaultWrapper(),
 			expire: "60s",
 			headerKey: []string{
 				constant.MiddlewareSignTokenHeaderKey,
@@ -237,21 +197,12 @@ func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
 }
 
 type IdempotenceOptions struct {
-	logger          *logger.Wrapper
 	redis           redis.UniversalClient
 	cachePrefix     string
 	expire          int
 	tokenName       string
 	successWithData func(...interface{})
 	failWithMsg     func(format interface{}, a ...interface{})
-}
-
-func WithIdempotenceLogger(l *logger.Wrapper) func(*IdempotenceOptions) {
-	return func(options *IdempotenceOptions) {
-		if l != nil {
-			getIdempotenceOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithIdempotenceRedis(rd redis.UniversalClient) func(*IdempotenceOptions) {
@@ -309,7 +260,6 @@ func ParseIdempotenceOptions(options ...func(*IdempotenceOptions)) *IdempotenceO
 func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *IdempotenceOptions {
 	if options == nil {
 		return &IdempotenceOptions{
-			logger:          logger.NewDefaultWrapper(),
 			cachePrefix:     constant.MiddlewareIdempotencePrefix,
 			expire:          constant.MiddlewareIdempotenceExpire,
 			tokenName:       constant.MiddlewareIdempotenceTokenName,
@@ -321,7 +271,6 @@ func getIdempotenceOptionsOrSetDefault(options *IdempotenceOptions) *Idempotence
 }
 
 type JwtOptions struct {
-	logger             *logger.Wrapper
 	realm              string
 	key                string
 	timeout            int
@@ -336,14 +285,6 @@ type JwtOptions struct {
 	failWithMsg        func(format interface{}, a ...interface{})
 	failWithCodeAndMsg func(code int, format interface{}, a ...interface{})
 	loginPwdCheck      func(c *gin.Context, r req.LoginCheck) (userId int64, err error)
-}
-
-func WithJwtLogger(l *logger.Wrapper) func(*JwtOptions) {
-	return func(options *JwtOptions) {
-		if l != nil {
-			getJwtOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithJwtRealm(realm string) func(*JwtOptions) {
@@ -443,7 +384,6 @@ func WithJwtLoginPwdCheck(fun func(c *gin.Context, r req.LoginCheck) (userId int
 func getJwtOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 	if options == nil {
 		return &JwtOptions{
-			logger:             logger.NewDefaultWrapper(),
 			realm:              "my jwt",
 			key:                "my secret",
 			timeout:            24,
@@ -463,7 +403,6 @@ func getJwtOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 }
 
 type OperationLogOptions struct {
-	logger                 *logger.Wrapper
 	redis                  redis.UniversalClient
 	ctxKey                 string
 	cachePrefix            string
@@ -476,14 +415,6 @@ type OperationLogOptions struct {
 	save                   func(c *gin.Context, list []OperationRecord)
 	maxCountBeforeSave     int
 	findApi                func(c *gin.Context) []OperationApi
-}
-
-func WithOperationLogLogger(l *logger.Wrapper) func(*OperationLogOptions) {
-	return func(options *OperationLogOptions) {
-		if l != nil {
-			getOperationLogOptionsOrSetDefault(options).logger = l
-		}
-	}
 }
 
 func WithOperationLogRedis(rd redis.UniversalClient) func(*OperationLogOptions) {
@@ -575,7 +506,6 @@ func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*Oper
 func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
 	if options == nil {
 		options = &OperationLogOptions{}
-		options.logger = logger.NewDefaultWrapper()
 		options.ctxKey = constant.MiddlewareOperationLogCtxKey
 		options.cachePrefix = constant.MiddlewareOperationLogApiCacheKey
 		options.urlPrefix = constant.MiddlewareUrlPrefix
@@ -585,10 +515,10 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 			return ms.User{}
 		}
 		options.save = func(c *gin.Context, list []OperationRecord) {
-			options.logger.Warn("operation log save is empty")
+			logger.WithRequestId(c).Warn("operation log save is empty")
 		}
 		options.findApi = func(c *gin.Context) []OperationApi {
-			options.logger.Warn("operation log findApi is empty")
+			logger.WithRequestId(c).Warn("operation log findApi is empty")
 			return []OperationApi{}
 		}
 	}
@@ -695,23 +625,13 @@ func getTransactionOptionsOrSetDefault(options *TransactionOptions) *Transaction
 }
 
 type PrintRouterOptions struct {
-	logger *logger.Wrapper
-	ctx    context.Context
-}
-
-func WithPrintRouterLogger(l *logger.Wrapper) func(*PrintRouterOptions) {
-	return func(options *PrintRouterOptions) {
-		if l != nil {
-			getPrintRouterOptionsOrSetDefault(options).logger = l
-		}
-	}
+	ctx context.Context
 }
 
 func WithPrintRouterCtx(ctx context.Context) func(*PrintRouterOptions) {
 	return func(options *PrintRouterOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getPrintRouterOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -719,8 +639,7 @@ func WithPrintRouterCtx(ctx context.Context) func(*PrintRouterOptions) {
 func getPrintRouterOptionsOrSetDefault(options *PrintRouterOptions) *PrintRouterOptions {
 	if options == nil {
 		return &PrintRouterOptions{
-			logger: logger.NewDefaultWrapper(),
-			ctx:    context.Background(),
+			ctx: context.Background(),
 		}
 	}
 	return options

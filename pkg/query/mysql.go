@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
@@ -101,13 +102,13 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 	newIdsRv := reflect.ValueOf(newIds)
 	newIdsIsArr := false
 	if idsRv.Kind() == reflect.Ptr {
-		my.ops.logger.Warn("ids cannot be pointer")
+		logger.WithRequestId(my.Ctx).Warn("ids cannot be pointer")
 		return
 	}
 	// get model val
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		my.ops.logger.Warn("model must be a pointer")
+		logger.WithRequestId(my.Ctx).Warn("model must be a pointer")
 		return
 	}
 	// check param/value len
@@ -242,7 +243,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 	}
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn("model must be a pointer")
+		logger.WithRequestId(my.Ctx).Warn("model must be a pointer")
 		return
 	}
 
@@ -271,7 +272,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 					my.ops.redis.Set(my.Ctx, cacheKey, page.Total, time.Duration(ops.cacheExpire)*time.Second)
 				}
 			} else {
-				my.ops.logger.Debug("hit count cache: %s, total: %d", cacheKey, page.Total)
+				logger.WithRequestId(my.Ctx).Debug("hit count cache: %s, total: %d", cacheKey, page.Total)
 			}
 		}
 		if page.Total > 0 || page.SkipCount {
@@ -283,7 +284,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 				if q.Statement.Model != nil {
 					err := q.Statement.Parse(q.Statement.Model)
 					if err != nil {
-						my.ops.logger.Warn("parse model err: %+v", err)
+						logger.WithRequestId(my.Ctx).Warn("parse model err: %+v", err)
 						return
 					}
 				}
@@ -318,7 +319,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn("model must be a pointer")
+		logger.WithRequestId(my.Ctx).Warn("model must be a pointer")
 		return
 	}
 	countCache := false
@@ -346,7 +347,7 @@ func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{
 func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		my.ops.logger.Warn("model must be a pointer")
+		logger.WithRequestId(my.Ctx).Warn("model must be a pointer")
 		return
 	}
 

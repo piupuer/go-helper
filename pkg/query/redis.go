@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/thedevsaddam/gojsonq/v2"
@@ -132,9 +133,9 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		cacheKey := fmt.Sprintf("%s_%s", rd.ops.database, tableName)
 		var err error
 		str, err := rd.ops.redis.Get(rd.Ctx, cacheKey).Result()
-		rd.ops.logger.Debug("[q redis]read %s", tableName)
+		logger.WithRequestId(rd.Ctx).Debug("[q redis]read %s", tableName)
 		if err != nil {
-			rd.ops.logger.Debug("[q redis]read %s err: %+v", tableName, err)
+			logger.WithRequestId(rd.Ctx).Debug("[q redis]read %s err: %+v", tableName, err)
 		} else {
 			// decompress
 			jsonStr = utils.DeCompressStrByZlib(str)

@@ -2,12 +2,10 @@ package oss
 
 import (
 	"context"
-	"github.com/piupuer/go-helper/pkg/logger"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type MinioOptions struct {
-	logger   *logger.Wrapper
 	ctx      context.Context
 	endpoint string
 	accessId string
@@ -15,19 +13,10 @@ type MinioOptions struct {
 	https    bool
 }
 
-func WithMinioLogger(l *logger.Wrapper) func(*MinioOptions) {
-	return func(options *MinioOptions) {
-		if l != nil {
-			getMinioOptionsOrSetDefault(options).logger = l
-		}
-	}
-}
-
 func WithMinioCtx(ctx context.Context) func(*MinioOptions) {
 	return func(options *MinioOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getMinioOptionsOrSetDefault(options).ctx = ctx
-			options.logger = options.logger.WithRequestId(ctx)
 		}
 	}
 }
@@ -59,7 +48,7 @@ func WithMinioHttps(flag bool) func(*MinioOptions) {
 func getMinioOptionsOrSetDefault(options *MinioOptions) *MinioOptions {
 	if options == nil {
 		return &MinioOptions{
-			logger: logger.NewDefaultWrapper(),
+			ctx: context.Background(),
 		}
 	}
 	return options

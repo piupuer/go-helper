@@ -11,7 +11,6 @@ import (
 func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	return f.FindMachine(r)
@@ -21,7 +20,6 @@ func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLog, error) {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	return f.FindPendingLogByApprover(r)
@@ -31,7 +29,6 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLo
 func (my MySql) FindFsmLogTrack(r req.FsmLog) ([]resp.FsmLogTrack, error) {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	logs, err := f.FindLog(r)
@@ -45,7 +42,6 @@ func (my MySql) FindFsmLogTrack(r req.FsmLog) ([]resp.FsmLogTrack, error) {
 func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
@@ -56,7 +52,6 @@ func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error)
 func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
@@ -67,7 +62,6 @@ func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	return f.CheckEditLogDetailPermission(r)
@@ -77,7 +71,6 @@ func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermi
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	_, err := f.CreateMachine(r)
@@ -88,7 +81,6 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
@@ -100,7 +92,6 @@ func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 func (my MySql) DeleteFsmByIds(ids []uint) error {
 	f := fsm.New(
 		my.Tx,
-		fsm.WithLogger(my.ops.logger),
 		fsm.WithCtx(my.Ctx),
 	)
 	return f.DeleteMachineByIds(ids)
