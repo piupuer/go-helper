@@ -3,7 +3,7 @@ package listen
 import (
 	"context"
 	"fmt"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,9 +28,9 @@ func Http(options ...func(*HttpOptions)) {
 	if ops.pprofPort > 0 {
 		go func() {
 			// listen pprof port
-			logger.WithRequestId(ctx).Info("[%s][http server]debug pprof is running at %s:%d", ops.proName, host, ops.pprofPort)
+			log.WithRequestId(ctx).Info("[%s][http server]debug pprof is running at %s:%d", ops.proName, host, ops.pprofPort)
 			if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, ops.pprofPort), nil); err != nil {
-				logger.WithRequestId(ctx).Error("[%s][http server]listen pprof error: %v", ops.proName, err)
+				log.WithRequestId(ctx).Error("[%s][http server]listen pprof error: %v", ops.proName, err)
 			}
 		}()
 	}
@@ -39,11 +39,11 @@ func Http(options ...func(*HttpOptions)) {
 	// it won't block the graceful shutdown handling below
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithRequestId(ctx).Error("[%s][http server]listen error: %v", ops.proName, err)
+			log.WithRequestId(ctx).Error("[%s][http server]listen error: %v", ops.proName, err)
 		}
 	}()
 
-	logger.WithRequestId(ctx).Info("[%s][http server]running at %s:%d/%s", ops.proName, host, port, ops.urlPrefix)
+	log.WithRequestId(ctx).Info("[%s][http server]running at %s:%d/%s", ops.proName, host, port, ops.urlPrefix)
 
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/server.go
 	// Wait for interrupt signal to gracefully shutdown the server with
@@ -54,15 +54,15 @@ func Http(options ...func(*HttpOptions)) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	logger.WithRequestId(ctx).Info("[http server]shutting down...")
+	log.WithRequestId(ctx).Info("[http server]shutting down...")
 
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling
 	_, cancel := context.WithTimeout(ops.ctx, 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ops.ctx); err != nil {
-		logger.WithRequestId(ctx).Error("[%s][http server]forced to shutdown: %v", ops.proName, err)
+		log.WithRequestId(ctx).Error("[%s][http server]forced to shutdown: %v", ops.proName, err)
 	}
 
-	logger.WithRequestId(ctx).Info("[%s][http server]exiting", ops.proName)
+	log.WithRequestId(ctx).Info("[%s][http server]exiting", ops.proName)
 }

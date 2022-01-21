@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"time"
 )
 
@@ -28,7 +28,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		clientIP := c.ClientIP()
 
 		if reqMethod == "OPTIONS" || reqPath == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
-			logger.WithRequestId(c).Debug(
+			log.WithRequestId(c).Debug(
 				"%s %s %d %s %s",
 				reqMethod,
 				reqPath,
@@ -37,7 +37,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 				clientIP,
 			)
 		} else {
-			logger.WithRequestId(c).Info(
+			log.WithRequestId(c).Info(
 				"%s %s %d %s %s",
 				reqMethod,
 				reqPath,

@@ -2,7 +2,7 @@ package captcha
 
 import (
 	"github.com/mojocn/base64Captcha"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 )
 
 type Captcha struct {
@@ -28,7 +28,7 @@ func (ca Captcha) Get() (id, img string) {
 	var err error
 	id, img, err = ca.c.Generate()
 	if err != nil {
-		logger.WithRequestId(ca.ops.ctx).Warn("get captcha failed: %v", err)
+		log.WithRequestId(ca.ops.ctx).Warn("get captcha failed: %v", err)
 	}
 	return
 }

@@ -1,60 +1,60 @@
-package logger
+package log
 
 import (
 	"context"
 )
 
-var defaultWrapper Wrapper
+var DefaultWrapper *Wrapper
 
 func init() {
-	defaultWrapper = Wrapper{
+	DefaultWrapper = &Wrapper{
 		log:    New(),
 		fields: map[string]interface{}{},
 	}
 }
 
 func NewDefaultWrapper() *Wrapper {
-	return &defaultWrapper
+	return DefaultWrapper
 }
 
 func Trace(args ...interface{}) {
-	defaultWrapper.Trace(args...)
+	DefaultWrapper.Trace(args...)
 }
 
 func Debug(args ...interface{}) {
-	defaultWrapper.Debug(args...)
+	DefaultWrapper.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	defaultWrapper.Info(args...)
+	DefaultWrapper.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	defaultWrapper.Warn(args...)
+	DefaultWrapper.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	defaultWrapper.Error(args...)
+	DefaultWrapper.Error(args...)
 }
 
 func Fatal(args ...interface{}) {
-	defaultWrapper.Fatal(args...)
+	DefaultWrapper.Fatal(args...)
 }
 
 func WithError(err error) *Wrapper {
-	return defaultWrapper.WithError(err)
+	return DefaultWrapper.WithError(err)
 }
 
 func WithField(k string, v interface{}) *Wrapper {
-	return defaultWrapper.WithFields(map[string]interface{}{
+	return DefaultWrapper.WithFields(map[string]interface{}{
 		k: v,
 	})
 }
 
 func WithFields(fields map[string]interface{}) *Wrapper {
-	return defaultWrapper.WithFields(fields)
+	return DefaultWrapper.WithFields(fields)
 }
 
 func WithRequestId(ctx context.Context) *Wrapper {
-	return defaultWrapper.WithRequestId(ctx)
+	return DefaultWrapper.WithRequestId(ctx)
 }

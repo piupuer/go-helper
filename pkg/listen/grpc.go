@@ -2,7 +2,7 @@ package listen
 
 import (
 	"fmt"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/rpc"
 	"net"
 	"os"
@@ -32,17 +32,17 @@ func Grpc(options ...func(*GrpcOptions)) {
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to listen: %v", ops.proName, err)
+		log.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to listen: %v", ops.proName, err)
 		return
 	}
 
 	go func() {
 		if err = srv.Serve(lis); err != nil {
-			logger.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to serve: %v", ops.proName, err)
+			log.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to serve: %v", ops.proName, err)
 		}
 	}()
 
-	logger.WithRequestId(ops.ctx).Info("[%s][grpc server]running at %s:%d", ops.proName, host, port)
+	log.WithRequestId(ops.ctx).Info("[%s][grpc server]running at %s:%d", ops.proName, host, port)
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
@@ -52,8 +52,8 @@ func Grpc(options ...func(*GrpcOptions)) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	logger.WithRequestId(ops.ctx).Info("[%s][grpc server]shutting down...", ops.proName)
+	log.WithRequestId(ops.ctx).Info("[%s][grpc server]shutting down...", ops.proName)
 
 	srv.GracefulStop()
-	logger.WithRequestId(ops.ctx).Info("[%s][grpc server]exiting", ops.proName)
+	log.WithRequestId(ops.ctx).Info("[%s][grpc server]exiting", ops.proName)
 }

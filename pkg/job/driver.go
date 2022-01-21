@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -53,12 +53,12 @@ func (rd *RedisClientDriver) heartBeat(nodeID string) {
 	for range tickers.C {
 		keyExist, err := rd.do("EXPIRE", key, int(rd.timeout/time.Second))
 		if err != nil {
-			logger.WithRequestId(rd.ops.ctx).Warn("redis expire err: %+v", err)
+			log.WithRequestId(rd.ops.ctx).Warn("redis expire err: %+v", err)
 			continue
 		}
 		if keyExist == int64(0) {
 			if err := rd.registerServiceNode(nodeID); err != nil {
-				logger.WithRequestId(rd.ops.ctx).Warn("register service node err: %+v", err)
+				log.WithRequestId(rd.ops.ctx).Warn("register service node err: %+v", err)
 			}
 		}
 	}

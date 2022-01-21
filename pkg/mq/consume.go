@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"time"
@@ -40,12 +40,12 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 					if handler(ctx, co.qu.ops.name, msg) {
 						err := msg.Ack(false)
 						if err != nil {
-							logger.WithRequestId(ctx).Error("consume ack err: %+v", errors.WithStack(err))
+							log.WithRequestId(ctx).Error("consume ack err: %+v", errors.WithStack(err))
 						}
 					} else {
 						err := msg.Nack(false, co.ops.nackRequeue)
 						if err != nil {
-							logger.WithRequestId(ctx).Error("consume nack err: %+v", errors.WithStack(err))
+							log.WithRequestId(ctx).Error("consume nack err: %+v", errors.WithStack(err))
 						}
 					}
 				}
@@ -65,7 +65,7 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 				}
 				d, err := co.consume(ctx)
 				if err != nil {
-					logger.WithRequestId(ctx).Error("reconsume err: %+v", errors.WithStack(err))
+					log.WithRequestId(ctx).Error("reconsume err: %+v", errors.WithStack(err))
 					return
 				}
 				delivery = d
@@ -98,12 +98,12 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 	if handler(ctx, co.qu.ops.name, msg) {
 		err := msg.Ack(false)
 		if err != nil {
-			logger.WithRequestId(ctx).Error("consume ack err: %+v", err)
+			log.WithRequestId(ctx).Error("consume ack err: %+v", err)
 		}
 	} else {
 		err := msg.Nack(false, co.ops.nackRequeue)
 		if err != nil {
-			logger.WithRequestId(ctx).Error("consume nack err: %+v", err)
+			log.WithRequestId(ctx).Error("consume nack err: %+v", err)
 		}
 	}
 	return nil

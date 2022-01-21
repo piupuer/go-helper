@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/rpc/interceptor"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -28,7 +28,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.tls {
 		t, err := NewGrpcServerTls(ops.tlsOps...)
 		if err != nil {
-			logger.WithRequestId(ops.ctx).Warn("load tls failed: %v", err)
+			log.WithRequestId(ops.ctx).Warn("load tls failed: %v", err)
 		} else {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}

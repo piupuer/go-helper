@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/ch"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/middleware"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -195,7 +195,7 @@ func (h *MessageHub) count() {
 			for _, client := range h.getClients() {
 				infos = append(infos, fmt.Sprintf("%d-%s", client.User.Id, client.Ip))
 			}
-			logger.Debug("[Message]active connection: %v", strings.Join(infos, ","))
+			log.Debug("[Message]active connection: %v", strings.Join(infos, ","))
 		}
 	}
 }
@@ -211,7 +211,7 @@ func (c *MessageClient) receive() {
 	defer func() {
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][receiver][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).Error("[Message][receiver][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
@@ -227,7 +227,7 @@ func (c *MessageClient) receive() {
 		// decompress data
 		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
-		logger.WithRequestId(c.ctx).Debug("[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
+		log.WithRequestId(c.ctx).Debug("[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
 		var r req.MessageWs
 		utils.Json2Struct(data, &r)
 		switch r.Type {
@@ -322,7 +322,7 @@ func (c *MessageClient) send() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][sender][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).Error("[Message][sender][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
@@ -352,7 +352,7 @@ func (c MessageClient) writeMessage(messageType int, data string) error {
 	// compress
 	// s, _ := utils.CompressStrByZlib(data)
 	s := &data
-	logger.WithRequestId(c.ctx).Debug("[Message][sender][%s] %v", c.Key, *s)
+	log.WithRequestId(c.ctx).Debug("[Message][sender][%s] %v", c.Key, *s)
 	return c.Conn.WriteMessage(messageType, []byte(*s))
 }
 
@@ -363,7 +363,7 @@ func (c *MessageClient) heartBeat() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			logger.WithRequestId(c.ctx).Error("[Message][heartbeat][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).Error("[Message][heartbeat][%s]connection may have been lost: %v", c.Key, err)
 		}
 	}()
 	for {
@@ -399,7 +399,7 @@ func (c *MessageClient) register() {
 		if !utils.ContainsUint(c.hub.userIds, c.User.Id) {
 			c.hub.userIds = append(c.hub.userIds, c.User.Id)
 		}
-		logger.WithRequestId(c.ctx).Debug("[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		log.WithRequestId(c.ctx).Debug("[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 		go func() {
 			c.hub.refreshUserMessage.SafeSend([]uint{c.User.Id})
 		}()
@@ -427,7 +427,7 @@ func (c *MessageClient) close() {
 	if _, ok := c.hub.clients[c.Key]; ok {
 		delete(c.hub.clients, c.Key)
 		c.Send.SafeClose()
-		logger.WithRequestId(c.ctx).Debug("[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		log.WithRequestId(c.ctx).Debug("[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 	}
 
 	c.Conn.Close()

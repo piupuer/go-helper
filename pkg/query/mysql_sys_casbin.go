@@ -3,7 +3,7 @@ package query
 import (
 	"github.com/casbin/casbin/v2"
 	"github.com/piupuer/go-helper/ms"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 )
@@ -11,7 +11,7 @@ import (
 func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
 	cs := make([]ms.SysRoleCasbin, 0)
 	if my.ops.enforcer == nil {
-		logger.WithRequestId(my.Ctx).Warn("casbin enforcer is empty")
+		log.WithRequestId(my.Ctx).Warn("casbin enforcer is empty")
 		return cs
 	}
 	policies := my.ops.enforcer.GetFilteredPolicy(0, c.Keyword, c.Path, c.Method)

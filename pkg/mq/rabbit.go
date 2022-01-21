@@ -2,7 +2,7 @@ package mq
 
 import (
 	"context"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"os"
@@ -58,7 +58,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
 		// kill -2 is syscall.SIGINT
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		logger.WithRequestId(ctx).Warn("process is exiting")
+		log.WithRequestId(ctx).Warn("process is exiting")
 		if rb.conn != nil {
 			rb.conn.Close()
 		}
@@ -93,7 +93,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 		case err := <-connLost:
 			// If the connection close is triggered by the Server, a reconnection takes place
 			if err != nil && err.Server {
-				logger.WithRequestId(ctx).Warn("connection is lost: %+v", errors.WithStack(err))
+				log.WithRequestId(ctx).Warn("connection is lost: %+v", errors.WithStack(err))
 				rb.lost = true
 				rb.lostCh <- err
 			}
@@ -105,7 +105,7 @@ func (rb *Rabbit) connect(ctx context.Context) error {
 // get a channel
 func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
 	if rb.channelLostCount > rb.ops.channelMaxLostCount {
-		logger.WithRequestId(ctx).Warn("get channel failed %d retries, connection maybe lost", rb.channelLostCount)
+		log.WithRequestId(ctx).Warn("get channel failed %d retries, connection maybe lost", rb.channelLostCount)
 		rb.lost = true
 	}
 	if rb.lost == true {

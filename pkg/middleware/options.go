@@ -7,7 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -515,10 +515,10 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 			return ms.User{}
 		}
 		options.save = func(c *gin.Context, list []OperationRecord) {
-			logger.WithRequestId(c).Warn("operation log save is empty")
+			log.WithRequestId(c).Warn("operation log save is empty")
 		}
 		options.findApi = func(c *gin.Context) []OperationApi {
-			logger.WithRequestId(c).Warn("operation log findApi is empty")
+			log.WithRequestId(c).Warn("operation log findApi is empty")
 			return []OperationApi{}
 		}
 	}

@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"reflect"
 )
@@ -44,7 +44,7 @@ func (rd Redis) Count(count *int64) *Redis {
 func (rd Redis) FindWithPage(q *Redis, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		logger.WithRequestId(rd.Ctx).Warn("model must be a pointer")
+		log.WithRequestId(rd.Ctx).Warn("model must be a pointer")
 		return
 	}
 

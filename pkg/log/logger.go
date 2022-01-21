@@ -1,4 +1,4 @@
-package logger
+package log
 
 import (
 	"context"
@@ -23,7 +23,7 @@ func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
 	logDir = regexp.MustCompile(`logger\.go`).ReplaceAllString(file, "")
-	helperDir = regexp.MustCompile(`go-helper.pkg.logger.logger\.go`).ReplaceAllString(file, "")
+	helperDir = regexp.MustCompile(`go-helper.pkg.log.logger\.go`).ReplaceAllString(file, "")
 }
 
 // Interface logger interface

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"io/ioutil"
@@ -38,7 +38,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		// token
 		token := c.Request.Header.Get(ops.headerKey[0])
 		if token == "" {
-			logger.WithRequestId(c).Warn(resp.InvalidSignTokenMsg)
+			log.WithRequestId(c).Warn(resp.InvalidSignTokenMsg)
 			abort(c, *ops, resp.InvalidSignTokenMsg)
 			return
 		}
@@ -58,12 +58,12 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			}
 		}
 		if appId == "" {
-			logger.WithRequestId(c).Warn(resp.InvalidSignIdMsg)
+			log.WithRequestId(c).Warn(resp.InvalidSignIdMsg)
 			abort(c, *ops, resp.InvalidSignIdMsg)
 			return
 		}
 		if timestamp == "" {
-			logger.WithRequestId(c).Warn(resp.InvalidSignTimestampMsg)
+			log.WithRequestId(c).Warn(resp.InvalidSignTimestampMsg)
 			abort(c, *ops, resp.InvalidSignTimestampMsg)
 			return
 		}
@@ -71,19 +71,19 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		now := carbon.Now()
 		t := carbon.CreateFromTimestamp(utils.Str2Int64(timestamp))
 		if t.AddDuration(ops.expire).Lt(now) {
-			logger.WithRequestId(c).Warn("%s: %s", resp.InvalidSignTimestampMsg, timestamp)
+			log.WithRequestId(c).Warn("%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			abort(c, *ops, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			return
 		}
 		// query user by app id
 		u := ops.getSignUser(c, appId)
 		if u.AppSecret == "" {
-			logger.WithRequestId(c).Warn("%s: %s", resp.IllegalSignIdMsg, appId)
+			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignIdMsg, appId)
 			abort(c, *ops, "%s: %s", resp.IllegalSignIdMsg, appId)
 			return
 		}
 		if u.Status == constant.Zero {
-			logger.WithRequestId(c).Warn("%s: %s", resp.UserDisabledMsg, appId)
+			log.WithRequestId(c).Warn("%s: %s", resp.UserDisabledMsg, appId)
 			abort(c, *ops, "%s: %s", resp.UserDisabledMsg, appId)
 			return
 		}
@@ -100,7 +100,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 				}
 			}
 			if !exists {
-				logger.WithRequestId(c).Warn("%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
+				log.WithRequestId(c).Warn("%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
 				abort(c, *ops, "%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
 				return
 			}
@@ -121,7 +121,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		}
 		// verify signature
 		if !verifySign(*ops, u.AppSecret, signature, reqMethod, reqUri, timestamp, string(body)) {
-			logger.WithRequestId(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
+			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
 			abort(c, *ops, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
 		}

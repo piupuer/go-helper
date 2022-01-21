@@ -5,7 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
-	"github.com/piupuer/go-helper/pkg/logger"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -78,7 +78,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
-		logger.WithRequestId(job.ops.ctx).Warn("initialize redis failed, switch singe mode, err: %+v", err)
+		log.WithRequestId(job.ops.ctx).Warn("initialize redis failed, switch singe mode, err: %+v", err)
 		return &job, nil
 	}
 
@@ -125,7 +125,7 @@ func (g *GoodJob) addSingleTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.singleTasks[task.Name]; ok {
-		logger.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
+		log.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -147,7 +147,7 @@ func (g *GoodJob) addDistributeTask(task GoodTask) *GoodJob {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if _, ok := g.tasks[task.Name]; ok {
-		logger.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
+		log.WithRequestId(g.ops.ctx).Warn("task %s already exists, skip", task.Name)
 		return g
 	}
 
@@ -262,7 +262,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.singleTasks, taskName)
 					break
 				} else {
-					logger.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
+					log.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}
@@ -276,7 +276,7 @@ func (g *GoodJob) Stop(taskName string) {
 					delete(g.tasks, taskName)
 					break
 				} else {
-					logger.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
+					log.WithRequestId(g.ops.ctx).Warn("task %s is not running, skip", task.Name)
 				}
 			}
 		}
