@@ -45,7 +45,10 @@ func New(options ...func(*Options)) (l Interface) {
 		f(ops)
 	}
 	switch ops.category {
-	case "zap":
+	case constant.LogCategoryZap:
+		l = newZap(ops)
+	case constant.LogCategoryLogrus:
+		l = newLogrus(ops)
 	default:
 		l = newLogrus(ops)
 	}
