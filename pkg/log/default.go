@@ -1,8 +1,6 @@
 package log
 
-import (
-	"context"
-)
+import "context"
 
 var DefaultWrapper *Wrapper
 

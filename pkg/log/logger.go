@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/piupuer/go-helper/pkg/constant"
-	utils2 "github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm/logger"
 	"os"
 	"path"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -56,7 +56,7 @@ func New(options ...func(*Options)) (l Interface) {
 }
 
 func getRequestId(ctx context.Context) (id string) {
-	if utils2.InterfaceIsNil(ctx) {
+	if interfaceIsNil(ctx) {
 		return
 	}
 	// get value from context
@@ -113,4 +113,12 @@ func removeBaseDir(s string) string {
 		s = fmt.Sprintf("%s@%s", s1, s2)
 	}
 	return s
+}
+
+func interfaceIsNil(i interface{}) bool {
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Ptr {
+		return v.IsNil()
+	}
+	return i == nil
 }

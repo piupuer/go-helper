@@ -1,8 +1,6 @@
 package log
 
-import (
-	"gorm.io/gorm/logger"
-)
+import "gorm.io/gorm/logger"
 
 type Level uint32
 

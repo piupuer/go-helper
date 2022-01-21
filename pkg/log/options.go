@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"io"
 )
@@ -18,7 +17,7 @@ type Options struct {
 
 func WithCtx(ctx context.Context) func(*Options) {
 	return func(options *Options) {
-		if !utils.InterfaceIsNil(ctx) {
+		if !interfaceIsNil(ctx) {
 			getOptionsOrSetDefault(options).ctx = ctx
 		}
 	}
