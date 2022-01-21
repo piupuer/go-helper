@@ -44,9 +44,11 @@ func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	for _, log := range messageLogs {
 		res := resp.Message{
 			Base: resp.Base{
-				Id:        log.Id,
-				CreatedAt: log.CreatedAt,
-				UpdatedAt: log.UpdatedAt,
+				Id: log.Id,
+				Time: resp.Time{
+					CreatedAt: log.CreatedAt,
+					UpdatedAt: log.UpdatedAt,
+				},
 			},
 			Status:     log.Status,
 			ToUserId:   log.ToUserId,

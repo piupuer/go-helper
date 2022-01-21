@@ -7,11 +7,15 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
+type Time struct {
+	CreatedAt carbon.ToDateTimeString `json:"createdAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // create time
+	UpdatedAt carbon.ToDateTimeString `json:"updatedAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // update time
+}
+
 // base fields(like Id/CreatedAt/UpdatedAt common fields)
 type Base struct {
-	Id        uint                    `json:"id"`        // primary key
-	CreatedAt carbon.ToDateTimeString `json:"createdAt"` // create time
-	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"` // update time
+	Id uint `json:"id"` // primary key
+	Time
 }
 
 // http resp structure

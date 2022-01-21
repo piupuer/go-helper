@@ -1,7 +1,5 @@
 package resp
 
-import "github.com/golang-module/carbon"
-
 type FsmApprovalLog struct {
 	Uuid     string `json:"uuid"`
 	Category uint   `json:"category"`
@@ -28,15 +26,14 @@ type FsmApprovingLog struct {
 }
 
 type FsmLogTrack struct {
-	CreatedAt carbon.ToDateTimeString `json:"createdAt"`
-	UpdatedAt carbon.ToDateTimeString `json:"updatedAt"`
-	Name      string                  `json:"name"`
-	Opinion   string                  `json:"opinion"`
-	Status    uint                    `json:"status"`
-	End       uint                    `json:"end"`
-	Cancel    uint                    `json:"cancel"`
-	Resubmit  uint                    `json:"resubmit"`
-	Confirm   uint                    `json:"confirm"`
+	Time
+	Name     string `json:"name"`
+	Opinion  string `json:"opinion"`
+	Status   uint   `json:"status"`
+	End      uint   `json:"end"`
+	Cancel   uint   `json:"cancel"`
+	Resubmit uint   `json:"resubmit"`
+	Confirm  uint   `json:"confirm"`
 }
 
 type FsmSubmitterDetail struct {
