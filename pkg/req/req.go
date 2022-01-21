@@ -59,7 +59,7 @@ func UintIdsWithErr(c *gin.Context) ([]uint, error) {
 }
 
 // validate request param
-func Validate(c context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
+func Validate(ctx context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -71,7 +71,7 @@ func Validate(c context.Context, r interface{}, trans map[string]string, options
 }
 
 // validate request param return err
-func ValidateWithErr(c context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
+func ValidateWithErr(ctx context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)

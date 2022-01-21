@@ -13,9 +13,9 @@ const (
 	CacheSuffixDictDataItem    = "dict_data_item"
 )
 
-func (my MySql) CacheDictDataList(c context.Context, name string) ([]ms.SysDictData, bool) {
+func (my MySql) CacheDictDataList(ctx context.Context, name string) ([]ms.SysDictData, bool) {
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(c, getDictDataListCacheKey(my.ops), name).Result()
+		res, err := my.ops.redis.HGet(ctx, getDictDataListCacheKey(my.ops), name).Result()
 		if err == nil && res != "" {
 			list := make([]ms.SysDictData, 0)
 			utils.Json2Struct(res, &list)
@@ -25,21 +25,21 @@ func (my MySql) CacheDictDataList(c context.Context, name string) ([]ms.SysDictD
 	return nil, false
 }
 
-func (my MySql) CacheSetDictDataList(c context.Context, name string, data []ms.SysDictData) {
+func (my MySql) CacheSetDictDataList(ctx context.Context, name string, data []ms.SysDictData) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(c, getDictDataListCacheKey(my.ops), name, utils.Struct2Json(data))
+		my.ops.redis.HSet(ctx, getDictDataListCacheKey(my.ops), name, utils.Struct2Json(data))
 	}
 }
 
-func (my MySql) CacheFlushDictDataList(c context.Context) {
+func (my MySql) CacheFlushDictDataList(ctx context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(c, getDictDataListCacheKey(my.ops))
+		my.ops.redis.Del(ctx, getDictDataListCacheKey(my.ops))
 	}
 }
 
-func (my MySql) CacheDictDataValList(c context.Context, name string) ([]string, bool) {
+func (my MySql) CacheDictDataValList(ctx context.Context, name string) ([]string, bool) {
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(c, getDictDataValListCacheKey(my.ops), name).Result()
+		res, err := my.ops.redis.HGet(ctx, getDictDataValListCacheKey(my.ops), name).Result()
 		if err == nil && res != "" {
 			list := make([]string, 0)
 			utils.Json2Struct(res, &list)
@@ -49,21 +49,21 @@ func (my MySql) CacheDictDataValList(c context.Context, name string) ([]string, 
 	return nil, false
 }
 
-func (my MySql) CacheSetDictDataValList(c context.Context, name string, data []string) {
+func (my MySql) CacheSetDictDataValList(ctx context.Context, name string, data []string) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(c, getDictDataValListCacheKey(my.ops), name, utils.Struct2Json(data))
+		my.ops.redis.HSet(ctx, getDictDataValListCacheKey(my.ops), name, utils.Struct2Json(data))
 	}
 }
 
-func (my MySql) CacheFlushDictDataValList(c context.Context) {
+func (my MySql) CacheFlushDictDataValList(ctx context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(c, getDictDataValListCacheKey(my.ops))
+		my.ops.redis.Del(ctx, getDictDataValListCacheKey(my.ops))
 	}
 }
 
-func (my MySql) CacheDictDataItem(c context.Context, name, key string) (*ms.SysDictData, bool) {
+func (my MySql) CacheDictDataItem(ctx context.Context, name, key string) (*ms.SysDictData, bool) {
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(c, getDictDataItemCacheKey(my.ops), fmt.Sprintf("%s_%s", name, key)).Result()
+		res, err := my.ops.redis.HGet(ctx, getDictDataItemCacheKey(my.ops), fmt.Sprintf("%s_%s", name, key)).Result()
 		if err == nil && res != "" {
 			item := ms.SysDictData{}
 			utils.Json2Struct(res, &item)
@@ -73,15 +73,15 @@ func (my MySql) CacheDictDataItem(c context.Context, name, key string) (*ms.SysD
 	return nil, false
 }
 
-func (my MySql) CacheSetDictDataItem(c context.Context, name, key string, data ms.SysDictData) {
+func (my MySql) CacheSetDictDataItem(ctx context.Context, name, key string, data ms.SysDictData) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(c, getDictDataItemCacheKey(my.ops), fmt.Sprintf("%s_%s", name, key), utils.Struct2Json(data))
+		my.ops.redis.HSet(ctx, getDictDataItemCacheKey(my.ops), fmt.Sprintf("%s_%s", name, key), utils.Struct2Json(data))
 	}
 }
 
-func (my MySql) CacheFlushDictDataItem(c context.Context) {
+func (my MySql) CacheFlushDictDataItem(ctx context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(c, getDictDataItemCacheKey(my.ops))
+		my.ops.redis.Del(ctx, getDictDataItemCacheKey(my.ops))
 	}
 }
 

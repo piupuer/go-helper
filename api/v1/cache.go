@@ -12,9 +12,9 @@ const (
 )
 
 // get menu tree from cache by uid
-func CacheGetMenuTree(c context.Context, uid uint, ops Options) ([]resp.MenuTree, bool) {
+func CacheGetMenuTree(ctx context.Context, uid uint, ops Options) ([]resp.MenuTree, bool) {
 	if ops.redis != nil {
-		res, err := ops.redis.HGet(c, getMenuTreeCacheKeyPrefix(ops), fmt.Sprintf("%d", uid)).Result()
+		res, err := ops.redis.HGet(ctx, getMenuTreeCacheKeyPrefix(ops), fmt.Sprintf("%d", uid)).Result()
 		if err == nil && res != "" {
 			list := make([]resp.MenuTree, 0)
 			utils.Json2Struct(res, &list)
@@ -25,16 +25,16 @@ func CacheGetMenuTree(c context.Context, uid uint, ops Options) ([]resp.MenuTree
 }
 
 // set menu tree to cache by uid
-func CacheSetMenuTree(c context.Context, uid uint, data []resp.MenuTree, ops Options) {
+func CacheSetMenuTree(ctx context.Context, uid uint, data []resp.MenuTree, ops Options) {
 	if ops.redis != nil {
-		ops.redis.HSet(c, getMenuTreeCacheKeyPrefix(ops), fmt.Sprintf("%d", uid), utils.Struct2Json(data))
+		ops.redis.HSet(ctx, getMenuTreeCacheKeyPrefix(ops), fmt.Sprintf("%d", uid), utils.Struct2Json(data))
 	}
 }
 
 // clear menu tree cache
-func CacheFlushMenuTree(c context.Context, ops Options) {
+func CacheFlushMenuTree(ctx context.Context, ops Options) {
 	if ops.redis != nil {
-		ops.redis.Del(c, getMenuTreeCacheKeyPrefix(ops))
+		ops.redis.Del(ctx, getMenuTreeCacheKeyPrefix(ops))
 	}
 }
 

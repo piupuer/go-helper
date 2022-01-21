@@ -66,25 +66,25 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 }
 
 // generate token by redis
-func GenIdempotenceToken(c context.Context, ops IdempotenceOptions) string {
+func GenIdempotenceToken(ctx context.Context, ops IdempotenceOptions) string {
 	token := uuid.NewString()
 	if ops.redis != nil {
-		ops.redis.Set(c, fmt.Sprintf("%s_%s", ops.cachePrefix, token), true, time.Duration(ops.expire)*time.Hour)
+		ops.redis.Set(ctx, fmt.Sprintf("%s_%s", ops.cachePrefix, token), true, time.Duration(ops.expire)*time.Hour)
 	} else {
-		logger.WithRequestId(c).Warn("please enable redis, otherwise the idempotence is invalid")
+		logger.WithRequestId(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return token
 }
 
 // check token by exec redis lua script
-func CheckIdempotenceToken(c context.Context, token string, ops IdempotenceOptions) bool {
+func CheckIdempotenceToken(ctx context.Context, token string, ops IdempotenceOptions) bool {
 	if ops.redis != nil {
-		res, err := ops.redis.Eval(c, lua, []string{fmt.Sprintf("%s_%s", ops.cachePrefix, token)}).Result()
+		res, err := ops.redis.Eval(ctx, lua, []string{fmt.Sprintf("%s_%s", ops.cachePrefix, token)}).Result()
 		if err != nil || res != "1" {
 			return false
 		}
 	} else {
-		logger.WithRequestId(c).Warn("please enable redis, otherwise the idempotence is invalid")
+		logger.WithRequestId(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return true
 }
