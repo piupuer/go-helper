@@ -3,7 +3,7 @@ package utils
 import (
 	"archive/zip"
 	"bytes"
-	"fmt"
+	"github.com/piupuer/go-helper/pkg/log"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"io"
@@ -25,7 +25,7 @@ func Zip(src, dst string) error {
 	zw := zip.NewWriter(fw)
 	defer func() {
 		if err := zw.Close(); err != nil {
-			fmt.Printf("[Zip]close file err: %+v", err)
+			log.Error("[zip]close file err: %v", err)
 		}
 	}()
 
@@ -67,7 +67,7 @@ func Zip(src, dst string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("[Zip]compress success: %s, %d characters of data were written\n", path, n)
+		log.Error("[zip]compress success: %s, %d characters of data were written", path, n)
 
 		return nil
 	})
@@ -126,7 +126,7 @@ func UnZip(src, dst string) ([]string, error) {
 			return files, nil
 		}
 
-		fmt.Printf("[UnZip]decompress success: %s, %d characters of data were written\n", path, n)
+		log.Error("[UnZip]decompress success: %s, %d characters of data were written", path, n)
 		files = append(files, path)
 		fw.Close()
 		fr.Close()

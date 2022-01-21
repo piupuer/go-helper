@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 	"net"
@@ -64,7 +65,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 		if timeout > 0 {
 			sleep, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
 			if err != nil {
-				fmt.Printf("close ssh session failed: %+v\n", errors.WithStack(err))
+				log.Error("[exec remote shell]close ssh session failed: %v", err)
 				return
 			}
 			time.Sleep(sleep)
@@ -100,7 +101,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 				Result:  e.String(),
 			}
 		}
-		fmt.Printf("exec cmd: %s\n", command)
+		log.Error("[exec remote shell]exec cmd: %s", command)
 	}
 	return SshResult{
 		Result:  b.String(),
@@ -112,7 +113,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 func closeClient(session *ssh.Session, client *ssh.Client) {
 	err := client.Close()
 	if err != nil {
-		fmt.Printf("close ssh client failed: %+v\n", err)
+		log.Error("[exec remote shell]close ssh client failed: %v", err)
 	}
 	session.Close()
 }

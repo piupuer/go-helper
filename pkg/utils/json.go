@@ -2,13 +2,13 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/piupuer/go-helper/pkg/log"
 )
 
 func Struct2Json(obj interface{}) string {
 	str, err := json.Marshal(obj)
 	if err != nil {
-		fmt.Printf("[Struct2Json]can not convert: %+v\n", err)
+		log.Error("[struct2json]can not convert: %v", err)
 	}
 	return string(str)
 }
@@ -16,7 +16,7 @@ func Struct2Json(obj interface{}) string {
 func Json2Struct(str string, obj interface{}) {
 	err := json.Unmarshal([]byte(str), obj)
 	if err != nil {
-		fmt.Printf("[Json2Struct]can not convert: %+v\n", err)
+		log.Error("[json2struct]can not convert: %v", err)
 	}
 }
 

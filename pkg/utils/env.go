@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/piupuer/go-helper/pkg/log"
 	"os"
 	"strconv"
 	"strings"
@@ -32,7 +33,7 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 			env := strings.TrimSpace(os.Getenv(newKey))
 			if env != "" {
 				newMap[key] = env
-				fmt.Printf("[EnvToInterface]get %s: %v\n", newKey, newMap[key])
+				log.Error("[env to interface]get %s: %v", newKey, newMap[key])
 				continue
 			}
 		case bool:
@@ -43,22 +44,22 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 				if ok && err == nil {
 					if itemB && !b {
 						newMap[key] = false
-						fmt.Printf("[EnvToInterface]get %s: %v\n", newKey, newMap[key])
+						log.Error("[env to interface]get %s: %v", newKey, newMap[key])
 						continue
 					} else if !itemB && b {
 						newMap[key] = true
-						fmt.Printf("[EnvToInterface]get %s: %v\n", newKey, newMap[key])
+						log.Error("[env to interface]get %s: %v", newKey, newMap[key])
 						continue
 					}
 				}
 			}
 		case float64:
-			env := strings.TrimSpace(os.Getenv(newKey))
-			if env != "" {
-				v, err := strconv.ParseFloat(env, 64)
+			e := strings.TrimSpace(os.Getenv(newKey))
+			if e != "" {
+				v, err := strconv.ParseFloat(e, 64)
 				if err == nil {
 					newMap[key] = v
-					fmt.Printf("[EnvToInterface]get %s: %v\n", newKey, newMap[key])
+					log.Error("[env to interface]get %s: %v", newKey, newMap[key])
 					continue
 				}
 			}
