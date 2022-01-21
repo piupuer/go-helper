@@ -23,12 +23,12 @@ require (
 	github.com/looplab/fsm v0.3.0
 	github.com/minio/minio-go/v7 v7.0.19
 	github.com/mojocn/base64Captcha v1.3.5
-	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
+	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	github.com/thoas/go-funk v0.9.1
@@ -76,14 +76,13 @@ require (
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
