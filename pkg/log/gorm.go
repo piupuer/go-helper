@@ -67,7 +67,7 @@ func (l *gormLogger) LogMode(level logger.LogLevel) logger.Interface {
 
 func (l gormLogger) Info(ctx context.Context, format string, args ...interface{}) {
 	if l.gorm.LogLevel >= logger.Info {
-		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum())
+		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum(), l.ops)
 		log := l.getLogger(ctx).WithFields(map[string]interface{}{
 			"lineNum": lineNum,
 		})
@@ -77,7 +77,7 @@ func (l gormLogger) Info(ctx context.Context, format string, args ...interface{}
 
 func (l gormLogger) Warn(ctx context.Context, format string, args ...interface{}) {
 	if l.gorm.LogLevel >= logger.Warn {
-		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum())
+		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum(), l.ops)
 		log := l.getLogger(ctx).WithFields(map[string]interface{}{
 			"lineNum": lineNum,
 		})
@@ -87,7 +87,7 @@ func (l gormLogger) Warn(ctx context.Context, format string, args ...interface{}
 
 func (l gormLogger) Error(ctx context.Context, format string, args ...interface{}) {
 	if l.gorm.LogLevel >= logger.Error {
-		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum())
+		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum(), l.ops)
 		log := l.getLogger(ctx).WithFields(map[string]interface{}{
 			"lineNum": lineNum,
 		})
@@ -97,7 +97,7 @@ func (l gormLogger) Error(ctx context.Context, format string, args ...interface{
 
 func (l gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.gorm.LogLevel > logger.Silent {
-		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum())
+		lineNum := removePrefix(utils.FileWithLineNum(), fileWithLineNum(), l.ops)
 		elapsed := time.Since(begin)
 		elapsedF := float64(elapsed.Nanoseconds()) / 1e6
 		sql, rows := fc()

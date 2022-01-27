@@ -79,9 +79,9 @@ func fileWithLineNum() string {
 	return ""
 }
 
-func removePrefix(s1 string, s2 string) string {
-	res1 := removeBaseDir(s1)
-	res2 := removeBaseDir(s2)
+func removePrefix(s1 string, s2 string, ops Options) string {
+	res1 := removeBaseDir(s1, ops)
+	res2 := removeBaseDir(s2, ops)
 	if strings.HasPrefix(s1, logDir) {
 		return res2
 	}
@@ -94,23 +94,33 @@ func removePrefix(s1 string, s2 string) string {
 	return res2
 }
 
-func removeBaseDir(s string) string {
+func removeBaseDir(s string, ops Options) string {
 	sep := string(os.PathSeparator)
 	if strings.HasPrefix(s, helperDir) {
 		s = strings.TrimPrefix(s, path.Dir(helperDir)+"/")
+	}
+	if strings.HasPrefix(s, ops.lineNumPrefix) {
+		s = strings.TrimPrefix(s, ops.lineNumPrefix)
 	}
 	arr := strings.Split(s, "@")
 	if len(arr) == 2 {
 		arr1 := strings.Split(arr[0], sep)
 		arr2 := strings.Split(arr[1], sep)
-		if len(arr1) > 3 {
-			arr1 = arr1[len(arr1)-3:]
+		if ops.lineNumLevel > 0 {
+			if ops.lineNumLevel < len(arr1) {
+				arr1 = arr1[len(arr1)-ops.lineNumLevel:]
+			}
 		}
-		// arr2 = arr2[1:]
+		if !ops.keepVersion {
+			arr2 = arr2[1:]
+		}
 		s1 := strings.Join(arr1, sep)
 		s2 := strings.Join(arr2, sep)
-		// s = fmt.Sprintf("%s%s%s", s1, sep, s2)
-		s = fmt.Sprintf("%s@%s", s1, s2)
+		if !ops.keepVersion {
+			s = fmt.Sprintf("%s%s%s", s1, sep, s2)
+		} else {
+			s = fmt.Sprintf("%s@%s", s1, s2)
+		}
 	}
 	return s
 }
