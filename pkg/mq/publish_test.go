@@ -3,8 +3,8 @@ package mq
 import (
 	"context"
 	"fmt"
-	"github.com/piupuer/go-helper/examples"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"testing"
 	"time"
 )
@@ -29,8 +29,7 @@ func TestExchange_PublishProto(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		go func() {
 			ctx := context.WithValue(context.Background(), constant.MiddlewareRequestIdCtxKey, "send-1")
-			var mqPb examples.Msg
-			mqPb.Name = "hello1"
+			var mqPb emptypb.Empty
 			err := ex.PublishProto(
 				&mqPb,
 				WithPublishRouteKey("rt1"),
@@ -41,8 +40,7 @@ func TestExchange_PublishProto(t *testing.T) {
 		}()
 		go func() {
 			ctx := context.WithValue(context.Background(), constant.MiddlewareRequestIdCtxKey, "send-2")
-			var mqPb examples.Msg
-			mqPb.Name = "hello2"
+			var mqPb emptypb.Empty
 			err := ex.PublishProto(
 				&mqPb,
 				WithPublishRouteKey("rt2"),
@@ -52,8 +50,7 @@ func TestExchange_PublishProto(t *testing.T) {
 		}()
 		go func() {
 			ctx := context.WithValue(context.Background(), constant.MiddlewareRequestIdCtxKey, "send-3")
-			var mqPb examples.Msg
-			mqPb.Name = "hello3"
+			var mqPb emptypb.Empty
 			err := ex.PublishProto(
 				&mqPb,
 				WithPublishRouteKey("rt2"),
@@ -84,8 +81,7 @@ func TestExchange_PublishProto2(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second)
-		var mqPb examples.Msg
-		mqPb.Name = "hello1"
+		var mqPb emptypb.Empty
 		err := ex.PublishProto(
 			&mqPb,
 			WithPublishRouteKey("rt1"),

@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package examples;
-option go_package = "/examples";
-
-message Msg {
-  string name = 1;
-}

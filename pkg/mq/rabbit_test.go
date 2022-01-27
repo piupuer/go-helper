@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-const uri = "amqp://admin:admin@127.0.0.1:5672/gsgc"
+const uri = "amqp://guest:guest@127.0.0.1:5672/"
 
 func TestNewRabbitMq(t *testing.T) {
 	rb := NewRabbit(uri)
