@@ -96,7 +96,7 @@ func removePrefix(s1 string, s2 string, ops Options) string {
 
 func removeBaseDir(s string, ops Options) string {
 	sep := string(os.PathSeparator)
-	if strings.HasPrefix(s, helperDir) {
+	if !ops.keepSourceDir && strings.HasPrefix(s, helperDir) {
 		s = strings.TrimPrefix(s, path.Dir(helperDir)+"/")
 	}
 	if strings.HasPrefix(s, ops.lineNumPrefix) {

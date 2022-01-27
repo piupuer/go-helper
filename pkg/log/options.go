@@ -84,10 +84,11 @@ func WithKeepVersion(flag bool) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			ctx:     context.Background(),
-			level:   Level(logrus.DebugLevel),
-			lineNum: true,
-			json:    false,
+			ctx:          context.Background(),
+			level:        Level(logrus.DebugLevel),
+			lineNum:      true,
+			lineNumLevel: 1,
+			keepVersion:  true,
 		}
 	}
 	return options
