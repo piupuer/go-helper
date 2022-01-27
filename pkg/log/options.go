@@ -7,16 +7,16 @@ import (
 )
 
 type Options struct {
-	ctx           context.Context
-	level         Level
-	output        io.Writer
-	category      string
-	json          bool
-	lineNum       bool
-	lineNumPrefix string
-	lineNumLevel  int
-	keepSourceDir bool
-	keepVersion   bool
+	ctx            context.Context
+	level          Level
+	output         io.Writer
+	category       string
+	json           bool
+	lineNum        bool
+	lineNumPrefix  string
+	lineNumLevel   int
+	lineNumSource  bool
+	lineNumVersion bool
 }
 
 func WithCtx(ctx context.Context) func(*Options) {
@@ -69,26 +69,26 @@ func WithLineNumLevel(level int) func(*Options) {
 	}
 }
 
-func WithKeepSourceDir(flag bool) func(*Options) {
+func WithLineNumSource(flag bool) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).keepSourceDir = flag
+		getOptionsOrSetDefault(options).lineNumSource = flag
 	}
 }
 
-func WithKeepVersion(flag bool) func(*Options) {
+func WithLineNumVersion(flag bool) func(*Options) {
 	return func(options *Options) {
-		getOptionsOrSetDefault(options).keepVersion = flag
+		getOptionsOrSetDefault(options).lineNumVersion = flag
 	}
 }
 
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			ctx:          context.Background(),
-			level:        Level(logrus.DebugLevel),
-			lineNum:      true,
-			lineNumLevel: 1,
-			keepVersion:  true,
+			ctx:            context.Background(),
+			level:          Level(logrus.DebugLevel),
+			lineNum:        true,
+			lineNumLevel:   1,
+			lineNumVersion: true,
 		}
 	}
 	return options

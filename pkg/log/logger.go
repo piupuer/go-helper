@@ -96,7 +96,7 @@ func removePrefix(s1 string, s2 string, ops Options) string {
 
 func removeBaseDir(s string, ops Options) string {
 	sep := string(os.PathSeparator)
-	if !ops.keepSourceDir && strings.HasPrefix(s, helperDir) {
+	if !ops.lineNumSource && strings.HasPrefix(s, helperDir) {
 		s = strings.TrimPrefix(s, path.Dir(helperDir)+"/")
 	}
 	if strings.HasPrefix(s, ops.lineNumPrefix) {
@@ -111,12 +111,12 @@ func removeBaseDir(s string, ops Options) string {
 				arr1 = arr1[len(arr1)-ops.lineNumLevel:]
 			}
 		}
-		if !ops.keepVersion {
+		if !ops.lineNumVersion {
 			arr2 = arr2[1:]
 		}
 		s1 := strings.Join(arr1, sep)
 		s2 := strings.Join(arr2, sep)
-		if !ops.keepVersion {
+		if !ops.lineNumVersion {
 			s = fmt.Sprintf("%s%s%s", s1, sep, s2)
 		} else {
 			s = fmt.Sprintf("%s@%s", s1, s2)

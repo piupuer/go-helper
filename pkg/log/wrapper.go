@@ -25,7 +25,7 @@ func (w *Wrapper) Trace(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
@@ -42,7 +42,7 @@ func (w *Wrapper) Debug(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
@@ -59,7 +59,7 @@ func (w *Wrapper) Info(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
@@ -76,7 +76,7 @@ func (w *Wrapper) Warn(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
@@ -93,7 +93,7 @@ func (w *Wrapper) Error(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
@@ -110,7 +110,7 @@ func (w *Wrapper) Fatal(args ...interface{}) {
 	}
 	ns := copyFields(w.fields)
 	if w.log.Options().lineNum {
-		ns["LineNum"] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
+		ns[constant.LogLineNumKey] = removePrefix(utils.FileWithLineNum(), fileWithLineNum(), w.log.Options())
 	}
 	if len(args) > 1 {
 		if format, ok := args[0].(string); ok {
