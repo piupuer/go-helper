@@ -33,7 +33,7 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 			env := strings.TrimSpace(os.Getenv(newKey))
 			if env != "" {
 				newMap[key] = env
-				log.Error("[env to interface]get %s: %v", newKey, newMap[key])
+				log.Info("[env to interface]get %s: %v", newKey, newMap[key])
 				continue
 			}
 		case bool:
@@ -44,11 +44,11 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 				if ok && err == nil {
 					if itemB && !b {
 						newMap[key] = false
-						log.Error("[env to interface]get %s: %v", newKey, newMap[key])
+						log.Info("[env to interface]get %s: %v", newKey, newMap[key])
 						continue
 					} else if !itemB && b {
 						newMap[key] = true
-						log.Error("[env to interface]get %s: %v", newKey, newMap[key])
+						log.Info("[env to interface]get %s: %v", newKey, newMap[key])
 						continue
 					}
 				}
@@ -59,7 +59,7 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 				v, err := strconv.ParseFloat(e, 64)
 				if err == nil {
 					newMap[key] = v
-					log.Error("[env to interface]get %s: %v", newKey, newMap[key])
+					log.Info("[env to interface]get %s: %v", newKey, newMap[key])
 					continue
 				}
 			}
