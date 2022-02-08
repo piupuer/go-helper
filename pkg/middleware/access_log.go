@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
-	"github.com/piupuer/go-helper/pkg/utils"
 	"time"
 )
 
@@ -29,56 +28,31 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 		clientIP := c.ClientIP()
 
-		var rp string
+		detail := make(map[string]interface{})
 		if ops.detail {
-			data, ok := c.Get(constant.MiddlewareOperationLogCtxKey)
-			if ok {
-				rp = utils.Struct2Json(data)
-			}
+			detail = getRequestDetail(c)
 		}
 
+		detail[constant.MiddlewareAccessLogIpLogKey] = clientIP
+
+		l := log.WithRequestId(c).WithFields(detail)
+
 		if reqMethod == "OPTIONS" || reqPath == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
-			if !ops.detail {
-				log.WithRequestId(c).Debug(
-					"%s %s %d %s %s",
-					reqMethod,
-					reqPath,
-					statusCode,
-					execTime,
-					clientIP,
-				)
-			} else {
-				log.WithRequestId(c).Debug(
-					"%s %s %d %s %s resp: `%s`",
-					reqMethod,
-					reqPath,
-					statusCode,
-					execTime,
-					clientIP,
-					rp,
-				)
-			}
+			l.Debug(
+				"%s %s %d %s",
+				reqMethod,
+				reqPath,
+				statusCode,
+				execTime,
+			)
 		} else {
-			if !ops.detail {
-				log.WithRequestId(c).Info(
-					"%s %s %d %s %s",
-					reqMethod,
-					reqPath,
-					statusCode,
-					execTime,
-					clientIP,
-				)
-			} else {
-				log.WithRequestId(c).Info(
-					"%s %s %d %s %s resp: `%s`",
-					reqMethod,
-					reqPath,
-					statusCode,
-					execTime,
-					clientIP,
-					rp,
-				)
-			}
+			l.Info(
+				"%s %s %d %s",
+				reqMethod,
+				reqPath,
+				statusCode,
+				execTime,
+			)
 		}
 	}
 }

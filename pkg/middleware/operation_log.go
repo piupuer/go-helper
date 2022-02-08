@@ -1,15 +1,12 @@
 package middleware
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -53,15 +50,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		startTime := carbon.Now()
-		// read body
-		var body []byte
-		body, err := ioutil.ReadAll(c.Request.Body)
-		if err != nil {
-			log.WithRequestId(c).Error("read body err: %+v", err)
-		} else {
-			// write back to gin request body
-			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		}
+		reqBody := getBody(c)
 		// find request params
 		reqParams := c.Request.URL.Query()
 		defer func() {
@@ -86,9 +75,6 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				Carbon: carbon.Now(),
 			}
 
-			if len(body) == 0 {
-				body = []byte("{}")
-			}
 			contentType := c.Request.Header.Get("Content-Type")
 			// multipart/form-data
 			if strings.Contains(contentType, "multipart/form-data") {
@@ -96,7 +82,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				if len(contentTypeArr) == 2 {
 					// read boundary
 					boundary := strings.TrimPrefix(contentTypeArr[1], "boundary=")
-					b := strings.NewReader(string(body))
+					b := strings.NewReader(reqBody)
 					r := multipart.NewReader(b, boundary)
 					f, _ := r.ReadForm(ops.singleFileMaxSize << 20)
 					defer f.RemoveAll()
@@ -110,7 +96,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 					params["content-type"] = "multipart/form-data"
 					params["file"] = "binary data ignored"
 					// save data by json format
-					body = []byte(utils.Struct2Json(params))
+					reqBody = utils.Struct2Json(params)
 				}
 			}
 			// read header
@@ -123,7 +109,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				Method:    c.Request.Method,
 				Path:      strings.TrimPrefix(c.Request.URL.Path, "/"+ops.urlPrefix),
 				Header:    utils.Struct2Json(header),
-				Body:      string(body),
+				Body:      reqBody,
 				Params:    utils.Struct2Json(reqParams),
 				Latency:   endTime.Time.Sub(startTime.Time),
 				UserAgent: c.Request.UserAgent(),

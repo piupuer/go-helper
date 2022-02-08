@@ -5,7 +5,7 @@ const (
 	MiddlewareIdempotencePrefix              = "idempotence"
 	MiddlewareIdempotenceExpire              = 24
 	MiddlewareIdempotenceTokenName           = "api-idempotence-token"
-	MiddlewareOperationLogCtxKey             = "operation_log_response"
+	MiddlewareOperationLogCtxKey             = "ResponseBody"
 	MiddlewareOperationLogNotLogin           = "not login"
 	MiddlewareOperationLogApiCacheKey        = "operation_log_api"
 	MiddlewareOperationLogSkipPathDict       = "OperationLogSkipPath"
@@ -20,4 +20,11 @@ const (
 	MiddlewareSignAppIdHeaderKey             = "appid"
 	MiddlewareSignTimestampHeaderKey         = "timestamp"
 	MiddlewareSignSignatureHeaderKey         = "signature"
+	MiddlewareAccessLogIpLogKey              = "Ip"
+	MiddlewareParamsQueryCtxKey              = "ParamsQuery"
+	MiddlewareParamsBodyCtxKey               = "ParamsBody"
+	MiddlewareParamsNullBody                 = "{}"
+	MiddlewareParamsQueryLogKey              = "Query"
+	MiddlewareParamsBodyLogKey               = "Body"
+	MiddlewareParamsRespLogKey               = "Resp"
 )

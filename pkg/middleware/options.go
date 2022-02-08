@@ -16,6 +16,33 @@ import (
 	"strings"
 )
 
+type ParamsOptions struct {
+	bodyCtxKey  string
+	queryCtxKey string
+}
+
+func WithParamsBodyCtxKey(key string) func(*ParamsOptions) {
+	return func(options *ParamsOptions) {
+		getParamsOptionsOrSetDefault(options).bodyCtxKey = key
+	}
+}
+
+func WithParamsQueryCtxKey(key string) func(*ParamsOptions) {
+	return func(options *ParamsOptions) {
+		getParamsOptionsOrSetDefault(options).queryCtxKey = key
+	}
+}
+
+func getParamsOptionsOrSetDefault(options *ParamsOptions) *ParamsOptions {
+	if options == nil {
+		return &ParamsOptions{
+			bodyCtxKey:  constant.MiddlewareParamsBodyCtxKey,
+			queryCtxKey: constant.MiddlewareParamsQueryCtxKey,
+		}
+	}
+	return options
+}
+
 type AccessLogOptions struct {
 	urlPrefix string
 	detail    bool

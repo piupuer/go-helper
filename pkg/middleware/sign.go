@@ -11,7 +11,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -106,21 +105,8 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			}
 		}
 
-		// read body
-		var body []byte
-		if reqMethod == http.MethodPost || reqMethod == http.MethodPut || reqMethod == http.MethodPatch {
-			var err error
-			body, err = ioutil.ReadAll(c.Request.Body)
-			if err == nil {
-				// write back to gin request body
-				c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-			}
-		}
-		if len(body) == 0 {
-			body = []byte("{}")
-		}
 		// verify signature
-		if !verifySign(*ops, u.AppSecret, signature, reqMethod, reqUri, timestamp, string(body)) {
+		if !verifySign(*ops, u.AppSecret, signature, reqMethod, reqUri, timestamp, getBody(c)) {
 			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
 			abort(c, *ops, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
