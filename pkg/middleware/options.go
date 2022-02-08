@@ -18,6 +18,7 @@ import (
 
 type AccessLogOptions struct {
 	urlPrefix string
+	detail    bool
 }
 
 func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
@@ -26,10 +27,17 @@ func WithAccessLogUrlPrefix(prefix string) func(*AccessLogOptions) {
 	}
 }
 
+func WithAccessLogDetail(flag bool) func(*AccessLogOptions) {
+	return func(options *AccessLogOptions) {
+		getAccessLogOptionsOrSetDefault(options).detail = flag
+	}
+}
+
 func getAccessLogOptionsOrSetDefault(options *AccessLogOptions) *AccessLogOptions {
 	if options == nil {
 		return &AccessLogOptions{
 			urlPrefix: constant.MiddlewareUrlPrefix,
+			detail:    true,
 		}
 	}
 	return options
