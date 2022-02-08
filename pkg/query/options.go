@@ -15,14 +15,12 @@ import (
 )
 
 type MysqlOptions struct {
-	ctx             context.Context
-	db              *gorm.DB
-	redis           redis.UniversalClient
-	cachePrefix     string
-	enforcer        *casbin.Enforcer
-	txCtxKey        string
-	requestIdCtxKey string
-	fsmTransition   func(ctx context.Context, logs ...resp.FsmApprovalLog) error
+	ctx           context.Context
+	db            *gorm.DB
+	redis         redis.UniversalClient
+	cachePrefix   string
+	enforcer      *casbin.Enforcer
+	fsmTransition func(ctx context.Context, logs ...resp.FsmApprovalLog) error
 }
 
 func WithMysqlDb(db *gorm.DB) func(*MysqlOptions) {
@@ -74,10 +72,8 @@ func WithMysqlFsmTransition(fun func(ctx context.Context, logs ...resp.FsmApprov
 func getMysqlOptionsOrSetDefault(options *MysqlOptions) *MysqlOptions {
 	if options == nil {
 		return &MysqlOptions{
-			ctx:             context.Background(),
-			cachePrefix:     constant.QueryCachePrefix,
-			txCtxKey:        constant.MiddlewareTransactionTxCtxKey,
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
+			ctx:         context.Background(),
+			cachePrefix: constant.QueryCachePrefix,
 		}
 	}
 	return options
@@ -130,12 +126,11 @@ func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOption
 }
 
 type RedisOptions struct {
-	ctx             context.Context
-	redis           redis.UniversalClient
-	enforcer        *casbin.Enforcer
-	requestIdCtxKey string
-	database        string
-	namingStrategy  schema.Namer
+	ctx            context.Context
+	redis          redis.UniversalClient
+	enforcer       *casbin.Enforcer
+	database       string
+	namingStrategy schema.Namer
 }
 
 func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
@@ -162,12 +157,6 @@ func WithRedisCasbinEnforcer(enforcer *casbin.Enforcer) func(*RedisOptions) {
 	}
 }
 
-func WithRedisRequestIdCtxKey(key string) func(*RedisOptions) {
-	return func(options *RedisOptions) {
-		getRedisOptionsOrSetDefault(options).requestIdCtxKey = key
-	}
-}
-
 func WithRedisDatabase(database string) func(*RedisOptions) {
 	return func(options *RedisOptions) {
 		getRedisOptionsOrSetDefault(options).database = database
@@ -183,9 +172,8 @@ func WithRedisNamingStrategy(name schema.Namer) func(*RedisOptions) {
 func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 	if options == nil {
 		return &RedisOptions{
-			ctx:             context.Background(),
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			database:        "query_redis",
+			ctx:      context.Background(),
+			database: "query_redis",
 		}
 	}
 	return options

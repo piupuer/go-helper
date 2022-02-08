@@ -124,27 +124,6 @@ func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 	return options
 }
 
-type ExceptionOptions struct {
-	operationLogCtxKey string
-	requestIdCtxKey    string
-}
-
-func WithExceptionOperationLogCtxKey(key string) func(*ExceptionOptions) {
-	return func(options *ExceptionOptions) {
-		getExceptionOptionsOrSetDefault(options).operationLogCtxKey = key
-	}
-}
-
-func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOptions {
-	if options == nil {
-		return &ExceptionOptions{
-			operationLogCtxKey: constant.MiddlewareOperationLogCtxKey,
-			requestIdCtxKey:    constant.MiddlewareRequestIdCtxKey,
-		}
-	}
-	return options
-}
-
 type SignOptions struct {
 	expire          string
 	findSkipPath    func(c *gin.Context) []string
@@ -588,38 +567,8 @@ func getRateOptionsOrSetDefault(options *RateOptions) *RateOptions {
 	return options
 }
 
-type RequestIdOptions struct {
-	headerName string
-	ctxKey     string
-}
-
-func WithRequestIdHeaderName(name string) func(*RequestIdOptions) {
-	return func(options *RequestIdOptions) {
-		getRequestIdOptionsOrSetDefault(options).headerName = name
-	}
-}
-
-func WithRequestIdCtxKey(key string) func(*RequestIdOptions) {
-	return func(options *RequestIdOptions) {
-		getRequestIdOptionsOrSetDefault(options).ctxKey = key
-	}
-}
-
-func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOptions {
-	if options == nil {
-		return &RequestIdOptions{
-			headerName: constant.MiddlewareRequestIdHeaderName,
-			ctxKey:     constant.MiddlewareRequestIdCtxKey,
-		}
-	}
-	return options
-}
-
 type TransactionOptions struct {
-	dbNoTx             *gorm.DB
-	requestIdCtxKey    string
-	txCtxKey           string
-	operationLogCtxKey string
+	dbNoTx *gorm.DB
 }
 
 func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
@@ -630,31 +579,9 @@ func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
 	}
 }
 
-func WithTransactionRequestIdCtxKey(key string) func(*TransactionOptions) {
-	return func(options *TransactionOptions) {
-		getTransactionOptionsOrSetDefault(options).requestIdCtxKey = key
-	}
-}
-
-func WithTransactionTxCtxKey(key string) func(*TransactionOptions) {
-	return func(options *TransactionOptions) {
-		getTransactionOptionsOrSetDefault(options).txCtxKey = key
-	}
-}
-
-func WithTransactionOperationLogCtxKey(key string) func(*TransactionOptions) {
-	return func(options *TransactionOptions) {
-		getTransactionOptionsOrSetDefault(options).operationLogCtxKey = key
-	}
-}
-
 func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
-		return &TransactionOptions{
-			requestIdCtxKey:    constant.MiddlewareRequestIdCtxKey,
-			txCtxKey:           constant.MiddlewareTransactionTxCtxKey,
-			operationLogCtxKey: constant.MiddlewareOperationLogCtxKey,
-		}
+		return &TransactionOptions{}
 	}
 	return options
 }

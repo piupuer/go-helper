@@ -39,7 +39,7 @@ func NewRedis(options ...func(*RedisOptions)) Redis {
 		ops:   *ops,
 		clone: 1,
 	}
-	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
+	rc := NewRequestId(ops.ctx)
 	rd.Ctx = rc
 	return rd
 }

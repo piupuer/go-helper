@@ -37,12 +37,10 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 							tx.Rollback()
 						}
 					}
-					rp.RequestId = c.GetString(ops.requestIdCtxKey)
+					rp.RequestId = c.GetString(constant.MiddlewareRequestIdCtxKey)
 					c.JSON(http.StatusOK, rp)
-					if ops.operationLogCtxKey != "" {
-						// set operation log key to context, It may be used OperationLog
-						c.Set(ops.operationLogCtxKey, rp)
-					}
+					// set operation log key to context, It may be used OperationLog
+					c.Set(constant.MiddlewareOperationLogCtxKey, rp)
 					c.Abort()
 					return
 				}
@@ -60,7 +58,7 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 		}()
 		if !noTransaction {
 			tx := ops.dbNoTx.Begin()
-			c.Set(ops.txCtxKey, tx)
+			c.Set(constant.MiddlewareTransactionTxCtxKey, tx)
 		}
 		c.Next()
 	}
@@ -68,7 +66,7 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 
 func getTx(c *gin.Context, ops TransactionOptions) *gorm.DB {
 	tx := ops.dbNoTx
-	txKey, exists := c.Get(ops.txCtxKey)
+	txKey, exists := c.Get(constant.MiddlewareTransactionTxCtxKey)
 	if exists {
 		if item, ok := txKey.(*gorm.DB); ok {
 			tx = item

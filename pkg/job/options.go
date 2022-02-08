@@ -7,11 +7,10 @@ import (
 )
 
 type Options struct {
-	ctx             context.Context
-	prefix          string
-	requestIdCtxKey string
-	taskNameCtxKey  string
-	autoRequestId   bool
+	ctx            context.Context
+	prefix         string
+	taskNameCtxKey string
+	autoRequestId  bool
 }
 
 func WithCtx(ctx context.Context) func(*Options) {
@@ -28,12 +27,6 @@ func WithPrefix(prefix string) func(*Options) {
 	}
 }
 
-func WithRequestIdCtxKey(key string) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).requestIdCtxKey = key
-	}
-}
-
 func WithAutoRequestId(flag bool) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).autoRequestId = flag
@@ -43,9 +36,8 @@ func WithAutoRequestId(flag bool) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			ctx:             context.Background(),
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			taskNameCtxKey:  constant.JobTaskNameCtxKey,
+			ctx:            context.Background(),
+			taskNameCtxKey: constant.JobTaskNameCtxKey,
 		}
 	}
 	return options

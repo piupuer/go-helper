@@ -3,26 +3,21 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/piupuer/go-helper/pkg/constant"
 )
 
-func RequestId(options ...func(*RequestIdOptions)) gin.HandlerFunc {
-	ops := getRequestIdOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
+func RequestId(c *gin.Context) {
+	// get from request header
+	requestId := c.Request.Header.Get(constant.MiddlewareRequestIdHeaderName)
+
+	if requestId == "" {
+		requestId = uuid.NewString()
 	}
-	return func(c *gin.Context) {
-		// get from request header
-		requestId := c.Request.Header.Get(ops.headerName)
 
-		if requestId == "" {
-			requestId = uuid.NewString()
-		}
+	// set to context
+	c.Set(constant.MiddlewareRequestIdCtxKey, requestId)
 
-		// set to context
-		c.Set(ops.ctxKey, requestId)
-
-		// set to header
-		c.Writer.Header().Set(ops.headerName, requestId)
-		c.Next()
-	}
+	// set to header
+	c.Writer.Header().Set(constant.MiddlewareRequestIdHeaderName, requestId)
+	c.Next()
 }

@@ -4,17 +4,18 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc/metadata"
 )
 
-func NewRequestId(ctx context.Context, ctxKey string) context.Context {
+func NewRequestId(ctx context.Context) context.Context {
 	if utils.InterfaceIsNil(ctx) {
 		ctx = context.Background()
 	}
 	requestId := ""
 	// get value from context
-	requestIdValue := ctx.Value(ctxKey)
+	requestIdValue := ctx.Value(constant.MiddlewareRequestIdCtxKey)
 	if item, ok := requestIdValue.(string); ok && item != "" {
 		requestId = item
 	}
@@ -22,7 +23,7 @@ func NewRequestId(ctx context.Context, ctxKey string) context.Context {
 	if requestId == "" {
 		requestId = uuid.NewString()
 	}
-	return context.WithValue(ctx, ctxKey, requestId)
+	return context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, requestId)
 }
 
 func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Context {
@@ -54,10 +55,10 @@ func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Contex
 	return context.WithValue(ctx, ctxKey, requestId)
 }
 
-func NewRequestIdReturnGinCtx(ctx context.Context, ctxKey string) *gin.Context {
-	c := NewRequestId(ctx, ctxKey)
+func NewRequestIdReturnGinCtx(ctx context.Context) *gin.Context {
+	c := NewRequestId(ctx)
 	keys := make(map[string]interface{})
-	keys[ctxKey] = c.Value(ctxKey)
+	keys[constant.MiddlewareRequestIdCtxKey] = c.Value(constant.MiddlewareRequestIdCtxKey)
 	return &gin.Context{
 		Keys: keys,
 	}

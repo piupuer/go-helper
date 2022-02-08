@@ -36,7 +36,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	so := make([]grpc.ServerOption, 0)
 	// interceptor options
 	if ops.requestId {
-		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId(ops.requestIdOps...)))
+		so = append(so, grpc.ChainUnaryInterceptor(interceptor.RequestId))
 	}
 	if ops.accessLog {
 		so = append(so, grpc.ChainUnaryInterceptor(interceptor.AccessLog(ops.accessLogOps...)))

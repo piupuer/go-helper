@@ -32,7 +32,7 @@ func NewMySql(options ...func(*MysqlOptions)) MySql {
 		panic("mysql db is empty")
 	}
 	my := MySql{}
-	rc := NewRequestId(ops.ctx, ops.requestIdCtxKey)
+	rc := NewRequestId(ops.ctx)
 	my.Ctx = rc
 	tx := getTx(ops.db, *ops)
 	my.Tx = tx.WithContext(rc)
@@ -51,7 +51,7 @@ func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 			}
 		}
 		if !(method == "OPTIONS" || method == "GET") {
-			txValue := ops.ctx.Value(ops.txCtxKey)
+			txValue := ops.ctx.Value(constant.MiddlewareTransactionTxCtxKey)
 			if item, ok := txValue.(*gorm.DB); ok {
 				tx = item
 			}

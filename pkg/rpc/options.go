@@ -130,7 +130,6 @@ type GrpcServerOptions struct {
 	tls            bool
 	tlsOps         []func(*GrpcServerTlsOptions)
 	requestId      bool
-	requestIdOps   []func(*interceptor.RequestIdOptions)
 	accessLog      bool
 	accessLogOps   []func(*interceptor.AccessLogOptions)
 	tag            bool
@@ -181,12 +180,6 @@ func WithGrpcServerExceptionOps(ops ...func(*interceptor.ExceptionOptions)) func
 func WithGrpcServerRequestId(flag bool) func(*GrpcServerOptions) {
 	return func(options *GrpcServerOptions) {
 		getGrpcServerOptionsOrSetDefault(options).requestId = flag
-	}
-}
-
-func WithGrpcServerRequestIdOps(ops ...func(*interceptor.RequestIdOptions)) func(*GrpcServerOptions) {
-	return func(options *GrpcServerOptions) {
-		getGrpcServerOptionsOrSetDefault(options).requestIdOps = append(getGrpcServerOptionsOrSetDefault(options).requestIdOps, ops...)
 	}
 }
 

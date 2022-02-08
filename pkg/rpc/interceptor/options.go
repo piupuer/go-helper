@@ -1,7 +1,6 @@
 package interceptor
 
 import (
-	"github.com/piupuer/go-helper/pkg/constant"
 	"gorm.io/gorm"
 )
 
@@ -16,8 +15,7 @@ func getExceptionOptionsOrSetDefault(options *ExceptionOptions) *ExceptionOption
 }
 
 type TransactionOptions struct {
-	dbNoTx   *gorm.DB
-	txCtxKey string
+	dbNoTx *gorm.DB
 }
 
 func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
@@ -28,36 +26,9 @@ func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
 	}
 }
 
-func WithTransactionTxCtxKey(key string) func(*TransactionOptions) {
-	return func(options *TransactionOptions) {
-		getTransactionOptionsOrSetDefault(options).txCtxKey = key
-	}
-}
-
 func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
-		return &TransactionOptions{
-			txCtxKey: constant.MiddlewareTransactionTxCtxKey,
-		}
-	}
-	return options
-}
-
-type RequestIdOptions struct {
-	ctxKey string
-}
-
-func WithRequestIdCtxKey(key string) func(*RequestIdOptions) {
-	return func(options *RequestIdOptions) {
-		getRequestIdOptionsOrSetDefault(options).ctxKey = key
-	}
-}
-
-func getRequestIdOptionsOrSetDefault(options *RequestIdOptions) *RequestIdOptions {
-	if options == nil {
-		return &RequestIdOptions{
-			ctxKey: constant.MiddlewareRequestIdCtxKey,
-		}
+		return &TransactionOptions{}
 	}
 	return options
 }

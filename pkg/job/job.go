@@ -186,7 +186,7 @@ func (g GoodJob) parseFun(task GoodTask) func() {
 		return func() {
 			ctx := context.Background()
 			if g.ops.autoRequestId {
-				ctx = query.NewRequestId(ctx, g.ops.requestIdCtxKey)
+				ctx = query.NewRequestId(ctx)
 			}
 			ctx = context.WithValue(ctx, g.ops.taskNameCtxKey, task.Name)
 			task.Func(ctx)
