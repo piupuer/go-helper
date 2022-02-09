@@ -67,7 +67,7 @@ func getResp(c *gin.Context) (rp string) {
 func getRequestDetail(c *gin.Context) (rp map[string]interface{}) {
 	rp = make(map[string]interface{})
 	ct := c.Writer.Header().Get("Content-Type")
-	var d1, d2, d3 string
+	var d1 string
 	if strings.Contains(ct, "application/json") ||
 		strings.Contains(ct, "text/plain") ||
 		ct == "" {
@@ -76,8 +76,8 @@ func getRequestDetail(c *gin.Context) (rp map[string]interface{}) {
 		d1 = fmt.Sprintf("`%s`", ct)
 	}
 	rp[constant.MiddlewareParamsRespLogKey] = d1
-	rp[constant.MiddlewareParamsQueryLogKey] = d2
-	rp[constant.MiddlewareParamsBodyLogKey] = d3
+	rp[constant.MiddlewareParamsQueryLogKey] = trim(getQuery(c))
+	rp[constant.MiddlewareParamsBodyLogKey] = trim(getBody(c))
 	return
 }
 

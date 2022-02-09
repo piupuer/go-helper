@@ -1,12 +1,17 @@
 package interceptor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"strings"
 	"time"
 )
 
@@ -17,11 +22,6 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 	}
 	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		startTime := time.Now()
-		log.WithRequestId(ctx).Info(
-			ctx,
-			"req: %s",
-			utils.Struct2Json(r),
-		)
 
 		rp, err := handler(ctx, r)
 
@@ -35,9 +35,20 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 			addr = p.Addr.String()
 		}
 		code := status.Code(err).String()
+
+		detail := make(map[string]interface{})
+		if ops.detail {
+			detail = getRequestDetail(utils.Struct2Json(r), utils.Struct2Json(rp))
+		}
+
+		detail[constant.MiddlewareAccessLogIpLogKey] = addr
+
+		l := log.
+			WithRequestId(ctx).
+			WithFields(detail)
 		if err != nil {
-			log.WithRequestId(ctx).Error(
-				"%s %s %s RPC code: '%s', RPC err: '%v'",
+			l.Error(
+				"%s %s %s %s %v",
 				fullMethod,
 				execTime,
 				addr,
@@ -45,19 +56,40 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 				err,
 			)
 		} else {
-			if ops.detail {
-				log.WithRequestId(ctx).Info(
-					"RPC code: '%s', resp: %s",
-					code,
-					utils.Struct2Json(rp),
-				)
-			} else {
-				log.WithRequestId(ctx).Info(
-					"RPC code: '%s'",
-					code,
-				)
-			}
+			l.Info(
+				"%s %s %s %s",
+				fullMethod,
+				execTime,
+				addr,
+				code,
+			)
 		}
 		return rp, err
 	}
+}
+
+func getRequestDetail(d1, d2 string) (rp map[string]interface{}) {
+	rp = make(map[string]interface{})
+	rp[constant.MiddlewareParamsBodyLogKey] = trim(d1)
+	rp[constant.MiddlewareParamsRespLogKey] = trim(d2)
+	return
+}
+
+func trim(s string) string {
+	s = compact(s)
+	s = strings.ReplaceAll(s, "\"", "'")
+	s = strings.ReplaceAll(s, "\t", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	if len(s) > 500 {
+		s = fmt.Sprintf("%s......omitted......%s", s[0:250], s[len(s)-250:len(s)])
+	}
+	return s
+}
+
+func compact(s string) string {
+	got := new(bytes.Buffer)
+	if err := json.Compact(got, []byte(s)); err != nil {
+		return s
+	}
+	return got.String()
 }
