@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"io/ioutil"
@@ -64,8 +66,36 @@ func getResp(c *gin.Context) (rp string) {
 
 func getRequestDetail(c *gin.Context) (rp map[string]interface{}) {
 	rp = make(map[string]interface{})
-	rp[constant.MiddlewareParamsRespLogKey] = strings.ReplaceAll(getResp(c),"\"", "'")
-	rp[constant.MiddlewareParamsQueryLogKey] = strings.ReplaceAll(getQuery(c),"\"", "'")
-	rp[constant.MiddlewareParamsBodyLogKey] = strings.ReplaceAll(getBody(c),"\"", "'")
+	ct := c.Writer.Header().Get("Content-Type")
+	var d1, d2, d3 string
+	if strings.Contains(ct, "application/json") ||
+		strings.Contains(ct, "text/plain") ||
+		ct == "" {
+		d1 = trim(getResp(c))
+	} else {
+		d1 = fmt.Sprintf("`%s`", ct)
+	}
+	rp[constant.MiddlewareParamsRespLogKey] = d1
+	rp[constant.MiddlewareParamsQueryLogKey] = d2
+	rp[constant.MiddlewareParamsBodyLogKey] = d3
 	return
+}
+
+func trim(s string) string {
+	s = compact(s)
+	s = strings.ReplaceAll(s, "\"", "'")
+	s = strings.ReplaceAll(s, "\t", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	if len(s) > 500 {
+		s = fmt.Sprintf("%s......omitted......%s", s[0:250], s[len(s)-250:len(s)])
+	}
+	return s
+}
+
+func compact(s string) string {
+	got := new(bytes.Buffer)
+	if err := json.Compact(got, []byte(s)); err != nil {
+		return s
+	}
+	return got.String()
 }

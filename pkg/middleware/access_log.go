@@ -33,6 +33,8 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		}
 		c.Writer = w
 
+		getBody(c)
+
 		c.Next()
 
 		endTime := time.Now()
