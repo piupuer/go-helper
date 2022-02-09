@@ -418,7 +418,6 @@ func getJwtOptionsOrSetDefault(options *JwtOptions) *JwtOptions {
 
 type OperationLogOptions struct {
 	redis                  redis.UniversalClient
-	ctxKey                 string
 	cachePrefix            string
 	urlPrefix              string
 	realIpKey              string
@@ -436,12 +435,6 @@ func WithOperationLogRedis(rd redis.UniversalClient) func(*OperationLogOptions) 
 		if rd != nil {
 			getOperationLogOptionsOrSetDefault(options).redis = rd
 		}
-	}
-}
-
-func WithOperationLogCtxKey(key string) func(*OperationLogOptions) {
-	return func(options *OperationLogOptions) {
-		getOperationLogOptionsOrSetDefault(options).ctxKey = key
 	}
 }
 
@@ -520,7 +513,6 @@ func WithOperationLogFindApi(fun func(c *gin.Context) []OperationApi) func(*Oper
 func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *OperationLogOptions {
 	if options == nil {
 		options = &OperationLogOptions{}
-		options.ctxKey = constant.MiddlewareOperationLogCtxKey
 		options.cachePrefix = constant.MiddlewareOperationLogApiCacheKey
 		options.urlPrefix = constant.MiddlewareUrlPrefix
 		options.maxCountBeforeSave = constant.MiddlewareOperationLogMaxCountBeforeSave

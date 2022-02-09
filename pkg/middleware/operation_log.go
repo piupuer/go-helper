@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"mime/multipart"
 	"net/http"
@@ -130,21 +129,8 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 			record.IpLocation = utils.GetIpRealLocation(record.Ip, ops.realIpKey)
 
 			record.Status = c.Writer.Status()
-			rp, exists := c.Get(ops.ctxKey)
-			var response string
-			if exists {
-				response = utils.Struct2Json(rp)
-				if item, ok := rp.(resp.Resp); ok {
-					if item.Code == resp.Unauthorized {
-						return
-					}
-					record.Status = item.Code
-				}
-			}
-			if response == "" {
-				response = "{}"
-			}
-			record.Resp = response
+
+			// record.Resp = response
 
 			// delay to update to db
 			logLock.Lock()

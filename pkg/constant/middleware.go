@@ -5,7 +5,6 @@ const (
 	MiddlewareIdempotencePrefix              = "idempotence"
 	MiddlewareIdempotenceExpire              = 24
 	MiddlewareIdempotenceTokenName           = "api-idempotence-token"
-	MiddlewareOperationLogCtxKey             = "ResponseBody"
 	MiddlewareOperationLogNotLogin           = "not login"
 	MiddlewareOperationLogApiCacheKey        = "operation_log_api"
 	MiddlewareOperationLogSkipPathDict       = "OperationLogSkipPath"
@@ -26,5 +25,6 @@ const (
 	MiddlewareParamsNullBody                 = "{}"
 	MiddlewareParamsQueryLogKey              = "Query"
 	MiddlewareParamsBodyLogKey               = "Body"
+	MiddlewareParamsRespCtxKey               = "ResponseBody"
 	MiddlewareParamsRespLogKey               = "Resp"
 )

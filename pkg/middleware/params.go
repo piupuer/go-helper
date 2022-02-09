@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
-	"github.com/piupuer/go-helper/pkg/utils"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 func Params(c *gin.Context) {
@@ -50,13 +50,22 @@ func getQuery(c *gin.Context) (rp string) {
 	return
 }
 
+func getResp(c *gin.Context) (rp string) {
+	if v := c.GetString(constant.MiddlewareParamsRespCtxKey); v != "" {
+		rp = v
+		return
+	}
+	if w, ok := c.Writer.(*accessWriter); ok {
+		rp = w.body.String()
+		c.Set(constant.MiddlewareParamsRespCtxKey, rp)
+	}
+	return
+}
+
 func getRequestDetail(c *gin.Context) (rp map[string]interface{}) {
 	rp = make(map[string]interface{})
-	data, ok := c.Get(constant.MiddlewareOperationLogCtxKey)
-	if ok {
-		rp[constant.MiddlewareParamsRespLogKey] = utils.Struct2Json(data)
-	}
-	rp[constant.MiddlewareParamsQueryLogKey] = getQuery(c)
-	rp[constant.MiddlewareParamsBodyLogKey] = getBody(c)
+	rp[constant.MiddlewareParamsRespLogKey] = strings.ReplaceAll(getResp(c),"\"", "'")
+	rp[constant.MiddlewareParamsQueryLogKey] = strings.ReplaceAll(getQuery(c),"\"", "'")
+	rp[constant.MiddlewareParamsBodyLogKey] = strings.ReplaceAll(getBody(c),"\"", "'")
 	return
 }

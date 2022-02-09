@@ -21,8 +21,6 @@ func Exception(c *gin.Context) {
 			}
 			// set json data
 			c.JSON(http.StatusOK, rp)
-			// set operation log key to context, It may be used OperationLog
-			c.Set(constant.MiddlewareOperationLogCtxKey, rp)
 			c.Abort()
 			return
 		}
@@ -48,8 +46,6 @@ func ExceptionWithNoTransaction(c *gin.Context) {
 			}
 			// set json data
 			c.JSON(http.StatusOK, rp)
-			// set operation log key to context, It may be used OperationLog
-			c.Set(constant.MiddlewareOperationLogCtxKey, rp)
 			c.Abort()
 			return
 		}

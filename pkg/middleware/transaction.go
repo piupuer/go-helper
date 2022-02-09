@@ -39,8 +39,6 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 					}
 					rp.RequestId = c.GetString(constant.MiddlewareRequestIdCtxKey)
 					c.JSON(http.StatusOK, rp)
-					// set operation log key to context, It may be used OperationLog
-					c.Set(constant.MiddlewareOperationLogCtxKey, rp)
 					c.Abort()
 					return
 				}

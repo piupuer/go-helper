@@ -1,12 +1,23 @@
 package middleware
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"time"
 )
+
+type accessWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w accessWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
 
 func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 	ops := getAccessLogOptionsOrSetDefault(nil)
@@ -15,6 +26,12 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		startTime := time.Now()
+
+		w := &accessWriter{
+			body: bytes.NewBuffer(nil),
+			ResponseWriter: c.Writer,
+		}
+		c.Writer = w
 
 		c.Next()
 
