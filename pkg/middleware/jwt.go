@@ -67,7 +67,7 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 // @Success 201 {object} resp.Resp "success"
 // @Tags *Base
 // @Description Login
-// @Param params body middleware.User true "params"
+// @Param params body req.LoginCheck true "params"
 // @Router /base/login [POST]
 func JwtLogin(options ...func(*JwtOptions)) gin.HandlerFunc {
 	ops := getJwtOptionsOrSetDefault(nil)
