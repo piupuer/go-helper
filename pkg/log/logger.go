@@ -67,31 +67,26 @@ func getRequestId(ctx context.Context) (id string) {
 	return
 }
 
-func fileWithLineNum() string {
+func fileWithLineNum(ops Options, options ...func(*FileWithLineNumOptions)) string {
+	lineOps := getFileWithLineNumOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(lineOps)
+	}
 	// the second caller usually from gorm internal, so set i start from 2
 	for i := 2; i < 15; i++ {
 		_, file, line, ok := runtime.Caller(i)
+		if lineOps.skipGorm && (strings.Contains(file, "gorm.io")) {
+			continue
+		}
+		if lineOps.skipHelper && (strings.Contains(file, helperDir)) {
+			continue
+		}
 		if ok && (!strings.HasPrefix(file, logDir) || strings.HasSuffix(file, "_test.go")) && !strings.Contains(file, "src/runtime") {
-			return file + ":" + strconv.FormatInt(int64(line), 10)
+			return removeBaseDir(file + ":" + strconv.FormatInt(int64(line), 10), ops)
 		}
 	}
 
 	return ""
-}
-
-func removePrefix(s1 string, s2 string, ops Options) string {
-	res1 := removeBaseDir(s1, ops)
-	res2 := removeBaseDir(s2, ops)
-	if strings.HasPrefix(s1, logDir) {
-		return res2
-	}
-	f1 := len(res1) <= len(res2)
-	f2 := strings.HasPrefix(s1, logDir)
-	// src/runtime may be in go routine
-	if strings.Contains(res2, "src/runtime") || (f1 || !f1 && f2) {
-		return res1
-	}
-	return res2
 }
 
 func removeBaseDir(s string, ops Options) string {
