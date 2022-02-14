@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"github.com/sirupsen/logrus"
 	"io"
 )
@@ -31,7 +30,6 @@ func getFileWithLineNumOptionsOrSetDefault(options *FileWithLineNumOptions) *Fil
 }
 
 type Options struct {
-	ctx            context.Context
 	level          Level
 	output         io.Writer
 	category       string
@@ -41,14 +39,6 @@ type Options struct {
 	lineNumLevel   int
 	lineNumSource  bool
 	lineNumVersion bool
-}
-
-func WithCtx(ctx context.Context) func(*Options) {
-	return func(options *Options) {
-		if !interfaceIsNil(ctx) {
-			getOptionsOrSetDefault(options).ctx = ctx
-		}
-	}
 }
 
 func WithLevel(level Level) func(*Options) {
@@ -108,7 +98,6 @@ func WithLineNumVersion(flag bool) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			ctx:            context.Background(),
 			level:          Level(logrus.DebugLevel),
 			lineNum:        true,
 			lineNumLevel:   1,

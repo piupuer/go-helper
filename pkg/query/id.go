@@ -26,7 +26,7 @@ func NewRequestId(ctx context.Context) context.Context {
 	return context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, requestId)
 }
 
-func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Context {
+func NewRequestIdWithMetaData(ctx context.Context) context.Context {
 	if utils.InterfaceIsNil(ctx) {
 		ctx = context.Background()
 	}
@@ -34,7 +34,7 @@ func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Contex
 	// get value from metadata
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		arr := md.Get(ctxKey)
+		arr := md.Get(constant.MiddlewareRequestIdCtxKey)
 		if len(arr) == 1 {
 			requestId = arr[0]
 		}
@@ -42,7 +42,7 @@ func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Contex
 		md = metadata.MD{}
 	}
 	// get value from context
-	requestIdValue := ctx.Value(ctxKey)
+	requestIdValue := ctx.Value(constant.MiddlewareRequestIdCtxKey)
 	if item, ok := requestIdValue.(string); ok && item != "" {
 		requestId = item
 	}
@@ -50,9 +50,9 @@ func NewRequestIdWithMetaData(ctx context.Context, ctxKey string) context.Contex
 	if requestId == "" {
 		requestId = uuid.NewString()
 	}
-	md.Set(ctxKey, requestId)
+	md.Set(constant.MiddlewareRequestIdCtxKey, requestId)
 	ctx = metadata.NewIncomingContext(ctx, md)
-	return context.WithValue(ctx, ctxKey, requestId)
+	return context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, requestId)
 }
 
 func NewRequestIdReturnGinCtx(ctx context.Context) *gin.Context {
