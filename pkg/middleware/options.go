@@ -129,8 +129,6 @@ type SignOptions struct {
 	findSkipPath    func(c *gin.Context) []string
 	getSignUser     func(c *gin.Context, appId string) ms.SignUser
 	headerKey       []string
-	requestIdCtxKey string
-	separator       string
 	checkScope      bool
 }
 
@@ -174,18 +172,6 @@ func WithSignHeaderKey(arr ...string) func(*SignOptions) {
 	}
 }
 
-func WithSignRequestIdCtxKey(key string) func(*SignOptions) {
-	return func(options *SignOptions) {
-		getSignOptionsOrSetDefault(options).requestIdCtxKey = key
-	}
-}
-
-func WithSignSeparator(s string) func(*SignOptions) {
-	return func(options *SignOptions) {
-		getSignOptionsOrSetDefault(options).separator = s
-	}
-}
-
 func WithSignCheckScope(flag bool) func(*SignOptions) {
 	return func(options *SignOptions) {
 		getSignOptionsOrSetDefault(options).checkScope = flag
@@ -202,8 +188,6 @@ func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
 				constant.MiddlewareSignTimestampHeaderKey,
 				constant.MiddlewareSignSignatureHeaderKey,
 			},
-			requestIdCtxKey: constant.MiddlewareRequestIdCtxKey,
-			separator:       constant.MiddlewareSignSeparator,
 			checkScope:      true,
 		}
 	}

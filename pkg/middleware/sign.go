@@ -38,7 +38,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		token := c.Request.Header.Get(ops.headerKey[0])
 		if token == "" {
 			log.WithRequestId(c).Warn(resp.InvalidSignTokenMsg)
-			abort(c, *ops, resp.InvalidSignTokenMsg)
+			abort(c, resp.InvalidSignTokenMsg)
 			return
 		}
 		list := strings.Split(token, ",")
@@ -58,12 +58,12 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		}
 		if appId == "" {
 			log.WithRequestId(c).Warn(resp.InvalidSignIdMsg)
-			abort(c, *ops, resp.InvalidSignIdMsg)
+			abort(c, resp.InvalidSignIdMsg)
 			return
 		}
 		if timestamp == "" {
 			log.WithRequestId(c).Warn(resp.InvalidSignTimestampMsg)
-			abort(c, *ops, resp.InvalidSignTimestampMsg)
+			abort(c, resp.InvalidSignTimestampMsg)
 			return
 		}
 		// compare timestamp
@@ -71,19 +71,19 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		t := carbon.CreateFromTimestamp(utils.Str2Int64(timestamp))
 		if t.AddDuration(ops.expire).Lt(now) {
 			log.WithRequestId(c).Warn("%s: %s", resp.InvalidSignTimestampMsg, timestamp)
-			abort(c, *ops, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
+			abort(c, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			return
 		}
 		// query user by app id
 		u := ops.getSignUser(c, appId)
 		if u.AppSecret == "" {
 			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignIdMsg, appId)
-			abort(c, *ops, "%s: %s", resp.IllegalSignIdMsg, appId)
+			abort(c, "%s: %s", resp.IllegalSignIdMsg, appId)
 			return
 		}
 		if u.Status == constant.Zero {
 			log.WithRequestId(c).Warn("%s: %s", resp.UserDisabledMsg, appId)
-			abort(c, *ops, "%s: %s", resp.UserDisabledMsg, appId)
+			abort(c, "%s: %s", resp.UserDisabledMsg, appId)
 			return
 		}
 		// scope
@@ -100,29 +100,29 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			}
 			if !exists {
 				log.WithRequestId(c).Warn("%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
-				abort(c, *ops, "%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
+				abort(c, "%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
 				return
 			}
 		}
 
 		// verify signature
-		if !verifySign(*ops, u.AppSecret, signature, reqMethod, reqUri, timestamp, getBody(c)) {
+		if !verifySign(u.AppSecret, signature, reqMethod, reqUri, timestamp, getBody(c)) {
 			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
-			abort(c, *ops, "%s: %s", resp.IllegalSignTokenMsg, token)
+			abort(c, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
 		}
 		c.Next()
 	}
 }
 
-func verifySign(ops SignOptions, secret, signature, method, uri, timestamp, body string) (flag bool) {
+func verifySign(secret, signature, method, uri, timestamp, body string) (flag bool) {
 	b := bytes.NewBuffer(nil)
 	b.WriteString(method)
-	b.WriteString(ops.separator)
+	b.WriteString(constant.MiddlewareSignSeparator)
 	b.WriteString(uri)
-	b.WriteString(ops.separator)
+	b.WriteString(constant.MiddlewareSignSeparator)
 	b.WriteString(timestamp)
-	b.WriteString(ops.separator)
+	b.WriteString(constant.MiddlewareSignSeparator)
 	b.WriteString(utils.JsonWithSort(body))
 	hash := hmac.New(sha256.New, []byte(secret))
 	hash.Write(b.Bytes())
@@ -131,9 +131,9 @@ func verifySign(ops SignOptions, secret, signature, method, uri, timestamp, body
 	return
 }
 
-func abort(c *gin.Context, ops SignOptions, format interface{}, a ...interface{}) {
+func abort(c *gin.Context, format interface{}, a ...interface{}) {
 	rp := resp.GetFailWithMsg(format, a...)
-	rp.RequestId = c.GetString(ops.requestIdCtxKey)
+	rp.RequestId = c.GetString(constant.MiddlewareRequestIdCtxKey)
 	c.JSON(http.StatusForbidden, rp)
 	c.Abort()
 }
