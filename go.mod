@@ -3,6 +3,7 @@ module github.com/piupuer/go-helper
 go 1.17
 
 require (
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.0+incompatible
 	github.com/appleboy/gin-jwt/v2 v2.8.0
 	github.com/casbin/casbin/v2 v2.40.6
 	github.com/foobaz/lossypng v0.0.0-20200814224715-48fa8819852a
@@ -46,6 +47,7 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
