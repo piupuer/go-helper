@@ -55,6 +55,12 @@ func WithDbOps(ops ...func(options *query.MysqlOptions)) func(*Options) {
 	}
 }
 
+func WithExportOps(ops ...func(options *delay.ExportOptions)) func(*Options) {
+	return func(options *Options) {
+		getOptionsOrSetDefault(options).exportOps = append(getOptionsOrSetDefault(options).exportOps, ops...)
+	}
+}
+
 func WithRedis(rd redis.UniversalClient) func(*Options) {
 	return func(options *Options) {
 		if rd != nil {
