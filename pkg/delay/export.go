@@ -227,6 +227,50 @@ func (ex Export) FindHistory(r *req.DelayExportHistory) (rp []resp.DelayExportHi
 	return
 }
 
+// DeleteHistoryByIds delete export history
+func (ex Export) DeleteHistoryByIds(ids []uint) (err error) {
+	if ex.Error != nil {
+		err = ex.Error
+		return
+	}
+	session := initSession(ex.ops.dbNoTx.Begin(), ex.ops.tbPrefix)
+	list := make([]ExportHistory, 0)
+	session.
+		Model(&ExportHistory{}).
+		Where("id IN (?)", ids).
+		Find(&list)
+	endObjs := make([]string, 0)
+	for _, item := range list {
+		if item.End == constant.One {
+			endObjs = append(endObjs, item.Url)
+		}
+	}
+	if len(endObjs) > 0 {
+		var bucket *oss.Bucket
+		bucket, err = ex.getBucket()
+		if err != nil {
+			session.Rollback()
+			err = errors.WithStack(err)
+			return
+		}
+		_, err = bucket.DeleteObjects(endObjs)
+		if err != nil {
+			session.Rollback()
+			err = errors.WithStack(err)
+			return
+		}
+	}
+	err = session.
+		Where("id IN (?)", ids).
+		Delete(&ExportHistory{}).Error
+	if err != nil {
+		session.Rollback()
+		return
+	}
+	session.Commit()
+	return
+}
+
 func (ex Export) getBucket() (bucket *oss.Bucket, err error) {
 	var client *oss.Client
 	client, err = oss.New(ex.ops.endpoint, ex.ops.key, ex.ops.secret)

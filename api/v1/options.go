@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/delay"
 	"github.com/piupuer/go-helper/pkg/oss"
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
@@ -15,6 +16,7 @@ type Options struct {
 	binlog                     bool
 	binlogOps                  []func(options *query.RedisOptions)
 	dbOps                      []func(options *query.MysqlOptions)
+	exportOps                  []func(options *delay.ExportOptions)
 	redis                      redis.UniversalClient
 	cachePrefix                string
 	operationAllowedToDelete   bool
@@ -224,4 +226,5 @@ func (ops *Options) addCtx(ctx context.Context) {
 		ops.binlogOps = append(ops.binlogOps, query.WithRedisCtx(ctx))
 	}
 	ops.dbOps = append(ops.dbOps, query.WithMysqlCtx(ctx))
+	ops.exportOps = append(ops.exportOps, delay.WithExportCtx(ctx))
 }
