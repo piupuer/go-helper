@@ -6,7 +6,7 @@ import (
 )
 
 type FileWithLineNumOptions struct {
-	skipGorm bool
+	skipGorm   bool
 	skipHelper bool
 }
 
