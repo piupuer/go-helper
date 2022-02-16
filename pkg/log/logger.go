@@ -23,7 +23,7 @@ func init() {
 	// get runtime root
 	_, file, _, _ := runtime.Caller(0)
 	logDir = regexp.MustCompile(`logger\.go`).ReplaceAllString(file, "")
-	helperDir = regexp.MustCompile(`go-helper.pkg.log.logger\.go`).ReplaceAllString(file, "")
+	helperDir = regexp.MustCompile(`pkg.log.logger\.go`).ReplaceAllString(file, "")
 }
 
 // Interface logger interface
@@ -82,7 +82,7 @@ func fileWithLineNum(ops Options, options ...func(*FileWithLineNumOptions)) stri
 			continue
 		}
 		if ok && (!strings.HasPrefix(file, logDir) || strings.HasSuffix(file, "_test.go")) && !strings.Contains(file, "src/runtime") {
-			return removeBaseDir(file + ":" + strconv.FormatInt(int64(line), 10), ops)
+			return removeBaseDir(file+":"+strconv.FormatInt(int64(line), 10), ops)
 		}
 	}
 
@@ -92,7 +92,7 @@ func fileWithLineNum(ops Options, options ...func(*FileWithLineNumOptions)) stri
 func removeBaseDir(s string, ops Options) string {
 	sep := string(os.PathSeparator)
 	if !ops.lineNumSource && strings.HasPrefix(s, helperDir) {
-		s = strings.TrimPrefix(s, path.Dir(helperDir)+"/")
+		s = strings.TrimPrefix(s, path.Dir(strings.TrimSuffix(helperDir, sep))+sep)
 	}
 	if strings.HasPrefix(s, ops.lineNumPrefix) {
 		s = strings.TrimPrefix(s, ops.lineNumPrefix)
