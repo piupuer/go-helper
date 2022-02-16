@@ -21,13 +21,14 @@ type Fsm struct {
 }
 
 // mysql DDL migrate rollback is not supported, Migrate before New
-func Migrate(db *gorm.DB, options ...func(*Options)) error {
-	ops := getOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
+func Migrate(options ...func(*Options)) (err error) {
+	fs := New(options...)
+	if fs.Error != nil {
+		err = fs.Error
+		return
 	}
-	session := initSession(db.WithContext(ops.ctx), ops.prefix)
-	return session.AutoMigrate(
+	session := fs.initSession()
+	err = session.AutoMigrate(
 		new(Machine),
 		new(Event),
 		new(User),
@@ -37,9 +38,10 @@ func Migrate(db *gorm.DB, options ...func(*Options)) error {
 		new(Log),
 		new(LogApprovalUserRelation),
 	)
+	return
 }
 
-func New(tx *gorm.DB, options ...func(*Options)) *Fsm {
+func New(options ...func(*Options)) *Fsm {
 	ops := getOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
@@ -47,8 +49,8 @@ func New(tx *gorm.DB, options ...func(*Options)) *Fsm {
 	fs := &Fsm{
 		ops: *ops,
 	}
-	if tx != nil {
-		fs.session = initSession(tx, ops.prefix)
+	if ops.db != nil {
+		fs.session = fs.initSession()
 	} else {
 		fs.Error = errors.WithStack(ErrDbNil)
 	}
@@ -1230,6 +1232,16 @@ func (fs Fsm) findRole(ids []uint) []Role {
 	return roles
 }
 
+func (fs Fsm) initSession() *gorm.DB {
+	namingStrategy := schema.NamingStrategy{
+		TablePrefix:   fs.ops.prefix,
+		SingularTable: true,
+	}
+	session := fs.ops.db.WithContext(fs.ops.ctx).Session(&gorm.Session{})
+	session.NamingStrategy = namingStrategy
+	return session
+}
+
 func getNextItemName(approved uint, eventName string) string {
 	name := eventName
 	if strings.HasSuffix(eventName, constant.FsmSuffixWaiting) {
@@ -1246,16 +1258,6 @@ func getNextItemName(approved uint, eventName string) string {
 		name = strings.TrimSuffix(eventName, constant.FsmSuffixConfirm) + constant.FsmSuffixConfirmed
 	}
 	return name
-}
-
-func initSession(db *gorm.DB, prefix string) *gorm.DB {
-	namingStrategy := schema.NamingStrategy{
-		TablePrefix:   prefix,
-		SingularTable: true,
-	}
-	session := db.Session(&gorm.Session{})
-	session.NamingStrategy = namingStrategy
-	return session
 }
 
 // check that the state machine is valid(traverse each event, only one end position)

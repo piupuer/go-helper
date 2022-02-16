@@ -38,19 +38,17 @@ func NewExport(options ...func(*ExportOptions)) *Export {
 }
 
 // MigrateExport mysql DDL migrate rollback is not supported, Migrate before New
-func MigrateExport(options ...func(*ExportOptions)) error {
-	ops := getExportOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
+func MigrateExport(options ...func(*ExportOptions)) (err error) {
+	ex := NewExport(options...)
+	if ex.Error != nil {
+		err = ex.Error
+		return
 	}
-	if ops.dbNoTx == nil {
-		log.WithRequestId(ops.ctx).Warn(ErrDbNil)
-		return errors.WithStack(ErrDbNil)
-	}
-	session := initSession(ops.dbNoTx.WithContext(ops.ctx), ops.tbPrefix)
-	return session.AutoMigrate(
+	session := ex.initSession()
+	err = session.AutoMigrate(
 		new(ExportHistory),
 	)
+	return
 }
 
 func (ex Export) Start(uid, name, category, progress string) (err error) {
@@ -64,7 +62,7 @@ func (ex Export) Start(uid, name, category, progress string) (err error) {
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
-	session := initSession(ex.ops.dbNoTx.Begin(), ex.ops.tbPrefix)
+	session := ex.initSession().Begin()
 	var h ExportHistory
 	h.Uuid = id
 	h.Category = category
@@ -93,7 +91,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
-	session := initSession(ex.ops.dbNoTx.Begin(), ex.ops.tbPrefix)
+	session := ex.initSession().Begin()
 	var h ExportHistory
 	err = session.
 		Model(&ExportHistory{}).
@@ -127,7 +125,7 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
-	session := initSession(ex.ops.dbNoTx.Begin(), ex.ops.tbPrefix)
+	session := ex.initSession().Begin()
 	var h ExportHistory
 	err = session.
 		Model(&ExportHistory{}).
@@ -175,7 +173,7 @@ func (ex Export) FindHistory(r *req.DelayExportHistory) (rp []resp.DelayExportHi
 		err = ex.Error
 		return
 	}
-	session := initSession(ex.ops.dbNoTx, ex.ops.tbPrefix)
+	session := ex.initSession()
 	list := make([]ExportHistory, 0)
 	q := session.Model(&ExportHistory{})
 	category := strings.TrimSpace(r.Category)
@@ -233,7 +231,7 @@ func (ex Export) DeleteHistoryByIds(ids []uint) (err error) {
 		err = ex.Error
 		return
 	}
-	session := initSession(ex.ops.dbNoTx.Begin(), ex.ops.tbPrefix)
+	session := ex.initSession().Begin()
 	list := make([]ExportHistory, 0)
 	session.
 		Model(&ExportHistory{}).
@@ -288,12 +286,12 @@ func (ex Export) getBucket() (bucket *oss.Bucket, err error) {
 	return
 }
 
-func initSession(db *gorm.DB, prefix string) *gorm.DB {
+func (ex Export) initSession() *gorm.DB {
 	namingStrategy := schema.NamingStrategy{
-		TablePrefix:   prefix,
+		TablePrefix:   ex.ops.tbPrefix,
 		SingularTable: true,
 	}
-	session := db.Session(&gorm.Session{})
+	session := ex.ops.dbNoTx.WithContext(ex.ops.ctx).Session(&gorm.Session{})
 	session.NamingStrategy = namingStrategy
 	return session
 }

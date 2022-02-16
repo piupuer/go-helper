@@ -24,9 +24,7 @@ type ExportOptions struct {
 
 func WithExportCtx(ctx context.Context) func(*ExportOptions) {
 	return func(options *ExportOptions) {
-		if !utils.InterfaceIsNil(ctx) {
-			getExportOptionsOrSetDefault(options).ctx = ctx
-		}
+		getExportOptionsOrSetDefault(options).ctx = getExportCtx(ctx)
 	}
 }
 
@@ -94,6 +92,7 @@ func WithExportExpire(min int64) func(*ExportOptions) {
 func getExportOptionsOrSetDefault(options *ExportOptions) *ExportOptions {
 	if options == nil {
 		return &ExportOptions{
+			ctx:       getExportCtx(nil),
 			tbPrefix:  constant.DelayExportTbPrefix,
 			objPrefix: constant.DelayExportObjPrefix,
 			machineId: fmt.Sprintf("%d", constant.One),
@@ -103,4 +102,11 @@ func getExportOptionsOrSetDefault(options *ExportOptions) *ExportOptions {
 		}
 	}
 	return options
+}
+
+func getExportCtx(ctx context.Context) context.Context {
+	if utils.InterfaceIsNil(ctx) {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, constant.LogSkipHelperCtxKey, false)
 }
