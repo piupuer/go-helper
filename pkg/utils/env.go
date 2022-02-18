@@ -8,15 +8,19 @@ import (
 	"strings"
 )
 
-// get environment variables to interface
-func EnvToInterface(i interface{}, prefix string) {
+// EnvToInterface parse environment variables to interface
+func EnvToInterface(options ...func(*EnvOptions)) {
+	ops := getOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
+	}
 	m := make(map[string]interface{}, 0)
-	Struct2StructByJson(i, &m)
-	newMap := envToInterface(m, prefix)
-	Struct2StructByJson(newMap, &i)
+	Struct2StructByJson(ops.obj, &m)
+	newMap := envToInterface(m, ops.prefix, ops.format)
+	Struct2StructByJson(newMap, ops.obj)
 }
 
-func envToInterface(m map[string]interface{}, prefix string) map[string]interface{} {
+func envToInterface(m map[string]interface{}, prefix string, fun func(key string, val interface{}) string) map[string]interface{} {
 	newMap := make(map[string]interface{}, 0)
 	// json types: string/bool/float64
 	for key, item := range m {
@@ -27,13 +31,13 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 		switch item.(type) {
 		case map[string]interface{}:
 			itemM, _ := item.(map[string]interface{})
-			newMap[key] = envToInterface(itemM, newKey)
+			newMap[key] = envToInterface(itemM, newKey, fun)
 			continue
 		case string:
 			env := strings.TrimSpace(os.Getenv(newKey))
 			if env != "" {
 				newMap[key] = env
-				log.Info("[env to interface]get %s: %v", newKey, newMap[key])
+				log.Info("[env to interface]get %v", fun(newKey, newMap[key]))
 				continue
 			}
 		case bool:
@@ -44,11 +48,11 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 				if ok && err == nil {
 					if itemB && !b {
 						newMap[key] = false
-						log.Info("[env to interface]get %s: %v", newKey, newMap[key])
+						log.Info("[env to interface]get %v", fun(newKey, newMap[key]))
 						continue
 					} else if !itemB && b {
 						newMap[key] = true
-						log.Info("[env to interface]get %s: %v", newKey, newMap[key])
+						log.Info("[env to interface]get %v", fun(newKey, newMap[key]))
 						continue
 					}
 				}
@@ -59,7 +63,7 @@ func envToInterface(m map[string]interface{}, prefix string) map[string]interfac
 				v, err := strconv.ParseFloat(e, 64)
 				if err == nil {
 					newMap[key] = v
-					log.Info("[env to interface]get %s: %v", newKey, newMap[key])
+					log.Info("[env to interface]get %v", fun(newKey, newMap[key]))
 					continue
 				}
 			}
