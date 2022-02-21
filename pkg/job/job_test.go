@@ -33,7 +33,7 @@ func TestNew(t *testing.T) {
 	}
 	job.AddTask(GoodTask{
 		Name: "work",
-		Expr: "@every 10s",
+		Expr: "@every 2s",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},
@@ -41,18 +41,15 @@ func TestNew(t *testing.T) {
 		DelayIfStillRunning: true,
 	}).Start()
 
-	time.Sleep(30 * time.Second)
+	time.Sleep(1 * time.Second)
 	job.AddTask(GoodTask{
 		Name: "work2",
-		Expr: "@every 5s",
+		Expr: "@every 1s",
 		Func: func(ctx context.Context) error {
 			return Run(ctx)
 		},
 	}).Start()
 
-	time.Sleep(15 * time.Second)
+	time.Sleep(5 * time.Second)
 	job.Stop("work")
-
-	ch := make(chan int, 0)
-	<-ch
 }

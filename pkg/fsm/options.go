@@ -48,6 +48,9 @@ func getOptionsOrSetDefault(options *Options) *Options {
 		return &Options{
 			ctx:    getCtx(nil),
 			prefix: constant.FsmPrefix,
+			transition: func(ctx context.Context, logs ...resp.FsmApprovalLog) error {
+				return nil
+			},
 		}
 	}
 	return options

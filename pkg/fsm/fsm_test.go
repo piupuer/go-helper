@@ -31,12 +31,12 @@ func init() {
 }
 
 func TestMigrate(t *testing.T) {
-	Migrate(db, WithPrefix("tb_fsm"))
+	Migrate(WithDb(db), WithPrefix("tb_fsm"))
 }
 
 func TestFsm_CreateMachine(t *testing.T) {
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	f.CreateMachine(req.FsmCreateMachine{
 		Name:                       "Leave Approval",
 		SubmitterName:              "applicant",
@@ -70,7 +70,7 @@ func TestFsm_CreateMachine(t *testing.T) {
 func TestFsm_SubmitLog(t *testing.T) {
 	uid := "log1"
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	_, err := f.SubmitLog(req.FsmCreateLog{
 		Category:        1,   // custom category
 		Uuid:            uid, // unique str
@@ -86,7 +86,7 @@ func TestFsm_SubmitLog(t *testing.T) {
 func TestFsm_ApproveLog(t *testing.T) {
 	uid := "log1"
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	var err error
 	// approved
 	_, err = f.ApproveLog(req.FsmApproveLog{
@@ -180,7 +180,7 @@ func TestFsm_ApproveLog(t *testing.T) {
 func TestFsm_ApproveLog1(t *testing.T) {
 	uid := "log2"
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	var err error
 	_, err = f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
@@ -238,7 +238,7 @@ func TestFsm_ApproveLog1(t *testing.T) {
 
 func TestFsm_CancelLogs(t *testing.T) {
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	var err error
 	_, err = f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
@@ -271,7 +271,7 @@ func TestFsm_CancelLogs(t *testing.T) {
 
 func TestFsm_FindPendingLogsByApprover(t *testing.T) {
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	fmt.Println(f.FindPendingLogByApprover(&req.FsmPendingLog{
 		ApprovalRoleId: 1,
 		ApprovalUserId: 2,
@@ -282,7 +282,7 @@ func TestFsm_FindPendingLogsByApprover(t *testing.T) {
 
 func TestFsm_FindLogs(t *testing.T) {
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	fmt.Println(f.FindLog(req.FsmLog{
 		Category: 1,
 		Uuid:     "log1",
@@ -292,7 +292,7 @@ func TestFsm_FindLogs(t *testing.T) {
 
 func TestFsm_GetLogTrack(t *testing.T) {
 	tx := db.Begin()
-	f := New(tx)
+	f := New(WithDb(tx))
 	logs, _ := f.FindLog(req.FsmLog{
 		Category: 1,
 		Uuid:     "log2",

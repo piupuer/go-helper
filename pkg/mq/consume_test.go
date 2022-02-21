@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/streadway/amqp"
+	"os"
 	"testing"
 	"time"
 )
@@ -30,11 +31,9 @@ func TestQueue_Consume(t *testing.T) {
 		WithConsumeAutoRequestId(true),
 	)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
-
-	ch := make(chan int)
-	<-ch
+	os.Exit(0)
 }
 
 func handler(ctx context.Context, q string, delivery amqp.Delivery) bool {
