@@ -123,7 +123,7 @@ func (w *Wrapper) Fatal(args ...interface{}) {
 
 func (w *Wrapper) WithError(err error) *Wrapper {
 	ns := copyFields(w.fields)
-	ns["error"] = err
+	ns[constant.LogErrorKey] = err
 	return &Wrapper{
 		log:    w.log,
 		fields: ns,
