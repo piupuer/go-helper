@@ -28,7 +28,7 @@ func NewGrpcServer(options ...func(*GrpcServerOptions)) *grpc.Server {
 	if ops.tls {
 		t, err := NewGrpcServerTls(ops.tlsOps...)
 		if err != nil {
-			log.WithRequestId(ops.ctx).Warn("load tls failed: %v", err)
+			log.WithRequestId(ops.ctx).WithError(err).Warn("load tls failed")
 		} else {
 			serverOps = append(serverOps, grpc.Creds(t))
 		}

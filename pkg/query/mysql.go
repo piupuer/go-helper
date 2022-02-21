@@ -284,7 +284,7 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 				if q.Statement.Model != nil {
 					err := q.Statement.Parse(q.Statement.Model)
 					if err != nil {
-						log.WithRequestId(my.Ctx).Warn("parse model err: %+v", err)
+						log.WithRequestId(my.Ctx).WithError(err).Warn("parse model failed")
 						return
 					}
 				}

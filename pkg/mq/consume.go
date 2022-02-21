@@ -38,14 +38,14 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 						continue
 					}
 					if handler(ctx, co.qu.ops.name, msg) {
-						err := msg.Ack(false)
-						if err != nil {
-							log.WithRequestId(ctx).Error("consume ack err: %+v", errors.WithStack(err))
+						e := msg.Ack(false)
+						if e != nil {
+							log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
 						}
 					} else {
-						err := msg.Nack(false, co.ops.nackRequeue)
-						if err != nil {
-							log.WithRequestId(ctx).Error("consume nack err: %+v", errors.WithStack(err))
+						e := msg.Nack(false, co.ops.nackRequeue)
+						if e != nil {
+							log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
 						}
 					}
 				}
@@ -63,9 +63,9 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 				if co.ops.newRequestIdWhenConnectionLost {
 					ctx = co.newContext(nil)
 				}
-				d, err := co.consume(ctx)
-				if err != nil {
-					log.WithRequestId(ctx).Error("reconsume err: %+v", errors.WithStack(err))
+				d, e := co.consume(ctx)
+				if e != nil {
+					log.WithRequestId(ctx).WithError(e).Error("reconsume failed")
 					return
 				}
 				delivery = d
@@ -96,14 +96,14 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 		return nil
 	}
 	if handler(ctx, co.qu.ops.name, msg) {
-		err := msg.Ack(false)
-		if err != nil {
-			log.WithRequestId(ctx).Error("consume ack err: %+v", err)
+		e := msg.Ack(false)
+		if e != nil {
+			log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
 		}
 	} else {
-		err := msg.Nack(false, co.ops.nackRequeue)
-		if err != nil {
-			log.WithRequestId(ctx).Error("consume nack err: %+v", err)
+		e := msg.Nack(false, co.ops.nackRequeue)
+		if e != nil {
+			log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
 		}
 	}
 	return nil

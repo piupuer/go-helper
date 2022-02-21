@@ -78,7 +78,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	if err != nil {
 		job.single = true
 		job.singleTasks = make(map[string]GoodSingleTask, 0)
-		log.WithRequestId(job.ops.ctx).Warn("initialize redis failed, switch singe mode, err: %+v", err)
+		log.WithRequestId(job.ops.ctx).WithError(err).Warn("initialize redis failed, switch singe mode")
 		return &job, nil
 	}
 

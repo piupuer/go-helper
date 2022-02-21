@@ -192,7 +192,7 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(eh.ops.ctx).Error("[binlog row change]runtime err: %+v\nstack: %v", err, string(debug.Stack()))
+			log.WithRequestId(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog row change]runtime exception, stack: %v", string(debug.Stack()))
 			return
 		}
 	}()
@@ -213,7 +213,7 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithRequestId(eh.ops.ctx).Error("[binlog ddl]drop table %s sync to redis err: %+v", table, err)
+				log.WithRequestId(eh.ops.ctx).WithError(err).Error("[binlog ddl]drop table %s sync to redis failed", table)
 			} else {
 				log.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]drop table %s success", table)
 			}
@@ -232,7 +232,7 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithRequestId(eh.ops.ctx).Error("[binlog ddl]truncate table %s sync to redis err: %+v", table, err)
+				log.WithRequestId(eh.ops.ctx).WithError(err).Error("[binlog ddl]truncate table %s sync to redis failed", table)
 			} else {
 				log.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]truncate table %s success", table)
 			}
@@ -245,7 +245,7 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) error {
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(eh.ops.ctx).Error("[binlog pos change]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+			log.WithRequestId(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog pos change]runtime exception, stack: %s", string(debug.Stack()))
 			return
 		}
 	}()

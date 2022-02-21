@@ -65,7 +65,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 		if timeout > 0 {
 			sleep, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
 			if err != nil {
-				log.Error("[exec remote shell]close ssh session failed: %v", err)
+				log.WithError(err).Error("[exec remote shell]close ssh session failed")
 				return
 			}
 			time.Sleep(sleep)
@@ -113,7 +113,7 @@ func ExecRemoteShellWithTimeout(config SshConfig, cmds []string, timeout int64) 
 func closeClient(session *ssh.Session, client *ssh.Client) {
 	err := client.Close()
 	if err != nil {
-		log.Error("[exec remote shell]close ssh client failed: %v", err)
+		log.WithError(err).Error("[exec remote shell]close ssh client failed")
 	}
 	session.Close()
 }

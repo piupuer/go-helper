@@ -52,7 +52,7 @@ func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, loca
 		if errBucketExists == nil && exists {
 			log.WithRequestId(ctx).Warn("bucket %s(location %s) already exists", bucketName, location)
 		} else {
-			log.WithRequestId(ctx).Error("make bucket failed: %+v", err)
+			log.WithRequestId(ctx).WithError(err).Error("make bucket failed")
 		}
 	}
 }

@@ -32,13 +32,13 @@ func Grpc(options ...func(*GrpcOptions)) {
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to listen: %v", ops.proName, err)
+		log.WithRequestId(ops.ctx).WithError(err).Error("[%s][grpc server]listen failed", ops.proName)
 		return
 	}
 
 	go func() {
 		if err = srv.Serve(lis); err != nil {
-			log.WithRequestId(ops.ctx).Error("[%s][grpc server]failed to serve: %v", ops.proName, err)
+			log.WithRequestId(ops.ctx).WithError(err).Error("[%s][grpc server]serve failed", ops.proName)
 		}
 	}()
 

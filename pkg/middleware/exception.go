@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/pkg/errors"
 	"net/http"
 	"runtime/debug"
 )
@@ -12,7 +13,7 @@ import (
 func Exception(c *gin.Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(c).Error("[exception middleware]runtime err: %v\nstack: %v", err, string(debug.Stack()))
+			log.WithRequestId(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
 			rp := resp.Resp{
 				Code:      resp.InternalServerError,
 				Data:      map[string]interface{}{},
@@ -42,7 +43,7 @@ func ExceptionWithNoTransaction(c *gin.Context) {
 				rp = item
 				rp.RequestId = rid
 			} else {
-				log.WithRequestId(c).Error("[exception middleware]runtime err: %+v", err, string(debug.Stack()))
+				log.WithRequestId(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
 			}
 			// set json data
 			c.JSON(http.StatusOK, rp)

@@ -195,7 +195,7 @@ func (h *MessageHub) count() {
 			for _, client := range h.getClients() {
 				infos = append(infos, fmt.Sprintf("%d-%s", client.User.Id, client.Ip))
 			}
-			log.Debug("[Message]active connection: %v", strings.Join(infos, ","))
+			log.Debug("[message]active connection: %v", strings.Join(infos, ","))
 		}
 	}
 }
@@ -211,7 +211,7 @@ func (c *MessageClient) receive() {
 	defer func() {
 		c.close()
 		if err := recover(); err != nil {
-			log.WithRequestId(c.ctx).Error("[Message][receiver][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).WithError(errors.Errorf("%v", err)).Error("[message][receiver][%s]connection may have been lost", c.Key)
 		}
 	}()
 	for {
@@ -227,7 +227,7 @@ func (c *MessageClient) receive() {
 		// decompress data
 		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
-		log.WithRequestId(c.ctx).Debug("[Message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
+		log.WithRequestId(c.ctx).Debug("[message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
 		var r req.MessageWs
 		utils.Json2Struct(data, &r)
 		switch r.Type {
@@ -322,7 +322,7 @@ func (c *MessageClient) send() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			log.WithRequestId(c.ctx).Error("[Message][sender][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).WithError(errors.Errorf("%v", err)).Error("[message][sender][%s]connection may have been lost", c.Key)
 		}
 	}()
 	for {
@@ -352,7 +352,7 @@ func (c MessageClient) writeMessage(messageType int, data string) error {
 	// compress
 	// s, _ := utils.CompressStrByZlib(data)
 	s := &data
-	log.WithRequestId(c.ctx).Debug("[Message][sender][%s] %v", c.Key, *s)
+	log.WithRequestId(c.ctx).Debug("[message][sender][%s] %v", c.Key, *s)
 	return c.Conn.WriteMessage(messageType, []byte(*s))
 }
 
@@ -363,7 +363,7 @@ func (c *MessageClient) heartBeat() {
 		ticker.Stop()
 		c.close()
 		if err := recover(); err != nil {
-			log.WithRequestId(c.ctx).Error("[Message][heartbeat][%s]connection may have been lost: %v", c.Key, err)
+			log.WithRequestId(c.ctx).WithError(errors.Errorf("%v", err)).Error("[message][heartbeat][%s]connection may have been lost", c.Key)
 		}
 	}()
 	for {
@@ -371,7 +371,7 @@ func (c *MessageClient) heartBeat() {
 		case <-ticker.C:
 			last := time.Now().Sub(c.LastActiveTime.Time)
 			if c.RetryCount > heartBeatMaxRetryCount {
-				panic(fmt.Sprintf("[Message][heartbeat]retry sending heartbeat for %d times without response", c.RetryCount))
+				panic(fmt.Sprintf("[message][heartbeat]retry sending heartbeat for %d times without response", c.RetryCount))
 			}
 			if last > heartBeatPeriod {
 				c.Send.SafeSend(resp.MessageWs{
@@ -399,7 +399,7 @@ func (c *MessageClient) register() {
 		if !utils.ContainsUint(c.hub.userIds, c.User.Id) {
 			c.hub.userIds = append(c.hub.userIds, c.User.Id)
 		}
-		log.WithRequestId(c.ctx).Debug("[Message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		log.WithRequestId(c.ctx).Debug("[message][online][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 		go func() {
 			c.hub.refreshUserMessage.SafeSend([]uint{c.User.Id})
 		}()
@@ -427,7 +427,7 @@ func (c *MessageClient) close() {
 	if _, ok := c.hub.clients[c.Key]; ok {
 		delete(c.hub.clients, c.Key)
 		c.Send.SafeClose()
-		log.WithRequestId(c.ctx).Debug("[Message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
+		log.WithRequestId(c.ctx).Debug("[message][offline][%s]%d-%s", c.Key, c.User.Id, c.Ip)
 	}
 
 	c.Conn.Close()

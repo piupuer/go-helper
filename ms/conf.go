@@ -24,14 +24,14 @@ func (c ConfBox) Get(filename string) (bs []byte) {
 	// read from system
 	bs, err = ioutil.ReadFile(f)
 	if err != nil {
-		log.WithRequestId(c.Ctx).Warn("[conf box]read file %s from system failed: %v", f, err)
+		log.WithRequestId(c.Ctx).WithError(err).Warn("[conf box]read file %s from system failed", f)
 		err = nil
 	}
 	if len(bs) == 0 {
 		// read from embed
 		bs, err = c.Fs.ReadFile(f)
 		if err != nil {
-			log.WithRequestId(c.Ctx).Warn("[conf box]read file %s from embed failed: %v", f, err)
+			log.WithRequestId(c.Ctx).WithError(err).Warn("[conf box]read file %s from embed failed", f)
 		}
 	}
 	return bs

@@ -135,7 +135,7 @@ func (rd *Redis) findByTableName(tableName string) *gojsonq.JSONQ {
 		str, err := rd.ops.redis.Get(rd.Ctx, cacheKey).Result()
 		log.WithRequestId(rd.Ctx).Debug("[q redis]read %s", tableName)
 		if err != nil {
-			log.WithRequestId(rd.Ctx).Debug("[q redis]read %s err: %+v", tableName, err)
+			log.WithRequestId(rd.Ctx).WithError(err).Warn("[q redis]read %s failed", tableName)
 		} else {
 			// decompress
 			jsonStr = utils.DeCompressStrByZlib(str)
