@@ -15,6 +15,7 @@ func newLogrus(ops *Options) *logrusLog {
 	} else {
 		ll.SetFormatter(&logrus.TextFormatter{
 			FullTimestamp: true,
+			DisableQuote:  true,
 		})
 	}
 	if ops.output != nil {
