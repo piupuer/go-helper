@@ -11,6 +11,7 @@ type Options struct {
 	driver      string
 	uri         string
 	lockName    string
+	before      func(ctx context.Context) error
 	changeTable string
 	fs          embed.FS
 	fsRoot      string
@@ -39,6 +40,14 @@ func WithUri(s string) func(*Options) {
 func WithLockName(s string) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).lockName = s
+	}
+}
+
+func WithBefore(f func(ctx context.Context) error) func(*Options) {
+	return func(options *Options) {
+		if f != nil {
+			getOptionsOrSetDefault(options).before = f
+		}
 	}
 }
 

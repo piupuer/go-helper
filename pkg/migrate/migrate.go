@@ -51,6 +51,14 @@ func Do(options ...func(*Options)) (err error) {
 		}
 	}
 
+	if ops.before != nil {
+		err = ops.before(ops.ctx)
+		if err != nil {
+			log.WithRequestId(ops.ctx).WithError(err).Error("exec before callback failed")
+			return
+		}
+	}
+
 	migrate.SetTable(ops.changeTable)
 	source := &migrate.EmbedFileSystemMigrationSource{
 		FileSystem: ops.fs,
