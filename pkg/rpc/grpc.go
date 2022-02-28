@@ -59,7 +59,7 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 
 func (gr Grpc) Conn() (conn *grpc.ClientConn, err error) {
 	if gr.Error != nil {
-		if strings.HasPrefix("health check", gr.Error.Error()) {
+		if strings.HasPrefix(gr.Error.Error(), "health check") {
 			gr.Error = nil
 			err = gr.HealthCheck(WithGrpcHealthCheckCtx(gr.ops.ctx))
 		} else {
