@@ -61,7 +61,6 @@ func (gr Grpc) Conn() (conn *grpc.ClientConn, err error) {
 	if gr.Error != nil {
 		if strings.HasPrefix(gr.Error.Error(), "health check") {
 			gr.Error = nil
-			err = gr.HealthCheck(WithGrpcHealthCheckCtx(gr.ops.ctx))
 		} else {
 			err = gr.Error
 		}
