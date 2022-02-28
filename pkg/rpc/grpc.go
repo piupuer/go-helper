@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"strings"
 	"time"
 )
 
@@ -58,13 +59,20 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
 
 func (gr Grpc) Conn() (conn *grpc.ClientConn, err error) {
 	if gr.Error != nil {
-		err = gr.Error
-		return
+		if strings.HasPrefix("health check", gr.Error.Error()) {
+			gr.Error = nil
+			err = gr.HealthCheck(WithGrpcHealthCheckCtx(gr.ops.ctx))
+		} else {
+			err = gr.Error
+		}
+		if err != nil {
+			return
+		}
 	}
 	var option grpc.DialOption
 	option = grpc.WithTransportCredentials(gr.ctl)
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(gr.ops.timeout)*time.Second)
+	ctx, _ := context.WithTimeout(gr.ops.ctx, time.Duration(gr.ops.timeout)*time.Second)
 	conn, err = grpc.DialContext(
 		ctx,
 		gr.uri,
