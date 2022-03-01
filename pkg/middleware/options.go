@@ -59,8 +59,8 @@ func getCorsOptionsOrSetDefault(options *CorsOptions) *CorsOptions {
 		return &CorsOptions{
 			origin:     constant.MiddlewareCorsOrigin,
 			header:     constant.MiddlewareCorsHeaders,
-			expose:     constant.MiddlewareCorsMethods,
-			method:     constant.MiddlewareCorsExpose,
+			expose:     constant.MiddlewareCorsExpose,
+			method:     constant.MiddlewareCorsMethods,
 			credential: constant.MiddlewareCorsCredentials,
 		}
 	}
