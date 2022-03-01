@@ -7,33 +7,29 @@ import (
 	"strings"
 )
 
-var methods = []string{
-	http.MethodOptions,
-	http.MethodGet,
-	http.MethodPost,
-	http.MethodPut,
-	http.MethodPatch,
-	http.MethodDelete,
-}
-
-var methodStr = strings.Join(methods, ", ")
-
-func Cors(c *gin.Context) {
-	method := c.Request.Method
-	if !utils.Contains(methods, method) {
-		c.Status(http.StatusMethodNotAllowed)
-		c.Abort()
-		return
+func Cors(options ...func(*CorsOptions)) gin.HandlerFunc {
+	ops := getCorsOptionsOrSetDefault(nil)
+	for _, f := range options {
+		f(ops)
 	}
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, api-idempotence-token")
-	c.Header("Access-Control-Allow-Methods", methodStr)
-	c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-	c.Header("Access-Control-Allow-Credentials", "true")
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		methods := strings.Split(ops.method, ",")
+		if !utils.Contains(methods, method) {
+			c.Status(http.StatusMethodNotAllowed)
+			c.Abort()
+			return
+		}
+		c.Header("Access-Control-Allow-Origin", ops.origin)
+		c.Header("Access-Control-Allow-Headers", ops.header)
+		c.Header("Access-Control-Allow-Methods", ops.method)
+		c.Header("Access-Control-Expose-Headers", ops.expose)
+		c.Header("Access-Control-Allow-Credentials", ops.credential)
 
-	// skip OPTIONS
-	if method == "OPTIONS" {
-		c.AbortWithStatus(http.StatusNoContent)
+		// skip OPTIONS
+		if method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+		}
+		c.Next()
 	}
-	c.Next()
 }

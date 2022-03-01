@@ -16,6 +16,57 @@ import (
 	"strings"
 )
 
+type CorsOptions struct {
+	origin     string
+	header     string
+	expose     string
+	method     string
+	credential string
+}
+
+func WithCorsOrigin(s string) func(*CorsOptions) {
+	return func(options *CorsOptions) {
+		getCorsOptionsOrSetDefault(options).origin = s
+	}
+}
+
+func WithCorsHeader(s string) func(*CorsOptions) {
+	return func(options *CorsOptions) {
+		getCorsOptionsOrSetDefault(options).header = s
+	}
+}
+
+func WithCorsExpose(s string) func(*CorsOptions) {
+	return func(options *CorsOptions) {
+		getCorsOptionsOrSetDefault(options).expose = s
+	}
+}
+
+func WithCorsMethod(s string) func(*CorsOptions) {
+	return func(options *CorsOptions) {
+		getCorsOptionsOrSetDefault(options).method = s
+	}
+}
+
+func WithCorsCredential(s string) func(*CorsOptions) {
+	return func(options *CorsOptions) {
+		getCorsOptionsOrSetDefault(options).credential = s
+	}
+}
+
+func getCorsOptionsOrSetDefault(options *CorsOptions) *CorsOptions {
+	if options == nil {
+		return &CorsOptions{
+			origin:     constant.MiddlewareCorsOrigin,
+			header:     constant.MiddlewareCorsHeaders,
+			expose:     constant.MiddlewareCorsMethods,
+			method:     constant.MiddlewareCorsExpose,
+			credential: constant.MiddlewareCorsCredentials,
+		}
+	}
+	return options
+}
+
 type ParamsOptions struct {
 	bodyCtxKey  string
 	queryCtxKey string
@@ -125,11 +176,11 @@ func getCasbinOptionsOrSetDefault(options *CasbinOptions) *CasbinOptions {
 }
 
 type SignOptions struct {
-	expire          string
-	findSkipPath    func(c *gin.Context) []string
-	getSignUser     func(c *gin.Context, appId string) ms.SignUser
-	headerKey       []string
-	checkScope      bool
+	expire       string
+	findSkipPath func(c *gin.Context) []string
+	getSignUser  func(c *gin.Context, appId string) ms.SignUser
+	headerKey    []string
+	checkScope   bool
 }
 
 func WithSignExpire(duration string) func(*SignOptions) {
@@ -188,7 +239,7 @@ func getSignOptionsOrSetDefault(options *SignOptions) *SignOptions {
 				constant.MiddlewareSignTimestampHeaderKey,
 				constant.MiddlewareSignSignatureHeaderKey,
 			},
-			checkScope:      true,
+			checkScope: true,
 		}
 	}
 	return options
