@@ -176,9 +176,13 @@ func (ex Export) FindHistory(r *req.DelayExportHistory) (rp []resp.DelayExportHi
 	session := ex.initSession()
 	list := make([]ExportHistory, 0)
 	q := session.Model(&ExportHistory{})
+	name := strings.TrimSpace(r.Name)
+	if name != "" {
+		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
+	}
 	category := strings.TrimSpace(r.Category)
 	if category != "" {
-		q.Where("category = ?", category)
+		q.Where("category LIKE ?", fmt.Sprintf("%%%s%%", category))
 	}
 	if r.End != nil {
 		q.Where("end = ?", *r.End)
