@@ -175,7 +175,9 @@ func (ex Export) FindHistory(r *req.DelayExportHistory) (rp []resp.DelayExportHi
 	}
 	session := ex.initSession()
 	list := make([]ExportHistory, 0)
-	q := session.Model(&ExportHistory{})
+	q := session.
+		Model(&ExportHistory{}).
+		Order("created_at DESC")
 	name := strings.TrimSpace(r.Name)
 	if name != "" {
 		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", name))
