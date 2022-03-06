@@ -366,29 +366,23 @@ func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 }
 
 // create data
-func (my MySql) Create(m ...interface{}) (err error) {
-	switch len(m) {
-	case 1:
-		err = my.Tx.Create(m[0]).Error
-	case 2:
-		r := m[0]
-		i := m[1]
-		v := reflect.ValueOf(r)
-		if v.Kind() == reflect.Slice {
-			mv := reflect.Indirect(reflect.ValueOf(i))
-			if mv.Kind() == reflect.Struct {
-				slice := reflect.MakeSlice(reflect.SliceOf(mv.Type()), 0, 0)
-				arr := reflect.New(slice.Type())
-				i = arr.Interface()
-			} else if mv.Kind() == reflect.Slice {
-				slice := reflect.MakeSlice(mv.Type(), 0, 0)
-				arr := reflect.New(slice.Type())
-				i = arr.Interface()
-			}
+func (my MySql) Create(r interface{}, model interface{}) (err error) {
+	i := model
+	v := reflect.ValueOf(r)
+	if v.Kind() == reflect.Slice {
+		mv := reflect.Indirect(reflect.ValueOf(model))
+		if mv.Kind() == reflect.Struct {
+			slice := reflect.MakeSlice(reflect.SliceOf(mv.Type()), 0, 0)
+			arr := reflect.New(slice.Type())
+			i = arr.Interface()
+		} else if mv.Kind() == reflect.Slice {
+			slice := reflect.MakeSlice(mv.Type(), 0, 0)
+			arr := reflect.New(slice.Type())
+			i = arr.Interface()
 		}
-		utils.Struct2StructByJson(r, i)
-		err = my.Tx.Create(i).Error
 	}
+	utils.Struct2StructByJson(r, i)
+	err = my.Tx.Create(i).Error
 	return
 }
 
