@@ -35,18 +35,18 @@ var (
 
 type SysMessage struct {
 	M
-	FromUserId uint                     `gorm:"comment:'sender user id'" json:"fromUserId"`
-	Title      string                   `gorm:"comment:'title'" json:"title"`
-	Content    string                   `gorm:"comment:'content'" json:"content"`
-	Type       uint                     `gorm:"type:tinyint;default:0;comment:'type(0: one2one, 1: one2more, 2: system(one2all))'" json:"type"`
-	RoleId     uint                     `gorm:"comment:'role id'" json:"roleId"`
-	ExpiredAt  *carbon.ToDateTimeString `gorm:"comment:'expire time'" json:"expiredAt"`
+	FromUserId uint                     `gorm:"comment:sender user id" json:"fromUserId"`
+	Title      string                   `gorm:"comment:title" json:"title"`
+	Content    string                   `gorm:"comment:content" json:"content"`
+	Type       uint                     `gorm:"type:tinyint;default:0;comment:type(0: one2one, 1: one2more, 2: system(one2all))" json:"type"`
+	RoleId     uint                     `gorm:"comment:role id" json:"roleId"`
+	ExpiredAt  *carbon.ToDateTimeString `gorm:"comment:expire time" json:"expiredAt"`
 }
 
 type SysMessageLog struct {
 	M
-	ToUserId  uint       `gorm:"comment:'receiver user id'" json:"toUserId"`
-	MessageId uint       `gorm:"comment:'message id'" json:"messageId"`
+	ToUserId  uint       `gorm:"comment:receiver user id" json:"toUserId"`
+	MessageId uint       `gorm:"comment:message id" json:"messageId"`
 	Message   SysMessage `gorm:"foreignKey:MessageId" json:"message"`
-	Status    uint       `gorm:"type:tinyint;default:0;comment:'status(0: unread, 1: read, 2: deleted)'" json:"status"`
+	Status    uint       `gorm:"type:tinyint;default:0;comment:status(0: unread, 1: read, 2: deleted)" json:"status"`
 }

@@ -28,7 +28,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		startTime := time.Now()
 
 		w := &accessWriter{
-			body: bytes.NewBuffer(nil),
+			body:           bytes.NewBuffer(nil),
 			ResponseWriter: c.Writer,
 		}
 		c.Writer = w
