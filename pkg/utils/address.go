@@ -6,25 +6,24 @@ import (
 	"net/http"
 )
 
-// get real ip location by amap
-func GetIpRealLocation(ip, key string) string {
-	rp, err := http.Get(fmt.Sprintf("https://restapi.amap.com/v3/ip?ip=%s&key=%s", ip, key))
-	address := "unknown address"
+// GetIpRealLocation get real ip location by amap
+func GetIpRealLocation(ip, key string) (address string) {
+	rp, err := http.Get(fmt.Sprintf("http://ip-api.com/json/%s?lang=zh-CN", ip))
+	address = "unknown address"
 	if err != nil {
-		return address
+		return
 	}
 	defer rp.Body.Close()
 	data, err := ioutil.ReadAll(rp.Body)
 	if err != nil {
-		return address
+		return
 	}
-	var result map[string]string
+	var result map[string]interface{}
 	Json2Struct(string(data), &result)
-	if result["status"] == "1" {
-		address = result["province"]
-		if result["city"] != "" && address != result["city"] {
-			address += result["province"]
-		}
+	if result["status"] == "success" {
+		country := result["country"].(string)
+		city := result["city"].(string)
+		address = country + city
 	}
-	return address
+	return
 }
