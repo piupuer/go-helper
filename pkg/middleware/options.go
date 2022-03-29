@@ -581,7 +581,9 @@ func WithRateRedis(rd redis.UniversalClient) func(*RateOptions) {
 
 func WithRateMaxLimit(limit int64) func(*RateOptions) {
 	return func(options *RateOptions) {
-		getRateOptionsOrSetDefault(options).maxLimit = limit
+		if limit > 0 {
+			getRateOptionsOrSetDefault(options).maxLimit = limit
+		}
 	}
 }
 
