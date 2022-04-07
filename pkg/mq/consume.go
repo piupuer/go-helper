@@ -75,38 +75,70 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 	return nil
 }
 
-func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
+func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) (err error) {
 	if handler == nil {
-		return errors.Errorf("handler is nil")
+		err = errors.Errorf("handler is nil")
+		return
 	}
 	co := qu.beforeConsume(options...)
 	if co.Error != nil {
-		return errors.WithStack(co.Error)
+		err = errors.WithStack(co.Error)
+		return
 	}
 	ctx := co.newContext(co.ops.oneCtx)
-	msg, ok, err := co.consumeOne(ctx)
+	var msg amqp.Delivery
+	var ok bool
+	msg, ok, err = co.consumeOne(ctx)
 	if err != nil {
-		return errors.WithStack(err)
+		err = errors.WithStack(err)
+		return
 	}
 	if !ok {
-		return errors.Errorf("queue is empty, can't get one msg")
+		err = errors.Errorf("queue is empty, can't get one msg")
+		return
 	}
 	if co.ops.autoAck {
 		handler(ctx, co.qu.ops.name, msg)
-		return nil
+		return
 	}
 	if handler(ctx, co.qu.ops.name, msg) {
-		e := msg.Ack(false)
-		if e != nil {
-			log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
+		err = msg.Ack(false)
+		if err != nil {
+			log.WithRequestId(ctx).WithError(err).Error("consume ack failed")
 		}
+		return
+	}
+	var retryCount int32
+	if v, o := msg.Headers["x-retry-count"].(int32); o {
+		retryCount = v + 1
 	} else {
-		e := msg.Nack(false, co.ops.nackRequeue)
-		if e != nil {
-			log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
+		retryCount = 1
+	}
+	if co.ops.nackRetry {
+		if retryCount > co.ops.nackMaxRetryCount {
+			log.WithRequestId(ctx).Warn("maximum retry %d exceeded, discard data", co.ops.nackMaxRetryCount)
+			err = msg.Nack(false, co.ops.nackRequeue)
+			if err != nil {
+				log.WithRequestId(ctx).WithError(err).Error("consume nack failed")
+			}
+			return
+		}
+		msg.Headers["x-retry-count"] = retryCount
+		err = qu.ex.PublishByte(
+			msg.Body,
+			WithPublishHeaders(msg.Headers),
+			WithPublishRouteKey(msg.RoutingKey),
+		)
+		if err != nil {
+			log.WithRequestId(ctx).WithError(err).Error("consume republish failed")
+			return
 		}
 	}
-	return nil
+	err = msg.Nack(false, co.ops.nackRequeue)
+	if err != nil {
+		log.WithRequestId(ctx).WithError(err).Error("consume nack failed")
+	}
+	return
 }
 
 func (qu *Queue) beforeConsume(options ...func(*ConsumeOptions)) *Consume {

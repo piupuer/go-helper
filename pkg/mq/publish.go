@@ -15,42 +15,42 @@ type Publish struct {
 	Error error
 }
 
-// publish grpc proto msg
-func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) error {
-	if m == nil {
-		return errors.Errorf("msg is nil")
-	}
-	b, err := proto.Marshal(m)
+// PublishProto publish grpc proto msg
+func (ex *Exchange) PublishProto(m proto.Message, options ...func(*PublishOptions)) (err error) {
+	var b []byte
+	b, err = proto.Marshal(m)
 	if err != nil {
-		return errors.WithStack(err)
+		err = errors.WithStack(err)
+		return
 	}
-	pu := ex.beforePublish(options...)
-	if pu.Error != nil {
-		return errors.WithStack(pu.Error)
-	}
-	pu.msg.Body = b
-	err = pu.publish()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	err = ex.PublishByte(b, options...)
+	return
 }
 
-// publish str msg
-func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) error {
-	if m == "" {
-		return errors.Errorf("msg is empty")
+// PublishJson publish str msg
+func (ex *Exchange) PublishJson(m string, options ...func(*PublishOptions)) (err error) {
+	err = ex.PublishByte([]byte(m), options...)
+	return
+}
+
+// PublishByte publish byte msg
+func (ex *Exchange) PublishByte(m []byte, options ...func(*PublishOptions)) (err error) {
+	if len(m) == 0 {
+		err = errors.Errorf("msg is empty")
+		return
 	}
 	pu := ex.beforePublish(options...)
 	if pu.Error != nil {
-		return errors.WithStack(pu.Error)
+		err = errors.WithStack(pu.Error)
+		return
 	}
-	pu.msg.Body = []byte(m)
-	err := pu.publish()
+	pu.msg.Body = m
+	err = pu.publish()
 	if err != nil {
-		return errors.WithStack(err)
+		err = errors.WithStack(err)
+		return
 	}
-	return nil
+	return
 }
 
 func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
@@ -72,7 +72,9 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 			pu.Error = errors.Errorf("dead letter first queue is empty")
 			return &pu
 		}
-		ops.headers["x-retry-count"] = 0
+		if _, ok := ops.headers["x-retry-count"].(int32); !ok {
+			ops.headers["x-retry-count"] = 0
+		}
 		ops.headers["x-first-death-queue"] = ops.deadLetterFirstQueue
 	}
 	if ops.deliveryMode <= 0 || ops.deliveryMode > amqp.Persistent {

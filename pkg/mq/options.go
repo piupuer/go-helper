@@ -331,6 +331,8 @@ type ConsumeOptions struct {
 	noWait                         bool
 	args                           amqp.Table
 	nackRequeue                    bool
+	nackRetry                      bool
+	nackMaxRetryCount              int32
 	autoRequestId                  bool
 	newRequestIdWhenConnectionLost bool
 	oneCtx                         context.Context
@@ -394,6 +396,20 @@ func WithConsumeNackRequeue(flag bool) func(*ConsumeOptions) {
 	}
 }
 
+func WithConsumeNackRetry(flag bool) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		getConsumeOptionsOrSetDefault(options).nackRetry = flag
+	}
+}
+
+func WithConsumeNackMaxRetryCount(i int32) func(*ConsumeOptions) {
+	return func(options *ConsumeOptions) {
+		if i > 0 {
+			getConsumeOptionsOrSetDefault(options).nackMaxRetryCount = i
+		}
+	}
+}
+
 func WithConsumeAutoRequestId(flag bool) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
 		getConsumeOptionsOrSetDefault(options).autoRequestId = flag
@@ -415,8 +431,9 @@ func WithConsumeOneContext(ctx context.Context) func(*ConsumeOptions) {
 func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {
 	if options == nil {
 		return &ConsumeOptions{
-			qosPrefetchCount: 2,
-			consumer:         "any",
+			qosPrefetchCount:  2,
+			consumer:          "any",
+			nackMaxRetryCount: 5,
 		}
 	}
 	return options
