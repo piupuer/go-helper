@@ -9,6 +9,7 @@ import (
 
 type RabbitOptions struct {
 	ctx                 context.Context
+	name                string
 	heartbeat           int
 	timeout             int
 	maxConnection       int
@@ -21,6 +22,12 @@ func WithCtx(ctx context.Context) func(*RabbitOptions) {
 		if !utils.InterfaceIsNil(ctx) {
 			getRabbitOptionsOrSetDefault(options).ctx = ctx
 		}
+	}
+}
+
+func WithName(name string) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		getRabbitOptionsOrSetDefault(options).name = name
 	}
 }
 

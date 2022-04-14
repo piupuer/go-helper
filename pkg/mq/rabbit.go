@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"github.com/google/uuid"
 	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
@@ -37,7 +38,12 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) (rb *Rabbit) {
 		f(ops)
 	}
 	rb.ops = *ops
+	name := ops.name
+	if name == "" {
+		name = uuid.NewString()[:8]
+	}
 	rb.poolConfig = &tcr.PoolConfig{
+		ApplicationName:      name,
 		URI:                  dsn,
 		Heartbeat:            uint32(ops.heartbeat),
 		ConnectionTimeout:    uint32(ops.timeout),
@@ -46,6 +52,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) (rb *Rabbit) {
 		MaxCacheChannelCount: uint64(ops.maxChannel),
 	}
 	healthPoolConfig := &tcr.PoolConfig{
+		ApplicationName:      name + "-hc",
 		URI:                  dsn,
 		Heartbeat:            uint32(ops.heartbeat),
 		ConnectionTimeout:    uint32(ops.timeout),
