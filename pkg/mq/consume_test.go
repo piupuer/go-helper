@@ -56,6 +56,7 @@ func TestQueue_ConsumeOne(t *testing.T) {
 			WithQueueDeclare(false),
 			WithQueueBind(false),
 		).ConsumeOne(
+			10,
 			handler,
 		)
 		if err != nil {

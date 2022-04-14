@@ -2,17 +2,20 @@ package mq
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/google/uuid"
+	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
+	"sync/atomic"
 	"time"
 )
 
 type Publish struct {
-	ex    *Exchange
-	ops   PublishOptions
-	msg   amqp.Publishing
-	Error error
+	ops       PublishOptions
+	ex        *Exchange
+	msg       amqp.Publishing
+	publisher *tcr.Publisher
+	Error     error
 }
 
 // PublishProto publish grpc proto msg
@@ -86,60 +89,54 @@ func (ex *Exchange) beforePublish(options ...func(*PublishOptions)) *Publish {
 		Timestamp:    time.Now(),
 		ContentType:  ops.contentType,
 		Headers:      ops.headers,
+		Expiration:   ops.expiration,
 	}
 	pu.msg = msg
 	pu.ex = ex
+	pu.publisher = tcr.NewPublisherFromConfig(
+		&tcr.RabbitSeasoning{
+			PoolConfig: ex.rb.poolConfig,
+			PublisherConfig: &tcr.PublisherConfig{
+				AutoAck:                false,
+				SleepOnIdleInterval:    uint32(ops.idleInterval),
+				SleepOnErrorInterval:   uint32(ops.reconnectInterval),
+				PublishTimeOutInterval: uint32(ops.timeout),
+			},
+		},
+		pu.ex.rb.pool,
+	)
 	return &pu
 }
 
-func (pu *Publish) publish() error {
-	ctx := pu.ops.ctx
-	ch, err := pu.ex.rb.getChannel(ctx)
-	if err != nil {
-		return errors.Wrap(err, "get channel failed")
+func (pu *Publish) publish() (err error) {
+	if atomic.LoadInt32(&pu.ex.rb.lost) == 1 {
+		err = errors.Errorf("connection maybe lost")
+		return
 	}
-	defer ch.Close()
-	count := len(pu.ops.routeKeys)
-
-	// set publisher confirm
-	if err = ch.Confirm(false); err != nil {
-		return errors.Wrap(err, "set publisher confirm failed")
-	}
-	confirmCh := ch.NotifyPublish(make(chan amqp.Confirmation, count))
-	returnCh := ch.NotifyReturn(make(chan amqp.Return, count))
-
-	for i := 0; i < count; i++ {
-		err = ch.Publish(
-			pu.ex.ops.name,
-			pu.ops.routeKeys[i],
-			pu.ops.mandatory,
-			pu.ops.immediate,
-			pu.msg,
+	for _, key := range pu.ops.routeKeys {
+		envelope := &tcr.Envelope{
+			DeliveryMode: pu.msg.DeliveryMode,
+			Exchange:     pu.ex.ops.name,
+			RoutingKey:   key,
+			ContentType:  pu.msg.ContentType,
+			Headers:      pu.msg.Headers,
+			Mandatory:    pu.ops.mandatory,
+			Immediate:    pu.ops.immediate,
+		}
+		letter := &tcr.Letter{
+			LetterID:   uuid.New(),
+			RetryCount: uint32(pu.ops.maxRetryCount),
+			Body:       pu.msg.Body,
+			Envelope:   envelope,
+		}
+		err = pu.publisher.PublishWithConfirmationContextError(
+			pu.ops.ctx,
+			letter,
 		)
 		if err != nil {
-			return errors.Wrap(err, "publish failed")
+			err = errors.Wrapf(err, "publish failed")
+			return
 		}
 	}
-	timeout := time.Duration(pu.ex.rb.ops.timeout) * time.Second
-	timer := time.NewTimer(timeout)
-	index := 0
-	for {
-		select {
-		case c := <-confirmCh:
-			if !c.Ack {
-				return errors.Errorf("publish confirm faled, delivery tag: %d", c.DeliveryTag)
-			}
-			index++
-		case r := <-returnCh:
-			log.WithRequestId(ctx).Error("publish return err: reply code: %d, reply text: %s, please check exchange name or route key", r.ReplyCode, r.ReplyText)
-			return errors.Errorf("reply code: %d, reply text: %s", r.ReplyCode, r.ReplyText)
-		case <-timer.C:
-			log.WithRequestId(ctx).Warn("publish timeout: %ds, the connection may have been disconnected", pu.ex.rb.ops.timeout)
-			return errors.Errorf("publish timeout: %ds", pu.ex.rb.ops.timeout)
-		}
-		if index == count {
-			break
-		}
-	}
-	return nil
+	return
 }

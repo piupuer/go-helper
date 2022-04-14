@@ -1,26 +1,21 @@
 package mq
 
 import (
-	"context"
+	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
-	"os"
-	"os/signal"
 	"sync/atomic"
-	"syscall"
 	"time"
 )
 
 type Rabbit struct {
-	ops              RabbitOptions
-	dsn              string           // connection url
-	connLock         int32            // lock when create connect
-	conn             *amqp.Connection // connection instance
-	lost             bool             // connection is lost
-	channelLostCount int              // can't get channel count
-	lostCh           chan error       // When the connection is lost, an error is sent to this channel
-	Error            error
+	ops        RabbitOptions
+	pool       *tcr.ConnectionPool
+	poolConfig *tcr.PoolConfig
+	healthHost *tcr.ConnectionHost
+	lost       int32
+	Error      error
 }
 
 type Exchange struct {
@@ -35,118 +30,62 @@ type Queue struct {
 	Error error
 }
 
-func NewRabbit(dsn string, options ...func(*RabbitOptions)) *Rabbit {
-	var rb Rabbit
-	rb.dsn = dsn
-	rb.lost = true
-	rb.lostCh = make(chan error)
+func NewRabbit(dsn string, options ...func(*RabbitOptions)) (rb *Rabbit) {
+	rb = &Rabbit{}
 	ops := getRabbitOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
 	rb.ops = *ops
-	ctx := rb.ops.ctx
-	err := rb.connect(ctx)
-	if err != nil {
-		rb.Error = errors.WithStack(err)
-		return &rb
+	rb.poolConfig = &tcr.PoolConfig{
+		URI:                  dsn,
+		Heartbeat:            uint32(ops.heartbeat),
+		ConnectionTimeout:    uint32(ops.timeout),
+		SleepOnErrorInterval: uint32(ops.healthCheckInterval),
+		MaxConnectionCount:   uint64(ops.maxConnection),
+		MaxCacheChannelCount: uint64(ops.maxChannel),
 	}
-	go func() {
-		quit := make(chan os.Signal)
-		// kill (no param) default send syscall.SIGTERM
-		// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
-		// kill -2 is syscall.SIGINT
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-		log.WithRequestId(ctx).Warn("process is exiting")
-		if rb.conn != nil {
-			rb.conn.Close()
-		}
-	}()
+	healthPoolConfig := &tcr.PoolConfig{
+		URI:                  dsn,
+		Heartbeat:            uint32(ops.heartbeat),
+		ConnectionTimeout:    uint32(ops.timeout),
+		SleepOnErrorInterval: uint32(ops.healthCheckInterval),
+		MaxConnectionCount:   1,
+		MaxCacheChannelCount: 1,
+	}
+	pool, err := tcr.NewConnectionPoolWithErrorHandler(
+		rb.poolConfig,
+		func(err error) {
+			log.WithRequestId(rb.ops.ctx).WithError(err).Error("rabbit pool err")
+		},
+	)
 
-	return &rb
+	if err != nil {
+		rb.Error = err
+		return
+	}
+	healthPool, _ := tcr.NewConnectionPool(healthPoolConfig)
+	rb.healthHost, err = healthPool.GetConnection()
+	if err != nil {
+		rb.Error = err
+		return
+	}
+	rb.pool = pool
+	go rb.healthCheck()
+	return
 }
 
-// connect mq
-func (rb *Rabbit) connect(ctx context.Context) error {
-	if !rb.lost {
-		return nil
-	}
-	v := atomic.LoadInt32(&rb.connLock)
-	if v == 1 {
-		return errors.Errorf("the connection is creating")
-	}
-	if !atomic.CompareAndSwapInt32(&rb.connLock, 0, 1) {
-		return errors.Errorf("the connection is creating")
-	}
-	defer atomic.AddInt32(&rb.connLock, -1)
-	conn, err := dialWithTimeout(rb.dsn, 5)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	rb.conn = conn
-	rb.lost = false
-
-	go func() {
-		connLost := rb.conn.NotifyClose(make(chan *amqp.Error))
-		select {
-		case err := <-connLost:
-			// If the connection close is triggered by the Server, a reconnection takes place
-			if err != nil && err.Server {
-				log.WithRequestId(ctx).WithError(err).Warn("connection is lost")
-				rb.lost = true
-				rb.lostCh <- err
-			}
-		}
-	}()
-	return nil
-}
-
-// get a channel
-func (rb *Rabbit) getChannel(ctx context.Context) (*amqp.Channel, error) {
-	if rb.channelLostCount > rb.ops.channelMaxLostCount {
-		log.WithRequestId(ctx).Warn("get channel failed %d retries, connection maybe lost", rb.channelLostCount)
-		rb.lost = true
-	}
-	if rb.lost == true {
-		err := rb.reconnect(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "reconnect failed")
-		}
-	}
-	channel, err := rb.conn.Channel()
-	if err != nil {
-		rb.channelLostCount++
-		return nil, errors.WithStack(err)
-	}
-	rb.channelLostCount = 0
-	return channel, nil
-}
-
-// reconnect mq
-func (rb *Rabbit) reconnect(ctx context.Context) error {
-	if !rb.lost {
-		return nil
-	}
-	interval := time.Duration(rb.ops.reconnectInterval) * time.Second
-	retryCount := 0
-	var err error
+func (rb *Rabbit) healthCheck() {
+	// InfiniteLoop: Stay here till we reconnect.
 	for {
-		if atomic.LoadInt32(&rb.connLock) == 1 {
-			return errors.Errorf("the connection is creating")
-		}
-		time.Sleep(interval)
-		err = rb.connect(ctx)
-		if err == nil {
-			return nil
+		ok := rb.healthHost.Connect()
+		if ok {
+			atomic.CompareAndSwapInt32(&rb.lost, 1, 0)
 		} else {
-			retryCount++
+			atomic.CompareAndSwapInt32(&rb.lost, 0, 1)
 		}
-		if retryCount >= rb.ops.reconnectMaxRetryCount {
-			break
-		}
+		time.Sleep(time.Duration(rb.ops.healthCheckInterval) * time.Millisecond)
 	}
-	return errors.Wrapf(err, "unable to connect after %d retries", retryCount)
 }
 
 // bind a exchange
@@ -283,14 +222,12 @@ func (ex *Exchange) beforeQueue(options ...func(*QueueOptions)) *Queue {
 }
 
 // declare exchange
-func (ex *Exchange) declare() error {
-	ctx := ex.rb.ops.ctx
-	ch, err := ex.rb.getChannel(ctx)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer ch.Close()
-	if err := ch.ExchangeDeclare(
+func (ex *Exchange) declare() (err error) {
+	ch := ex.rb.pool.GetChannelFromPool()
+	defer func() {
+		ex.rb.pool.ReturnChannel(ch, true)
+	}()
+	if err = ch.Channel.ExchangeDeclare(
 		ex.ops.name,
 		ex.ops.kind,
 		ex.ops.durable,
@@ -299,20 +236,19 @@ func (ex *Exchange) declare() error {
 		ex.ops.noWait,
 		ex.ops.args,
 	); err != nil {
-		return errors.Wrapf(err, "failed declare exchange %s(%s)", ex.ops.name, ex.ops.kind)
+		err = errors.Wrapf(err, "failed declare exchange %s(%s)", ex.ops.name, ex.ops.kind)
+		return
 	}
-	return nil
+	return
 }
 
 // declare queue
-func (qu *Queue) declare() error {
-	ctx := qu.ex.rb.ops.ctx
-	ch, err := qu.ex.rb.getChannel(ctx)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer ch.Close()
-	if _, err := ch.QueueDeclare(
+func (qu *Queue) declare() (err error) {
+	ch := qu.ex.rb.pool.GetChannelFromPool()
+	defer func() {
+		qu.ex.rb.pool.ReturnChannel(ch, true)
+	}()
+	if _, err = ch.Channel.QueueDeclare(
 		qu.ops.name,
 		qu.ops.durable,
 		qu.ops.autoDelete,
@@ -320,40 +256,29 @@ func (qu *Queue) declare() error {
 		qu.ops.noWait,
 		qu.ops.args,
 	); err != nil {
-		return errors.Wrapf(err, "failed to declare %s", qu.ops.name)
+		err = errors.Wrapf(err, "failed to declare %s", qu.ops.name)
+		return
 	}
-	return nil
+	return
 }
 
 // bind queue
-func (qu *Queue) bind() error {
-	ctx := qu.ex.rb.ops.ctx
-	ch, err := qu.ex.rb.getChannel(ctx)
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
+func (qu *Queue) bind() (err error) {
+	ch := qu.ex.rb.pool.GetChannelFromPool()
+	defer func() {
+		qu.ex.rb.pool.ReturnChannel(ch, true)
+	}()
 	for _, key := range qu.ops.routeKeys {
-		if err := ch.QueueBind(
+		if err = ch.Channel.QueueBind(
 			qu.ops.name,
 			key,
 			qu.ex.ops.name,
 			qu.ops.noWait,
 			qu.ops.args,
 		); err != nil {
-			return errors.Wrapf(err, "failed to declare bind queue, queue: %s, key: %s, exchange: %s", qu.ops.name, key, qu.ex.ops.name)
+			err = errors.Wrapf(err, "failed to declare bind queue, queue: %s, key: %s, exchange: %s", qu.ops.name, key, qu.ex.ops.name)
+			return
 		}
 	}
-	return nil
-}
-
-// dial rabbitmq with timeout(seconds)
-func dialWithTimeout(dsn string, timeout int64) (*amqp.Connection, error) {
-	conn, err := amqp.DialConfig(dsn, amqp.Config{
-		Dial: amqp.DefaultDial(time.Duration(timeout) * time.Second),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
+	return
 }

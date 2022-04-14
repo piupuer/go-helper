@@ -8,11 +8,12 @@ import (
 )
 
 type RabbitOptions struct {
-	ctx                    context.Context
-	reconnectInterval      int
-	reconnectMaxRetryCount int
-	channelMaxLostCount    int
-	timeout                int
+	ctx                 context.Context
+	heartbeat           int
+	timeout             int
+	maxConnection       int
+	maxChannel          int
+	healthCheckInterval int
 }
 
 func WithCtx(ctx context.Context) func(*RabbitOptions) {
@@ -23,26 +24,10 @@ func WithCtx(ctx context.Context) func(*RabbitOptions) {
 	}
 }
 
-func WithReconnectInterval(second int) func(*RabbitOptions) {
+func WithHeartbeat(second int) func(*RabbitOptions) {
 	return func(options *RabbitOptions) {
 		if second > 0 {
-			getRabbitOptionsOrSetDefault(options).reconnectInterval = second
-		}
-	}
-}
-
-func WithReconnectMaxRetryCount(count int) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		if count > 0 {
-			getRabbitOptionsOrSetDefault(options).reconnectMaxRetryCount = count
-		}
-	}
-}
-
-func WithChannelMaxLostCount(count int) func(*RabbitOptions) {
-	return func(options *RabbitOptions) {
-		if count > 0 {
-			getRabbitOptionsOrSetDefault(options).channelMaxLostCount = count
+			getRabbitOptionsOrSetDefault(options).heartbeat = second
 		}
 	}
 }
@@ -55,14 +40,39 @@ func WithTimeout(second int) func(*RabbitOptions) {
 	}
 }
 
+func WithMaxConnection(count int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if count > 0 {
+			getRabbitOptionsOrSetDefault(options).maxConnection = count
+		}
+	}
+}
+
+func WithMaxChannel(count int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if count > 0 {
+			getRabbitOptionsOrSetDefault(options).maxChannel = count
+		}
+	}
+}
+
+func WithHealthCheckInterval(milli int) func(*RabbitOptions) {
+	return func(options *RabbitOptions) {
+		if milli > 0 {
+			getRabbitOptionsOrSetDefault(options).healthCheckInterval = milli
+		}
+	}
+}
+
 func getRabbitOptionsOrSetDefault(options *RabbitOptions) *RabbitOptions {
 	if options == nil {
 		return &RabbitOptions{
-			ctx:                    context.Background(),
-			timeout:                10,
-			reconnectMaxRetryCount: 3,
-			channelMaxLostCount:    5,
-			reconnectInterval:      5,
+			ctx:                 context.Background(),
+			heartbeat:           1,
+			timeout:             10,
+			maxConnection:       10,
+			maxChannel:          50,
+			healthCheckInterval: 100,
 		}
 	}
 	return options
@@ -253,6 +263,10 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 
 type PublishOptions struct {
 	ctx                  context.Context
+	maxRetryCount        int
+	timeout              int
+	reconnectInterval    int
+	idleInterval         int
 	routeKeys            []string
 	contentType          string
 	headers              amqp.Table
@@ -264,16 +278,42 @@ type PublishOptions struct {
 	deadLetterFirstQueue string
 }
 
-func WithPublishContentType(contentType string) func(*PublishOptions) {
+func WithPublishCtx(ctx context.Context) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		getPublishOptionsOrSetDefault(options).contentType = contentType
+		if !utils.InterfaceIsNil(ctx) {
+			getPublishOptionsOrSetDefault(options).ctx = ctx
+		}
 	}
 }
 
-func WithPublishHeaders(headers amqp.Table) func(*PublishOptions) {
+func WithPublishMaxRetryCount(count int) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		if headers != nil {
-			getPublishOptionsOrSetDefault(options).headers = headers
+		if count > 0 {
+			getPublishOptionsOrSetDefault(options).maxRetryCount = count
+		}
+	}
+}
+
+func WithPublishTimeout(milli int) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		if milli > 0 {
+			getPublishOptionsOrSetDefault(options).timeout = milli
+		}
+	}
+}
+
+func WithPublishReconnectInterval(milli int) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		if milli > 0 {
+			getPublishOptionsOrSetDefault(options).reconnectInterval = milli
+		}
+	}
+}
+
+func WithPublishIdleInterval(milli int) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		if milli > 0 {
+			getPublishOptionsOrSetDefault(options).idleInterval = milli
 		}
 	}
 }
@@ -289,10 +329,16 @@ func WithPublishRouteKey(keys ...string) func(*PublishOptions) {
 	}
 }
 
-func WithPublishCtx(ctx context.Context) func(*PublishOptions) {
+func WithPublishContentType(contentType string) func(*PublishOptions) {
 	return func(options *PublishOptions) {
-		if !utils.InterfaceIsNil(ctx) {
-			getPublishOptionsOrSetDefault(options).ctx = ctx
+		getPublishOptionsOrSetDefault(options).contentType = contentType
+	}
+}
+
+func WithPublishHeaders(headers amqp.Table) func(*PublishOptions) {
+	return func(options *PublishOptions) {
+		if headers != nil {
+			getPublishOptionsOrSetDefault(options).headers = headers
 		}
 	}
 }
@@ -312,46 +358,36 @@ func WithPublishDeadLetterFirstQueue(q string) func(*PublishOptions) {
 func getPublishOptionsOrSetDefault(options *PublishOptions) *PublishOptions {
 	if options == nil {
 		return &PublishOptions{
-			ctx:         context.Background(),
-			contentType: "text/plain",
-			headers:     amqp.Table{},
+			ctx:               context.Background(),
+			contentType:       "text/plain",
+			headers:           amqp.Table{},
+			maxRetryCount:     3,
+			timeout:           10000,
+			reconnectInterval: 1000,
+			idleInterval:      1000,
 		}
 	}
 	return options
 }
 
 type ConsumeOptions struct {
-	qosPrefetchCount               int
-	qosPrefetchSize                int
-	qosGlobal                      bool
-	consumer                       string
-	autoAck                        bool
-	exclusive                      bool
-	noLocal                        bool
-	noWait                         bool
-	args                           amqp.Table
-	nackRequeue                    bool
-	nackRetry                      bool
-	nackMaxRetryCount              int32
-	autoRequestId                  bool
-	newRequestIdWhenConnectionLost bool
-	oneCtx                         context.Context
+	qosPrefetchCount  int
+	consumer          string
+	autoAck           bool
+	exclusive         bool
+	noWait            bool
+	args              amqp.Table
+	nackRequeue       bool
+	nackRetry         bool
+	nackMaxRetryCount int32
+	autoRequestId     bool
+	oneCtx            context.Context
 }
 
 func WithConsumeQosPrefetchCount(prefetchCount int) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
 		getConsumeOptionsOrSetDefault(options).qosPrefetchCount = prefetchCount
 	}
-}
-
-func WithConsumeQosPrefetchSize(prefetchSize int) func(*ConsumeOptions) {
-	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).qosPrefetchSize = prefetchSize
-	}
-}
-
-func WithConsumeQosGlobal(options *ConsumeOptions) {
-	getConsumeOptionsOrSetDefault(options).qosGlobal = true
 }
 
 func WithConsumeConsumer(consumer string) func(*ConsumeOptions) {
@@ -369,12 +405,6 @@ func WithConsumeAutoAck(flag bool) func(*ConsumeOptions) {
 func WithConsumeExclusive(flag bool) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
 		getConsumeOptionsOrSetDefault(options).exclusive = flag
-	}
-}
-
-func WithConsumeNoLocal(flag bool) func(*ConsumeOptions) {
-	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).noLocal = flag
 	}
 }
 
@@ -416,12 +446,6 @@ func WithConsumeAutoRequestId(flag bool) func(*ConsumeOptions) {
 	}
 }
 
-func WithConsumeNewRequestIdWhenConnectionLost(flag bool) func(*ConsumeOptions) {
-	return func(options *ConsumeOptions) {
-		getConsumeOptionsOrSetDefault(options).newRequestIdWhenConnectionLost = flag
-	}
-}
-
 func WithConsumeOneContext(ctx context.Context) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
 		getConsumeOptionsOrSetDefault(options).oneCtx = ctx
@@ -432,7 +456,6 @@ func getConsumeOptionsOrSetDefault(options *ConsumeOptions) *ConsumeOptions {
 	if options == nil {
 		return &ConsumeOptions{
 			qosPrefetchCount:  2,
-			consumer:          "any",
 			nackMaxRetryCount: 5,
 		}
 	}

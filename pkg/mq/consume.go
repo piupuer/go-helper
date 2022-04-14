@@ -3,79 +3,22 @@ package mq
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
-	"time"
+	"sync/atomic"
 )
 
 type Consume struct {
-	qu    *Queue
-	ops   ConsumeOptions
-	Error error
+	ops      ConsumeOptions
+	q        string
+	consumer *tcr.Consumer
+	Error    error
 }
 
-func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) error {
-	if handler == nil {
-		return errors.Errorf("handler is nil")
-	}
-	co := qu.beforeConsume(options...)
-	if co.Error != nil {
-		return errors.WithStack(co.Error)
-	}
-	ctx := co.newContext(nil)
-	delivery, err := co.consume(ctx)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	go func() {
-		for {
-			go func() {
-				for msg := range delivery {
-					if co.ops.autoAck {
-						handler(ctx, co.qu.ops.name, msg)
-						continue
-					}
-					if handler(ctx, co.qu.ops.name, msg) {
-						e := msg.Ack(false)
-						if e != nil {
-							log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
-						}
-					} else {
-						e := msg.Nack(false, co.ops.nackRequeue)
-						if e != nil {
-							log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
-						}
-					}
-				}
-			}()
-			// wait connection lost
-			if err = <-co.qu.ex.rb.lostCh; err != nil {
-				for {
-					err = co.qu.ex.rb.reconnect(ctx)
-					if err == nil {
-						break
-					} else {
-						time.Sleep(time.Duration(co.qu.ex.rb.ops.reconnectInterval) * time.Second)
-					}
-				}
-				if co.ops.newRequestIdWhenConnectionLost {
-					ctx = co.newContext(nil)
-				}
-				d, e := co.consume(ctx)
-				if e != nil {
-					log.WithRequestId(ctx).WithError(e).Error("reconsume failed")
-					return
-				}
-				delivery = d
-			}
-		}
-	}()
-	return nil
-}
-
-func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) (err error) {
+func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bool, options ...func(*ConsumeOptions)) (err error) {
 	if handler == nil {
 		err = errors.Errorf("handler is nil")
 		return
@@ -85,58 +28,103 @@ func (qu *Queue) ConsumeOne(handler func(context.Context, string, amqp.Delivery)
 		err = errors.WithStack(co.Error)
 		return
 	}
-	ctx := co.newContext(co.ops.oneCtx)
-	var msg amqp.Delivery
-	var ok bool
-	msg, ok, err = co.consumeOne(ctx)
+	ctx := co.newContext(nil)
+	co.consumer.StartConsumingWithAction(func(msg *tcr.ReceivedMessage) {
+		d := msg.Delivery
+		a := d.Acknowledger
+		tag := d.DeliveryTag
+		ok := handler(ctx, co.q, d)
+		if co.ops.autoAck {
+			return
+		}
+		if ok {
+			e := a.Ack(tag, false)
+			if e != nil {
+				log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
+			}
+			return
+		}
+		e := a.Nack(tag, false, co.ops.nackRequeue)
+		if e != nil {
+			log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
+		}
+	})
+	return
+}
+
+func (qu *Queue) ConsumeOne(size int, handler func(c context.Context, q string, d amqp.Delivery) bool, options ...func(*ConsumeOptions)) (err error) {
+	if size < 1 {
+		err = errors.Errorf("minimum size is 1")
+		return
+	}
+	if handler == nil {
+		err = errors.Errorf("handler is nil")
+		return
+	}
+
+	if atomic.LoadInt32(&qu.ex.rb.lost) == 1 {
+		err = errors.Errorf("connection maybe lost")
+		return
+	}
+	co := qu.beforeConsume(options...)
+	if co.Error != nil {
+		err = errors.WithStack(co.Error)
+		return
+	}
+	ch := qu.ex.rb.pool.GetChannelFromPool()
+	defer func() {
+		qu.ex.rb.pool.ReturnChannel(ch, true)
+	}()
+	var ds []amqp.Delivery
+	ds, err = qu.getBatch(ch, qu.ops.name, size, co.ops.autoAck)
+
 	if err != nil {
 		err = errors.WithStack(err)
 		return
 	}
-	if !ok {
-		err = errors.Errorf("queue is empty, can't get one msg")
-		return
-	}
-	if co.ops.autoAck {
-		handler(ctx, co.qu.ops.name, msg)
-		return
-	}
-	if handler(ctx, co.qu.ops.name, msg) {
-		err = msg.Ack(false)
-		if err != nil {
-			log.WithRequestId(ctx).WithError(err).Error("consume ack failed")
+	ctx := co.newContext(co.ops.oneCtx)
+	for i, d := range ds {
+		a := d.Acknowledger
+		tag := d.DeliveryTag
+		ctx = context.WithValue(ctx, "index", i)
+		ok := handler(ctx, co.q, d)
+		if co.ops.autoAck {
+			return
 		}
-		return
-	}
-	var retryCount int32
-	if v, o := msg.Headers["x-retry-count"].(int32); o {
-		retryCount = v + 1
-	} else {
-		retryCount = 1
-	}
-	if co.ops.nackRetry {
-		if retryCount > co.ops.nackMaxRetryCount {
-			log.WithRequestId(ctx).Warn("maximum retry %d exceeded, discard data", co.ops.nackMaxRetryCount)
-			err = msg.Nack(false, co.ops.nackRequeue)
-			if err != nil {
-				log.WithRequestId(ctx).WithError(err).Error("consume nack failed")
+		if ok {
+			e := a.Ack(tag, false)
+			if e != nil {
+				log.WithRequestId(ctx).WithError(e).Error("consume one ack failed")
 			}
 			return
 		}
-		msg.Headers["x-retry-count"] = retryCount
-		err = qu.ex.PublishByte(
-			msg.Body,
-			WithPublishHeaders(msg.Headers),
-			WithPublishRouteKey(msg.RoutingKey),
-		)
-		if err != nil {
-			log.WithRequestId(ctx).WithError(err).Error("consume republish failed")
-			return
+		// get retry count
+		var retryCount int32
+		if v, o := d.Headers["x-retry-count"].(int32); o {
+			retryCount = v + 1
+		} else {
+			retryCount = 1
 		}
-	}
-	err = msg.Nack(false, co.ops.nackRequeue)
-	if err != nil {
-		log.WithRequestId(ctx).WithError(err).Error("consume nack failed")
+		// need to retry, requeue with set custom header
+		if co.ops.nackRetry {
+			if retryCount < co.ops.nackMaxRetryCount {
+				d.Headers["x-retry-count"] = retryCount
+				err = qu.ex.PublishByte(
+					d.Body,
+					WithPublishHeaders(d.Headers),
+					WithPublishRouteKey(d.RoutingKey),
+				)
+				if err != nil {
+					log.WithRequestId(ctx).WithError(err).Error("consume one republish failed")
+				}
+			} else {
+				log.WithRequestId(ctx).Warn("maximum retry %d exceeded, discard data", co.ops.nackMaxRetryCount)
+			}
+		}
+		e := a.Nack(tag, false, co.ops.nackRequeue)
+		if e != nil {
+			log.WithRequestId(ctx).WithError(e).Error("consume one nack failed")
+		}
 	}
 	return
 }
@@ -152,46 +140,51 @@ func (qu *Queue) beforeConsume(options ...func(*ConsumeOptions)) *Consume {
 		f(ops)
 	}
 	co.ops = *ops
-	co.qu = qu
+	co.q = qu.ops.name
+	co.consumer = tcr.NewConsumerFromConfig(
+		&tcr.ConsumerConfig{
+			Enabled:              true,
+			QueueName:            qu.ops.name,
+			ConsumerName:         co.ops.consumer,
+			AutoAck:              co.ops.autoAck,
+			Exclusive:            co.ops.exclusive,
+			NoWait:               co.ops.noWait,
+			Args:                 co.ops.args,
+			QosCountOverride:     co.ops.qosPrefetchCount,
+			SleepOnIdleInterval:  100,
+			SleepOnErrorInterval: 100,
+		},
+		qu.ex.rb.pool,
+	)
 	return &co
 }
 
-func (co *Consume) consume(ctx context.Context) (<-chan amqp.Delivery, error) {
-	channel, err := co.qu.ex.rb.getChannel(ctx)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	// set channel qos
-	err = channel.Qos(
-		co.ops.qosPrefetchCount,
-		co.ops.qosPrefetchSize,
-		co.ops.qosGlobal,
-	)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return channel.Consume(
-		co.qu.ops.name,
-		co.ops.consumer,
-		co.ops.autoAck,
-		co.ops.exclusive,
-		co.ops.noLocal,
-		co.ops.noWait,
-		co.ops.args,
-	)
-}
+func (qu *Queue) getBatch(channel *tcr.ChannelHost, queueName string, batchSize int, autoAck bool) (ds []amqp.Delivery, err error) {
+	ds = make([]amqp.Delivery, 0)
 
-func (co *Consume) consumeOne(ctx context.Context) (amqp.Delivery, bool, error) {
-	channel, err := co.qu.ex.rb.getChannel(ctx)
-	var msg amqp.Delivery
-	if err != nil {
-		return msg, false, errors.WithStack(err)
+	// Get A Batch of Messages
+GetBatchLoop:
+	for {
+		// Break if we have a full batch
+		if len(ds) == batchSize {
+			break GetBatchLoop
+		}
+
+		var d amqp.Delivery
+		var ok bool
+		d, ok, err = channel.Channel.Get(queueName, autoAck)
+		if err != nil {
+			return
+		}
+
+		if !ok { // Break If empty
+			break GetBatchLoop
+		}
+
+		ds = append(ds, d)
 	}
 
-	return channel.Get(
-		co.qu.ops.name,
-		co.ops.autoAck,
-	)
+	return
 }
 
 func (co *Consume) newContext(ctx context.Context) context.Context {
