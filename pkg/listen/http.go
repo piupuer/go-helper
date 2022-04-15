@@ -54,7 +54,10 @@ func Http(options ...func(*HttpOptions)) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.WithRequestId(ctx).Info("[http server]shutting down...")
+	if ops.exit != nil {
+		ops.exit()
+	}
+	log.WithRequestId(ctx).Info("[%s][http server]shutting down...", ops.proName)
 
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling

@@ -16,6 +16,7 @@ type HttpOptions struct {
 	urlPrefix string
 	proName   string
 	handler   http.Handler
+	exit      func()
 }
 
 func WithHttpCtx(ctx context.Context) func(*HttpOptions) {
@@ -62,6 +63,14 @@ func WithHttpHandler(h http.Handler) func(*HttpOptions) {
 	}
 }
 
+func WithHttpExit(f func()) func(*HttpOptions) {
+	return func(options *HttpOptions) {
+		if f != nil {
+			getHttpOptionsOrSetDefault(options).exit = f
+		}
+	}
+}
+
 func getHttpOptionsOrSetDefault(options *HttpOptions) *HttpOptions {
 	if options == nil {
 		return &HttpOptions{
@@ -82,6 +91,7 @@ type GrpcOptions struct {
 	proName   string
 	serverOps []func(*rpc.GrpcServerOptions)
 	register  func(g *grpc.Server)
+	exit      func()
 }
 
 func WithGrpcCtx(ctx context.Context) func(*GrpcOptions) {
@@ -120,6 +130,14 @@ func WithGrpcRegister(fun func(g *grpc.Server)) func(*GrpcOptions) {
 	return func(options *GrpcOptions) {
 		if fun != nil {
 			getGrpcOptionsOrSetDefault(options).register = fun
+		}
+	}
+}
+
+func WithGrpcExit(f func()) func(*GrpcOptions) {
+	return func(options *GrpcOptions) {
+		if f != nil {
+			getGrpcOptionsOrSetDefault(options).exit = f
 		}
 	}
 }

@@ -52,6 +52,9 @@ func Grpc(options ...func(*GrpcOptions)) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	if ops.exit != nil {
+		ops.exit()
+	}
 	log.WithRequestId(ops.ctx).Info("[%s][grpc server]shutting down...", ops.proName)
 
 	srv.GracefulStop()
