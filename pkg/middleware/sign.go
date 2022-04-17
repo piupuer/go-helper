@@ -32,6 +32,14 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 					c.Next()
 					return
 				}
+				re, err := regexp.Compile(item)
+				if err != nil {
+					continue
+				}
+				if re.MatchString(c.Request.URL.Path) {
+					c.Next()
+					return
+				}
 			}
 		}
 		// token
