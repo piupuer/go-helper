@@ -95,6 +95,14 @@ func (rb *Rabbit) healthCheck() {
 	}
 }
 
+func (rb *Rabbit) Ping() (err error) {
+	if rb.lost == 1 {
+		err = errors.Errorf("connection maybe lost")
+		return
+	}
+	return
+}
+
 // bind a exchange
 func (rb *Rabbit) Exchange(options ...func(*ExchangeOptions)) *Exchange {
 	ex := rb.beforeExchange(options...)
