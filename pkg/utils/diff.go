@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/shopspring/decimal"
 	"reflect"
 )
@@ -57,7 +57,7 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 					case decimal.Decimal:
 						d, _ := decimal.NewFromString(rv.String())
 						m3[k1] = d
-					case carbon.ToDateTimeString:
+					case carbon.DateTime:
 						t := carbon.Parse(rv.String())
 						// skip zero time
 						if !t.IsZero() {

@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"mime/multipart"
@@ -25,21 +25,21 @@ type OperationApi struct {
 }
 
 type OperationRecord struct {
-	CreatedAt  carbon.ToDateTimeString `json:"createdAt"`
-	ApiDesc    string                  `json:"apiDesc"`
-	Path       string                  `json:"path"`
-	Method     string                  `json:"method"`
-	Header     string                  `json:"header"`
-	Body       string                  `json:"body"`
-	Params     string                  `json:"params"`
-	Resp       string                  `json:"resp"`
-	Status     int                     `json:"status"`
-	Username   string                  `json:"username"`
-	RoleName   string                  `json:"roleName"`
-	Ip         string                  `json:"ip"`
-	IpLocation string                  `json:"ipLocation"`
-	Latency    time.Duration           `json:"latency"`
-	UserAgent  string                  `json:"userAgent"`
+	CreatedAt  carbon.DateTime `json:"createdAt"`
+	ApiDesc    string          `json:"apiDesc"`
+	Path       string          `json:"path"`
+	Method     string          `json:"method"`
+	Header     string          `json:"header"`
+	Body       string          `json:"body"`
+	Params     string          `json:"params"`
+	Resp       string          `json:"resp"`
+	Status     int             `json:"status"`
+	Username   string          `json:"username"`
+	RoleName   string          `json:"roleName"`
+	Ip         string          `json:"ip"`
+	IpLocation string          `json:"ipLocation"`
+	Latency    time.Duration   `json:"latency"`
+	UserAgent  string          `json:"userAgent"`
 }
 
 func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
@@ -70,9 +70,7 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				}
 			}
 
-			endTime := carbon.ToDateTimeString{
-				Carbon: carbon.Now(),
-			}
+			endTime := carbon.Now()
 
 			contentType := c.Request.Header.Get("Content-Type")
 			// multipart/form-data
@@ -110,10 +108,12 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 				Header:    utils.Struct2Json(header),
 				Body:      reqBody,
 				Params:    utils.Struct2Json(reqParams),
-				Latency:   endTime.Time.Sub(startTime.Time),
+				Latency:   endTime.Carbon2Time().Sub(startTime.Carbon2Time()),
 				UserAgent: c.Request.UserAgent(),
 			}
-			record.CreatedAt = endTime
+			record.CreatedAt = carbon.DateTime{
+				Carbon: endTime,
+			}
 
 			record.Username = constant.MiddlewareOperationLogNotLogin
 			record.RoleName = constant.MiddlewareOperationLogNotLogin

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/gorilla/websocket"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/ch"
@@ -369,7 +369,7 @@ func (c *MessageClient) heartBeat() {
 	for {
 		select {
 		case <-ticker.C:
-			last := time.Now().Sub(c.LastActiveTime.Time)
+			last := time.Now().Sub(c.LastActiveTime.Carbon2Time())
 			if c.RetryCount > heartBeatMaxRetryCount {
 				panic(fmt.Sprintf("[message][heartbeat]retry sending heartbeat for %d times without response", c.RetryCount))
 			}

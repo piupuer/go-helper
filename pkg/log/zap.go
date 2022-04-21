@@ -2,7 +2,7 @@ package log
 
 import (
 	"fmt"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"

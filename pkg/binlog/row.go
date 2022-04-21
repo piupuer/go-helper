@@ -5,7 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/schema"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
@@ -46,7 +46,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 				// convert to carbon.DateTimeString
 				// grom v2 time type is datetime(3)
 				if t, ok := eItem.(string); ok && columnType == "datetime(3)" {
-					eItem = carbon.ToDateTimeString{
+					eItem = carbon.DateTime{
 						Carbon: carbon.Parse(t),
 					}
 				}

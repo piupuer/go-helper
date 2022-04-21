@@ -2,7 +2,7 @@ package query
 
 import (
 	"fmt"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -175,7 +175,7 @@ func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) 
 
 	// default expire
 	if message.ExpiredAt == nil {
-		message.ExpiredAt = &carbon.ToDateTimeString{
+		message.ExpiredAt = &carbon.DateTime{
 			Carbon: carbon.Now().AddDays(30),
 		}
 	}
@@ -203,7 +203,7 @@ func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []u
 	message.Type = ms.SysMessageTypeOneToMany
 
 	if message.ExpiredAt == nil {
-		message.ExpiredAt = &carbon.ToDateTimeString{
+		message.ExpiredAt = &carbon.DateTime{
 			Carbon: carbon.Now().AddDays(30),
 		}
 	}
@@ -226,7 +226,7 @@ func (my MySql) CreateSystemMessage(message ms.SysMessage) error {
 	message.Type = ms.SysMessageTypeSystem
 
 	if message.ExpiredAt == nil {
-		message.ExpiredAt = &carbon.ToDateTimeString{
+		message.ExpiredAt = &carbon.DateTime{
 			Carbon: carbon.Now().AddDays(30),
 		}
 	}

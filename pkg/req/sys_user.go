@@ -1,6 +1,6 @@
 package req
 
-import "github.com/golang-module/carbon"
+import "github.com/golang-module/carbon/v2"
 
 type UserStatus struct {
 	Username   string `json:"username" form:"username"`
@@ -14,8 +14,8 @@ type UserNeedCaptcha struct {
 }
 
 type UserNeedResetPwd struct {
-	First         uint                `json:"first"`
-	LastLoginTime carbon.ToDateString `json:"lastLoginTime"`
+	First         uint            `json:"first"`
+	LastLoginTime carbon.DateTime `json:"lastLoginTime"`
 }
 
 type ResetUserPwd struct {

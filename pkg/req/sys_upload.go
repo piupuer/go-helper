@@ -2,7 +2,7 @@ package req
 
 import (
 	"fmt"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/pkg/errors"
 	"regexp"
 )

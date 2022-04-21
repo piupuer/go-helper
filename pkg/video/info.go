@@ -35,7 +35,7 @@ func parseDuration(str string) (duration, bitrate int64) {
 	return
 }
 
-func parseVideo(str string) (width, height, bitrate , fps int64) {
+func parseVideo(str string) (width, height, bitrate, fps int64) {
 	res := videoReg.FindStringSubmatch(str)
 	if len(res) == 5 {
 		w, _ := decimal.NewFromString(res[1])

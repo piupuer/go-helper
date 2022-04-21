@@ -1,7 +1,7 @@
 package ms
 
 import (
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -9,7 +9,7 @@ import (
 )
 
 type DeletedAt struct {
-	carbon.ToDateTimeString
+	carbon.DateTime
 }
 
 func (DeletedAt) QueryClauses(f *schema.Field) []clause.Interface {

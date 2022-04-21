@@ -2,14 +2,14 @@ package resp
 
 import (
 	"fmt"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 type Time struct {
-	CreatedAt carbon.ToDateTimeString `json:"createdAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // create time
-	UpdatedAt carbon.ToDateTimeString `json:"updatedAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // update time
+	CreatedAt carbon.DateTime `json:"createdAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // create time
+	UpdatedAt carbon.DateTime `json:"updatedAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // update time
 }
 
 // base fields(like Id/CreatedAt/UpdatedAt common fields)
