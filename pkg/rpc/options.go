@@ -88,38 +88,11 @@ func WithGrpcTimeout(second int) func(*GrpcOptions) {
 	}
 }
 
-func WithGrpcHealthCheck(flag bool) func(*GrpcOptions) {
-	return func(options *GrpcOptions) {
-		getGrpcOptionsOrSetDefault(options).healthCheck = flag
-	}
-}
-
 func getGrpcOptionsOrSetDefault(options *GrpcOptions) *GrpcOptions {
 	if options == nil {
 		return &GrpcOptions{
 			ctx:     context.Background(),
 			timeout: constant.GrpcTimeout,
-		}
-	}
-	return options
-}
-
-type GrpcHealthCheckOptions struct {
-	ctx context.Context
-}
-
-func WithGrpcHealthCheckCtx(ctx context.Context) func(*GrpcHealthCheckOptions) {
-	return func(options *GrpcHealthCheckOptions) {
-		if !utils.InterfaceIsNil(ctx) {
-			getGrpcHealthCheckOptionsOrSetDefault(options).ctx = ctx
-		}
-	}
-}
-
-func getGrpcHealthCheckOptionsOrSetDefault(options *GrpcHealthCheckOptions) *GrpcHealthCheckOptions {
-	if options == nil {
-		return &GrpcHealthCheckOptions{
-			ctx: context.Background(),
 		}
 	}
 	return options

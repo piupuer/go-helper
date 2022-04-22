@@ -4,110 +4,68 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/piupuer/go-helper/pkg/log"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"strings"
 	"time"
 )
 
 type Grpc struct {
 	ops   GrpcOptions
-	uri   string
-	ctl   credentials.TransportCredentials
+	Conn  *grpc.ClientConn
 	Error error
 }
 
-func NewGrpc(uri string, options ...func(*GrpcOptions)) *Grpc {
-	var gr Grpc
-	gr.uri = uri
+func NewGrpc(uri string, options ...func(*GrpcOptions)) (gr *Grpc) {
+	gr = &Grpc{}
 	ops := getGrpcOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
 	gr.ops = *ops
+	var ctl credentials.TransportCredentials
 	if len(ops.clientKey) > 0 || len(ops.clientPem) > 0 || len(ops.caPem) > 0 {
 		cert, err := tls.X509KeyPair(gr.ops.clientPem, gr.ops.clientKey)
 		if err != nil {
 			gr.Error = errors.Wrap(err, "load x509 key pair failed")
-			return &gr
+			return
 		}
 		certPool := x509.NewCertPool()
 		if ok := certPool.AppendCertsFromPEM(gr.ops.caPem); !ok {
 			gr.Error = errors.Errorf("append certs from pem failed")
-			return &gr
+			return
 		}
-		gr.ctl = credentials.NewTLS(&tls.Config{
+		ctl = credentials.NewTLS(&tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ServerName:   gr.ops.serverName,
 			RootCAs:      certPool,
 		})
 	} else {
-		gr.ctl = insecure.NewCredentials()
+		ctl = insecure.NewCredentials()
 	}
-	if ops.healthCheck {
-		err := gr.HealthCheck(WithGrpcHealthCheckCtx(ops.ctx))
-		if err != nil {
-			gr.Error = err
-		}
-	}
-	return &gr
-}
 
-func (gr Grpc) Conn() (conn *grpc.ClientConn, err error) {
-	if gr.Error != nil {
-		if strings.HasPrefix(gr.Error.Error(), "health check") {
-			gr.Error = nil
-		} else {
-			err = gr.Error
-		}
-		if err != nil {
-			return
-		}
+	streamInterceptors := make([]grpc.StreamClientInterceptor, 0)
+	unaryInterceptors := make([]grpc.UnaryClientInterceptor, 0)
+	// retry
+	retryOpts := []grpc_retry.CallOption{
+		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(250 * time.Millisecond)),
+		grpc_retry.WithMax(5),
+		grpc_retry.WithCodes(codes.Aborted, codes.NotFound, codes.Unavailable),
 	}
-	var option grpc.DialOption
-	option = grpc.WithTransportCredentials(gr.ctl)
+	streamInterceptors = append(streamInterceptors, grpc_retry.StreamClientInterceptor(retryOpts...))
+	unaryInterceptors = append(unaryInterceptors, grpc_retry.UnaryClientInterceptor(retryOpts...))
+
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(ctl),
+		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(unaryInterceptors...)),
+		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(streamInterceptors...)),
+	}
 
 	ctx, _ := context.WithTimeout(gr.ops.ctx, time.Duration(gr.ops.timeout)*time.Second)
-	conn, err = grpc.DialContext(
-		ctx,
-		gr.uri,
-		option,
-	)
-	return
-}
-
-func (gr Grpc) HealthCheck(options ...func(*GrpcHealthCheckOptions)) (err error) {
-	if gr.Error != nil {
-		err = gr.Error
-		return
-	}
-	ops := getGrpcHealthCheckOptionsOrSetDefault(nil)
-	for _, f := range options {
-		f(ops)
-	}
-	// get connection
-	var conn *grpc.ClientConn
-	conn, err = gr.Conn()
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-	// health check
-	client := grpc_health_v1.NewHealthClient(conn)
-	var h *grpc_health_v1.HealthCheckResponse
-	ctx, _ := context.WithTimeout(ops.ctx, time.Duration(gr.ops.timeout)*time.Second)
-	h, err = client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
-	if err != nil {
-		log.WithContext(ctx).Warn("health check %s failed: %v", gr.uri, err)
-		return errors.Wrapf(err, "health check %s failed", gr.uri)
-	}
-	if h.Status != grpc_health_v1.HealthCheckResponse_SERVING {
-		log.WithContext(ctx).Warn("health check %s not SERVING: %v", gr.uri, h.Status)
-		return errors.Errorf("health check %s not SERVING", gr.uri)
-	}
+	gr.Conn, gr.Error = grpc.DialContext(ctx, uri, opts...)
 	return
 }
