@@ -65,6 +65,10 @@ func NewGrpc(uri string, options ...func(*GrpcOptions)) (gr *Grpc) {
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(streamInterceptors...)),
 	}
 
+	if len(ops.customs) > 0 {
+		opts = append(opts, ops.customs...)
+	}
+
 	ctx, _ := context.WithTimeout(gr.ops.ctx, time.Duration(gr.ops.timeout)*time.Second)
 	gr.Conn, gr.Error = grpc.DialContext(ctx, uri, opts...)
 	return

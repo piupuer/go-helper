@@ -12,13 +12,13 @@ import (
 )
 
 type GrpcOptions struct {
-	ctx         context.Context
-	serverName  string
-	caPem       []byte
-	clientPem   []byte
-	clientKey   []byte
-	timeout     int
-	healthCheck bool
+	ctx        context.Context
+	serverName string
+	caPem      []byte
+	clientPem  []byte
+	clientKey  []byte
+	timeout    int
+	customs    []grpc.DialOption
 }
 
 func WithGrpcCtx(ctx context.Context) func(*GrpcOptions) {
@@ -85,6 +85,12 @@ func WithGrpcTimeout(second int) func(*GrpcOptions) {
 		if second > 0 {
 			getGrpcOptionsOrSetDefault(options).timeout = second
 		}
+	}
+}
+
+func WithGrpcCustom(ops ...grpc.DialOption) func(*GrpcOptions) {
+	return func(options *GrpcOptions) {
+		getGrpcOptionsOrSetDefault(options).customs = append(getGrpcOptionsOrSetDefault(options).customs, ops...)
 	}
 }
 
