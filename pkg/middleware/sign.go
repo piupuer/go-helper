@@ -45,7 +45,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		// token
 		token := c.Request.Header.Get(ops.headerKey[0])
 		if token == "" {
-			log.WithRequestId(c).Warn(resp.InvalidSignTokenMsg)
+			log.WithContext(c).Warn(resp.InvalidSignTokenMsg)
 			abort(c, resp.InvalidSignTokenMsg)
 			return
 		}
@@ -65,12 +65,12 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			}
 		}
 		if appId == "" {
-			log.WithRequestId(c).Warn(resp.InvalidSignIdMsg)
+			log.WithContext(c).Warn(resp.InvalidSignIdMsg)
 			abort(c, resp.InvalidSignIdMsg)
 			return
 		}
 		if timestamp == "" {
-			log.WithRequestId(c).Warn(resp.InvalidSignTimestampMsg)
+			log.WithContext(c).Warn(resp.InvalidSignTimestampMsg)
 			abort(c, resp.InvalidSignTimestampMsg)
 			return
 		}
@@ -78,19 +78,19 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		now := carbon.Now()
 		t := carbon.CreateFromTimestamp(utils.Str2Int64(timestamp))
 		if t.AddDuration(ops.expire).Lt(now) {
-			log.WithRequestId(c).Warn("%s: %s", resp.InvalidSignTimestampMsg, timestamp)
+			log.WithContext(c).Warn("%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			abort(c, "%s: %s", resp.InvalidSignTimestampMsg, timestamp)
 			return
 		}
 		// query user by app id
 		u := ops.getSignUser(c, appId)
 		if u.AppSecret == "" {
-			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignIdMsg, appId)
+			log.WithContext(c).Warn("%s: %s", resp.IllegalSignIdMsg, appId)
 			abort(c, "%s: %s", resp.IllegalSignIdMsg, appId)
 			return
 		}
 		if u.Status == constant.Zero {
-			log.WithRequestId(c).Warn("%s: %s", resp.UserDisabledMsg, appId)
+			log.WithContext(c).Warn("%s: %s", resp.UserDisabledMsg, appId)
 			abort(c, "%s: %s", resp.UserDisabledMsg, appId)
 			return
 		}
@@ -107,7 +107,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 				}
 			}
 			if !exists {
-				log.WithRequestId(c).Warn("%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
+				log.WithContext(c).Warn("%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
 				abort(c, "%s: %s, %s", resp.InvalidSignScopeMsg, reqMethod, reqPath)
 				return
 			}
@@ -115,7 +115,7 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 
 		// verify signature
 		if !verifySign(u.AppSecret, signature, reqMethod, reqUri, timestamp, getBody(c)) {
-			log.WithRequestId(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
+			log.WithContext(c).Warn("%s: %s", resp.IllegalSignTokenMsg, token)
 			abort(c, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
 		}

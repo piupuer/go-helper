@@ -8,6 +8,6 @@ func PrintRouter(options ...func(*PrintRouterOptions)) func(httpMethod string, a
 		f(ops)
 	}
 	return func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-		log.WithRequestId(ops.ctx).Debug("[gin-route] %-6s %-40s --> %s (%d handlers)", httpMethod, absolutePath, handlerName, nuHandlers)
+		log.WithContext(ops.ctx).Debug("[gin-route] %-6s %-40s --> %s (%d handlers)", httpMethod, absolutePath, handlerName, nuHandlers)
 	}
 }

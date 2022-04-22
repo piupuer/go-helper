@@ -44,7 +44,7 @@ func AccessLog(options ...func(*AccessLogOptions)) grpc.UnaryServerInterceptor {
 		detail[constant.MiddlewareAccessLogIpLogKey] = addr
 
 		l := log.
-			WithRequestId(ctx).
+			WithContext(ctx).
 			WithFields(detail)
 		if err != nil {
 			l.Error(

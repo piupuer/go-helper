@@ -13,7 +13,7 @@ import (
 func Exception(c *gin.Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
+			log.WithContext(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
 			rp := resp.Resp{
 				Code:      resp.InternalServerError,
 				Data:      map[string]interface{}{},
@@ -43,7 +43,7 @@ func ExceptionWithNoTransaction(c *gin.Context) {
 				rp = item
 				rp.RequestId = rid
 			} else {
-				log.WithRequestId(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
+				log.WithContext(c).WithError(errors.Errorf("%v", err)).Error("runtime exception, stack: %s", string(debug.Stack()))
 			}
 			// set json data
 			c.JSON(http.StatusOK, rp)

@@ -63,7 +63,7 @@ func NewRabbit(dsn string, options ...func(*RabbitOptions)) (rb *Rabbit) {
 	pool, err := tcr.NewConnectionPoolWithErrorHandler(
 		rb.poolConfig,
 		func(err error) {
-			log.WithRequestId(rb.ops.ctx).WithError(err).Error("rabbit pool err")
+			log.WithContext(rb.ops.ctx).WithError(err).Error("rabbit pool err")
 		},
 	)
 

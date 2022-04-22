@@ -23,7 +23,7 @@ func Do(options ...func(*Options)) (err error) {
 	var db *sql.DB
 	db, err = sql.Open(ops.driver, ops.uri)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("open %s(%s) failed", ops.driver, ops.uri)
+		log.WithContext(ops.ctx).WithError(err).Error("open %s(%s) failed", ops.driver, ops.uri)
 		return
 	}
 
@@ -44,7 +44,7 @@ func Do(options ...func(*Options)) (err error) {
 			break
 		} else {
 			log.
-				WithRequestId(ops.ctx).
+				WithContext(ops.ctx).
 				WithFields(map[string]interface{}{
 					"LockName": ops.lockName,
 				}).Info("cannot acquire advisory lock, retrying...")
@@ -54,7 +54,7 @@ func Do(options ...func(*Options)) (err error) {
 	if ops.before != nil {
 		err = ops.before(ops.ctx)
 		if err != nil {
-			log.WithRequestId(ops.ctx).WithError(err).Error("exec before callback failed")
+			log.WithContext(ops.ctx).WithError(err).Error("exec before callback failed")
 			return
 		}
 	}
@@ -66,16 +66,16 @@ func Do(options ...func(*Options)) (err error) {
 	}
 	err = status(ops, db, source)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("show migrate status failed")
+		log.WithContext(ops.ctx).WithError(err).Error("show migrate status failed")
 		return
 	}
 
 	_, err = migrate.Exec(db, ops.driver, source, migrate.Up)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("migrate failed")
+		log.WithContext(ops.ctx).WithError(err).Error("migrate failed")
 		return
 	}
-	log.WithRequestId(ops.ctx).Info("migrate success")
+	log.WithContext(ops.ctx).Info("migrate success")
 	return
 }
 
@@ -83,7 +83,7 @@ func database(ops *Options) (err error) {
 	var cfg *m.Config
 	cfg, err = m.ParseDSN(ops.uri)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("invalid uri")
+		log.WithContext(ops.ctx).WithError(err).Error("invalid uri")
 		return
 	}
 	dbname := cfg.DBName
@@ -94,7 +94,7 @@ func database(ops *Options) (err error) {
 	}
 	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbname))
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("create database failed")
+		log.WithContext(ops.ctx).WithError(err).Error("create database failed")
 	}
 	return
 }
@@ -107,7 +107,7 @@ func acquireLock(ops *Options, db *sql.DB) (f bool, err error) {
 
 	if err != nil {
 		log.
-			WithRequestId(ops.ctx).
+			WithContext(ops.ctx).
 			WithError(err).
 			WithFields(map[string]interface{}{
 				"LockName": ops.lockName,
@@ -116,7 +116,7 @@ func acquireLock(ops *Options, db *sql.DB) (f bool, err error) {
 	}
 
 	log.
-		WithRequestId(ops.ctx).
+		WithContext(ops.ctx).
 		WithFields(map[string]interface{}{
 			"LockName": ops.lockName,
 		}).Info("acquire advisory lock: %v", f)
@@ -129,7 +129,7 @@ func releaseLock(ops *Options, db *sql.DB) (err error) {
 
 	if err != nil {
 		log.
-			WithRequestId(ops.ctx).
+			WithContext(ops.ctx).
 			WithError(err).
 			WithFields(map[string]interface{}{
 				"LockName": ops.lockName,
@@ -138,7 +138,7 @@ func releaseLock(ops *Options, db *sql.DB) (err error) {
 	}
 
 	log.
-		WithRequestId(ops.ctx).
+		WithContext(ops.ctx).
 		WithFields(map[string]interface{}{
 			"LockName": ops.lockName,
 		}).Info("release advisory lock success")
@@ -149,14 +149,14 @@ func status(ops *Options, db *sql.DB, source *migrate.EmbedFileSystemMigrationSo
 	var migrations []*migrate.Migration
 	migrations, err = source.FindMigrations()
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("find migration failed")
+		log.WithContext(ops.ctx).WithError(err).Error("find migration failed")
 		return
 	}
 
 	var records []*migrate.MigrationRecord
 	records, err = migrate.GetMigrationRecords(db, ops.driver)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("find migration history failed")
+		log.WithContext(ops.ctx).WithError(err).Error("find migration history failed")
 		return
 	}
 	rows := make(map[string]bool)
@@ -178,7 +178,7 @@ func status(ops *Options, db *sql.DB, source *migrate.EmbedFileSystemMigrationSo
 		}
 	}
 	log.
-		WithRequestId(ops.ctx).
+		WithContext(ops.ctx).
 		WithFields(map[string]interface{}{
 			"Pending": strings.Join(pending, ","),
 			"Applied": strings.Join(applied, ","),

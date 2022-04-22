@@ -122,12 +122,12 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	}
 	compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("[binlog row change]compress failed")
+		log.WithContext(ops.ctx).WithError(err).Error("[binlog row change]compress failed")
 		return
 	}
 	err = ops.redis.Set(ops.ctx, cacheKey, compress, 0).Err()
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("[binlog row change]set to redis failed")
+		log.WithContext(ops.ctx).WithError(err).Error("[binlog row change]set to redis failed")
 	}
 }
 
@@ -163,7 +163,7 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 		}
 	}
 	if count != len(table.Columns) {
-		log.WithRequestId(ops.ctx).Warn("[binlog get row]columns: %v, data: %v", table.Columns, data)
+		log.WithContext(ops.ctx).Warn("[binlog get row]columns: %v, data: %v", table.Columns, data)
 	}
 	return row
 }
@@ -171,6 +171,6 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 func PosChange(ops Options, pos mysql.Position) {
 	err := ops.redis.Set(ops.ctx, fmt.Sprintf("%s_%s", ops.dsn.DBName, ops.binlogPos), utils.Struct2Json(pos), 0).Err()
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("[binlog pos change]save pos failed")
+		log.WithContext(ops.ctx).WithError(err).Error("[binlog pos change]save pos failed")
 	}
 }

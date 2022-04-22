@@ -31,7 +31,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 
 		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.WithRequestId(c).WithError(err).Error("upgrade websocket failed")
+			log.WithContext(c).WithError(err).Error("upgrade websocket failed")
 			return
 		}
 		defer conn.Close()
@@ -46,7 +46,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			LoginPwd:  r.LoginPwd,
 		})
 		if err != nil {
-			log.WithRequestId(c).WithError(err).Error("connect ssh client failed")
+			log.WithContext(c).WithError(err).Error("connect ssh client failed")
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -54,7 +54,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		// open ssh channel
 		channel, incomingRequests, err := client.Conn.OpenChannel("session", nil)
 		if err != nil {
-			log.WithRequestId(c).WithError(err).Error("connect ssh channel failed")
+			log.WithContext(c).WithError(err).Error("connect ssh channel failed")
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -98,14 +98,14 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		}
 		ok, err := channel.SendRequest("pty-req", true, ssh.Marshal(&ptyReq))
 		if !ok || err != nil {
-			log.WithRequestId(c).WithError(err).Error("send pseudo terminal request failed")
+			log.WithContext(c).WithError(err).Error("send pseudo terminal request failed")
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
 
 		ok, err = channel.SendRequest("shell", true, nil)
 		if !ok || err != nil {
-			log.WithRequestId(c).WithError(err).Error("send shell failed")
+			log.WithContext(c).WithError(err).Error("send shell failed")
 			conn.WriteMessage(websocket.TextMessage, []byte("\n"+err.Error()))
 			return
 		}
@@ -122,7 +122,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 				for {
 					x, size, err := br.ReadRune()
 					if err != nil {
-						log.WithRequestId(c).WithError(err).Warn("read shell failed")
+						log.WithContext(c).WithError(err).Warn("read shell failed")
 						break
 					}
 					if size > 0 {
@@ -138,7 +138,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 						err = conn.WriteMessage(websocket.TextMessage, buf)
 						buf = []byte{}
 						if err != nil {
-							log.WithRequestId(c).WithError(err).Error("write msg to %s failed", conn.RemoteAddr())
+							log.WithContext(c).WithError(err).Error("write msg to %s failed", conn.RemoteAddr())
 							return
 						}
 					}
@@ -185,7 +185,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 			m, p, err := conn.ReadMessage()
 			active = time.Now()
 			if err != nil {
-				log.WithRequestId(c).WithError(err).Warn("connection %s lost", conn.RemoteAddr())
+				log.WithContext(c).WithError(err).Warn("connection %s lost", conn.RemoteAddr())
 				break
 			}
 
@@ -197,7 +197,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 					if err := utils.IsSafetyCmd(cmd); err != nil {
 						err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%v\r\n\r\n", err)))
 						if err != nil {
-							log.WithRequestId(c).WithError(err).Warn("write msg to %s failed", conn.RemoteAddr())
+							log.WithContext(c).WithError(err).Warn("write msg to %s failed", conn.RemoteAddr())
 							break
 						}
 						// write Ctrl C

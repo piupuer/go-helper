@@ -141,7 +141,7 @@ func (w *Wrapper) WithFields(fields map[string]interface{}) *Wrapper {
 	}
 }
 
-func (w *Wrapper) WithRequestId(ctx context.Context) *Wrapper {
+func (w *Wrapper) WithContext(ctx context.Context) *Wrapper {
 	requestId := getRequestId(ctx)
 	if requestId == "" {
 		return w

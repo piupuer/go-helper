@@ -71,7 +71,7 @@ func GenIdempotenceToken(ctx context.Context, ops IdempotenceOptions) string {
 	if ops.redis != nil {
 		ops.redis.Set(ctx, fmt.Sprintf("%s_%s", ops.cachePrefix, token), true, time.Duration(ops.expire)*time.Hour)
 	} else {
-		log.WithRequestId(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
+		log.WithContext(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return token
 }
@@ -84,7 +84,7 @@ func CheckIdempotenceToken(ctx context.Context, token string, ops IdempotenceOpt
 			return false
 		}
 	} else {
-		log.WithRequestId(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
+		log.WithContext(ctx).Warn("please enable redis, otherwise the idempotence is invalid")
 	}
 	return true
 }

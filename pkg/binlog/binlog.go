@@ -192,12 +192,12 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog row change]runtime exception, stack: %v", string(debug.Stack()))
+			log.WithContext(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog row change]runtime exception, stack: %v", string(debug.Stack()))
 			return
 		}
 	}()
 	RowChange(eh.ops, e)
-	log.WithRequestId(eh.ops.ctx).Debug("[binlog row change]%s %v", e.Action, e.Rows)
+	log.WithContext(eh.ops.ctx).Debug("[binlog row change]%s %v", e.Action, e.Rows)
 	return nil
 }
 
@@ -213,9 +213,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithRequestId(eh.ops.ctx).WithError(err).Error("[binlog ddl]drop table %s sync to redis failed", table)
+				log.WithContext(eh.ops.ctx).WithError(err).Error("[binlog ddl]drop table %s sync to redis failed", table)
 			} else {
-				log.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]drop table %s success", table)
+				log.WithContext(eh.ops.ctx).Debug("[binlog ddl]drop table %s success", table)
 			}
 		}
 	}
@@ -232,9 +232,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithRequestId(eh.ops.ctx).WithError(err).Error("[binlog ddl]truncate table %s sync to redis failed", table)
+				log.WithContext(eh.ops.ctx).WithError(err).Error("[binlog ddl]truncate table %s sync to redis failed", table)
 			} else {
-				log.WithRequestId(eh.ops.ctx).Debug("[binlog ddl]truncate table %s success", table)
+				log.WithContext(eh.ops.ctx).Debug("[binlog ddl]truncate table %s success", table)
 			}
 		}
 	}
@@ -245,12 +245,12 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) error {
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithRequestId(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog pos change]runtime exception, stack: %s", string(debug.Stack()))
+			log.WithContext(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog pos change]runtime exception, stack: %s", string(debug.Stack()))
 			return
 		}
 	}()
 	PosChange(eh.ops, pos)
-	log.WithRequestId(eh.ops.ctx).Debug("[binlog pos change]%s %v %t", pos, set, force)
+	log.WithContext(eh.ops.ctx).Debug("[binlog pos change]%s %v %t", pos, set, force)
 	return nil
 }
 

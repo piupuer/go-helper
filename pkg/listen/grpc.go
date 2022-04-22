@@ -32,17 +32,17 @@ func Grpc(options ...func(*GrpcOptions)) {
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.WithRequestId(ops.ctx).WithError(err).Error("[%s][grpc server]listen failed", ops.proName)
+		log.WithContext(ops.ctx).WithError(err).Error("[%s][grpc server]listen failed", ops.proName)
 		return
 	}
 
 	go func() {
 		if err = srv.Serve(lis); err != nil {
-			log.WithRequestId(ops.ctx).WithError(err).Error("[%s][grpc server]serve failed", ops.proName)
+			log.WithContext(ops.ctx).WithError(err).Error("[%s][grpc server]serve failed", ops.proName)
 		}
 	}()
 
-	log.WithRequestId(ops.ctx).Info("[%s][grpc server]running at %s:%d", ops.proName, host, port)
+	log.WithContext(ops.ctx).Info("[%s][grpc server]running at %s:%d", ops.proName, host, port)
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
@@ -55,8 +55,8 @@ func Grpc(options ...func(*GrpcOptions)) {
 	if ops.exit != nil {
 		ops.exit()
 	}
-	log.WithRequestId(ops.ctx).Info("[%s][grpc server]shutting down...", ops.proName)
+	log.WithContext(ops.ctx).Info("[%s][grpc server]shutting down...", ops.proName)
 
 	srv.GracefulStop()
-	log.WithRequestId(ops.ctx).Info("[%s][grpc server]exiting", ops.proName)
+	log.WithContext(ops.ctx).Info("[%s][grpc server]exiting", ops.proName)
 }

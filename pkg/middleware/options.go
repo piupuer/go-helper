@@ -556,10 +556,10 @@ func getOperationLogOptionsOrSetDefault(options *OperationLogOptions) *Operation
 			return ms.User{}
 		}
 		options.save = func(c *gin.Context, list []OperationRecord) {
-			log.WithRequestId(c).Warn("operation log save is empty")
+			log.WithContext(c).Warn("operation log save is empty")
 		}
 		options.findApi = func(c *gin.Context) []OperationApi {
-			log.WithRequestId(c).Warn("operation log findApi is empty")
+			log.WithContext(c).Warn("operation log findApi is empty")
 			return []OperationApi{}
 		}
 	}

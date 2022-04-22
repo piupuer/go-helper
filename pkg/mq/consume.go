@@ -40,13 +40,13 @@ func (qu *Queue) Consume(handler func(context.Context, string, amqp.Delivery) bo
 		if ok {
 			e := a.Ack(tag, false)
 			if e != nil {
-				log.WithRequestId(ctx).WithError(e).Error("consume ack failed")
+				log.WithContext(ctx).WithError(e).Error("consume ack failed")
 			}
 			return
 		}
 		e := a.Nack(tag, false, co.ops.nackRequeue)
 		if e != nil {
-			log.WithRequestId(ctx).WithError(e).Error("consume nack failed")
+			log.WithContext(ctx).WithError(e).Error("consume nack failed")
 		}
 	})
 	return
@@ -94,7 +94,7 @@ func (qu *Queue) ConsumeOne(size int, handler func(c context.Context, q string, 
 		if ok {
 			e := a.Ack(tag, false)
 			if e != nil {
-				log.WithRequestId(ctx).WithError(e).Error("consume one ack failed")
+				log.WithContext(ctx).WithError(e).Error("consume one ack failed")
 			}
 			return
 		}
@@ -115,15 +115,15 @@ func (qu *Queue) ConsumeOne(size int, handler func(c context.Context, q string, 
 					WithPublishRouteKey(d.RoutingKey),
 				)
 				if err != nil {
-					log.WithRequestId(ctx).WithError(err).Error("consume one republish failed")
+					log.WithContext(ctx).WithError(err).Error("consume one republish failed")
 				}
 			} else {
-				log.WithRequestId(ctx).Warn("maximum retry %d exceeded, discard data", co.ops.nackMaxRetryCount)
+				log.WithContext(ctx).Warn("maximum retry %d exceeded, discard data", co.ops.nackMaxRetryCount)
 			}
 		}
 		e := a.Nack(tag, false, co.ops.nackRequeue)
 		if e != nil {
-			log.WithRequestId(ctx).WithError(e).Error("consume one nack failed")
+			log.WithContext(ctx).WithError(e).Error("consume one nack failed")
 		}
 	}
 	return

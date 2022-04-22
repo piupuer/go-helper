@@ -28,9 +28,9 @@ func Http(options ...func(*HttpOptions)) {
 	if ops.pprofPort > 0 {
 		go func() {
 			// listen pprof port
-			log.WithRequestId(ctx).Info("[%s][http server]debug pprof is running at %s:%d", ops.proName, host, ops.pprofPort)
+			log.WithContext(ctx).Info("[%s][http server]debug pprof is running at %s:%d", ops.proName, host, ops.pprofPort)
 			if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, ops.pprofPort), nil); err != nil {
-				log.WithRequestId(ctx).WithError(err).Error("[%s][http server]listen pprof failed", ops.proName)
+				log.WithContext(ctx).WithError(err).Error("[%s][http server]listen pprof failed", ops.proName)
 			}
 		}()
 	}
@@ -39,11 +39,11 @@ func Http(options ...func(*HttpOptions)) {
 	// it won't block the graceful shutdown handling below
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.WithRequestId(ctx).WithError(err).Error("[%s][http server]listen failed", ops.proName)
+			log.WithContext(ctx).WithError(err).Error("[%s][http server]listen failed", ops.proName)
 		}
 	}()
 
-	log.WithRequestId(ctx).Info("[%s][http server]running at %s:%d/%s", ops.proName, host, port, ops.urlPrefix)
+	log.WithContext(ctx).Info("[%s][http server]running at %s:%d/%s", ops.proName, host, port, ops.urlPrefix)
 
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/server.go
 	// Wait for interrupt signal to gracefully shutdown the server with
@@ -57,15 +57,15 @@ func Http(options ...func(*HttpOptions)) {
 	if ops.exit != nil {
 		ops.exit()
 	}
-	log.WithRequestId(ctx).Info("[%s][http server]shutting down...", ops.proName)
+	log.WithContext(ctx).Info("[%s][http server]shutting down...", ops.proName)
 
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling
 	_, cancel := context.WithTimeout(ops.ctx, 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ops.ctx); err != nil {
-		log.WithRequestId(ctx).WithError(err).Error("[%s][http server]forced to shutdown failed", ops.proName)
+		log.WithContext(ctx).WithError(err).Error("[%s][http server]forced to shutdown failed", ops.proName)
 	}
 
-	log.WithRequestId(ctx).Info("[%s][http server]exiting", ops.proName)
+	log.WithContext(ctx).Info("[%s][http server]exiting", ops.proName)
 }

@@ -44,7 +44,7 @@ func (rd Redis) Count(count *int64) *Redis {
 func (rd Redis) FindWithPage(q *Redis, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
-		log.WithRequestId(rd.Ctx).Warn("model must be a pointer")
+		log.WithContext(rd.Ctx).Warn("model must be a pointer")
 		return
 	}
 

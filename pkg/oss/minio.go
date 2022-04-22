@@ -50,9 +50,9 @@ func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, loca
 		// Check to see if we already own this bucket (which happens if you run this twice)
 		exists, errBucketExists := mo.client.BucketExists(ctx, bucketName)
 		if errBucketExists == nil && exists {
-			log.WithRequestId(ctx).Warn("bucket %s(location %s) already exists", bucketName, location)
+			log.WithContext(ctx).Warn("bucket %s(location %s) already exists", bucketName, location)
 		} else {
-			log.WithRequestId(ctx).WithError(err).Error("make bucket failed")
+			log.WithContext(ctx).WithError(err).Error("make bucket failed")
 		}
 	}
 }

@@ -54,7 +54,7 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 
 		detail[constant.MiddlewareAccessLogIpLogKey] = clientIP
 
-		l := log.WithRequestId(c).WithFields(detail)
+		l := log.WithContext(c).WithFields(detail)
 
 		if reqMethod == "OPTIONS" || reqPath == fmt.Sprintf("/%s/ping", ops.urlPrefix) {
 			l.Debug(

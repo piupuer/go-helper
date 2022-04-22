@@ -31,7 +31,7 @@ func NewExport(options ...func(*ExportOptions)) *Export {
 		ops: *ops,
 	}
 	if ops.dbNoTx == nil {
-		log.WithRequestId(ops.ctx).Warn(ErrDbNil)
+		log.WithContext(ops.ctx).Warn(ErrDbNil)
 		ex.Error = errors.WithStack(ErrDbNil)
 	}
 	return ex
@@ -58,7 +58,7 @@ func (ex Export) Start(uid, name, category, progress string) (err error) {
 	}
 	id := strings.TrimSpace(uid)
 	if id == "" {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
@@ -72,7 +72,7 @@ func (ex Export) Start(uid, name, category, progress string) (err error) {
 		Model(&ExportHistory{}).
 		Create(&h).Error
 	if err != nil {
-		log.WithRequestId(ex.ops.ctx).Error(err)
+		log.WithContext(ex.ops.ctx).Error(err)
 		session.Rollback()
 		return
 	}
@@ -87,7 +87,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 	}
 	id := strings.TrimSpace(uid)
 	if id == "" {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
@@ -97,7 +97,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 		Model(&ExportHistory{}).
 		First(&h).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
 	}
@@ -106,7 +106,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 		Where("uuid = ?", uid).
 		Update("progress", progress).Error
 	if err != nil {
-		log.WithRequestId(ex.ops.ctx).Error(err)
+		log.WithContext(ex.ops.ctx).Error(err)
 		session.Rollback()
 		return
 	}
@@ -121,7 +121,7 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 	}
 	id := strings.TrimSpace(uid)
 	if id == "" {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidNil, id))
 		err = errors.WithStack(ErrUuidNil)
 		return
 	}
@@ -131,7 +131,7 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 		Model(&ExportHistory{}).
 		First(&h).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
 	}
@@ -146,7 +146,7 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 	objName := fmt.Sprintf("%s/%s/%s/%s", ex.ops.objPrefix, carbon.Now().ToDateString(), ex.ops.machineId, filepath.Base(filename))
 	err = bucket.PutObjectFromFile(objName, filename)
 	if err != nil {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrOssPutObjectFailed, err.Error()))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrOssPutObjectFailed, err.Error()))
 		err = errors.WithStack(ErrOssPutObjectFailed)
 		return
 	}
@@ -160,7 +160,7 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 		Updates(&m).Error
 	if err != nil {
 		session.Rollback()
-		log.WithRequestId(ex.ops.ctx).Error(err)
+		log.WithContext(ex.ops.ctx).Error(err)
 		return
 	}
 	session.Commit()
@@ -279,13 +279,13 @@ func (ex Export) getBucket() (bucket *oss.Bucket, err error) {
 	var client *oss.Client
 	client, err = oss.New(ex.ops.endpoint, ex.ops.key, ex.ops.secret)
 	if err != nil {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrOssSecretInvalid, err.Error()))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrOssSecretInvalid, err.Error()))
 		err = errors.WithStack(ErrOssSecretInvalid)
 		return
 	}
 	bucket, err = client.Bucket(ex.ops.bucket)
 	if err != nil {
-		log.WithRequestId(ex.ops.ctx).Error(errors.Wrap(ErrOssBucketInvalid, err.Error()))
+		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrOssBucketInvalid, err.Error()))
 		err = errors.WithStack(ErrOssBucketInvalid)
 		return
 	}

@@ -53,6 +53,6 @@ func WithFields(fields map[string]interface{}) *Wrapper {
 	return DefaultWrapper.WithFields(fields)
 }
 
-func WithRequestId(ctx context.Context) *Wrapper {
-	return DefaultWrapper.WithRequestId(ctx)
+func WithContext(ctx context.Context) *Wrapper {
+	return DefaultWrapper.WithContext(ctx)
 }

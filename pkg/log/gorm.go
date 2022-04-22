@@ -50,7 +50,7 @@ func NewGormLogger(config Config) logger.Interface {
 }
 
 func (l *gormLogger) getLogger(ctx context.Context) Interface {
-	return DefaultWrapper.WithRequestId(ctx).log.WithFields(DefaultWrapper.WithRequestId(ctx).fields)
+	return DefaultWrapper.WithContext(ctx).log.WithFields(DefaultWrapper.WithContext(ctx).fields)
 }
 
 func (l *gormLogger) LogMode(level logger.LogLevel) logger.Interface {
