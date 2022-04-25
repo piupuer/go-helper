@@ -6,4 +6,5 @@ const (
 	LogLineNumKey       = "LineNum"
 	LogErrorKey         = "Err"
 	LogSkipHelperCtxKey = "LogSkipHelper"
+	LogHiddenSqlCtxKey  = "LogHiddenSql"
 )

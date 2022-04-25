@@ -131,6 +131,13 @@ func (l gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 		if rows > -1 {
 			row = fmt.Sprintf("%d", rows)
 		}
+		hiddenSql := false
+		if v, ok := ctx.Value(constant.LogHiddenSqlCtxKey).(bool); ok {
+			hiddenSql = v
+		}
+		if hiddenSql {
+			sql = "(sql is hidden)"
+		}
 		log := l.getLogger(ctx).WithFields(map[string]interface{}{
 			constant.LogLineNumKey: lineNum,
 		})
