@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -37,7 +38,7 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 							tx.Rollback()
 						}
 					}
-					rp.RequestId = c.GetString(constant.MiddlewareRequestIdCtxKey)
+					rp.RequestId, _, _ = tracing.GetId(c)
 					c.JSON(http.StatusOK, rp)
 					c.Abort()
 					return

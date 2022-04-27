@@ -36,6 +36,7 @@ require (
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	github.com/thoas/go-funk v0.9.1
 	github.com/ulule/limiter/v3 v3.9.0
+	go.opentelemetry.io/otel/trace v1.6.3
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/text v0.3.7
@@ -79,6 +80,7 @@ require (
 	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
+	go.opentelemetry.io/otel v1.6.3 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b // indirect

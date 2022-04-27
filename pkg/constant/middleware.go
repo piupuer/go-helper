@@ -9,8 +9,9 @@ const (
 	MiddlewareOperationLogApiCacheKey        = "operation_log_api"
 	MiddlewareOperationLogSkipPathDict       = "OperationLogSkipPath"
 	MiddlewareOperationLogMaxCountBeforeSave = 100
-	MiddlewareRequestIdHeaderName            = "X-Request-Id"
 	MiddlewareRequestIdCtxKey                = "RequestId"
+	MiddlewareTraceIdCtxKey                  = "TraceId"
+	MiddlewareSpanIdCtxKey                   = "SpanId"
 	MiddlewareTransactionTxCtxKey            = "tx"
 	MiddlewareTransactionForceCommitCtxKey   = "ForceCommitTx"
 	MiddlewareJwtUserCtxKey                  = "user"

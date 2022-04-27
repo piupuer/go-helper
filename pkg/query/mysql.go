@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/thedevsaddam/gojsonq/v2"
@@ -32,7 +33,7 @@ func NewMySql(options ...func(*MysqlOptions)) MySql {
 		panic("mysql db is empty")
 	}
 	my := MySql{}
-	rc := NewRequestId(ops.ctx)
+	rc := tracing.NewId(ops.ctx)
 	my.Ctx = rc
 	tx := getTx(ops.db, *ops)
 	my.Tx = tx.WithContext(rc)

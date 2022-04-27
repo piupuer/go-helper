@@ -1,13 +1,11 @@
 package log
 
 import (
-	"context"
 	"fmt"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"gorm.io/gorm/logger"
 	"os"
 	"path"
-	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -53,18 +51,6 @@ func New(options ...func(*Options)) (l Interface) {
 		l = newLogrus(ops)
 	}
 	return l
-}
-
-func getRequestId(ctx context.Context) (id string) {
-	if interfaceIsNil(ctx) {
-		return
-	}
-	// get value from context
-	requestIdValue := ctx.Value(constant.MiddlewareRequestIdCtxKey)
-	if item, ok := requestIdValue.(string); ok && item != "" {
-		id = item
-	}
-	return
 }
 
 func fileWithLineNum(ops Options, options ...func(*FileWithLineNumOptions)) string {
@@ -118,12 +104,4 @@ func removeBaseDir(s string, ops Options) string {
 		}
 	}
 	return s
-}
-
-func interfaceIsNil(i interface{}) bool {
-	v := reflect.ValueOf(i)
-	if v.Kind() == reflect.Ptr {
-		return v.IsNil()
-	}
-	return i == nil
 }

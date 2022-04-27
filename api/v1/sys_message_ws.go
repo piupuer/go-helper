@@ -2,7 +2,6 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/middleware"
 	"github.com/piupuer/go-helper/pkg/query"
@@ -33,7 +32,6 @@ func MessageWs(hub *query.MessageHub, options ...func(*Options)) gin.HandlerFunc
 	}
 	return func(c *gin.Context) {
 		h := make(http.Header)
-		h.Add(constant.MiddlewareRequestIdHeaderName, c.GetString(constant.MiddlewareRequestIdCtxKey))
 		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, h)
 		if err != nil {
 			log.WithContext(c).WithError(err).Error("upgrade websocket failed")

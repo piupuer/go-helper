@@ -6,7 +6,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/pkg/log"
-	"github.com/piupuer/go-helper/pkg/query"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	"sync"
@@ -186,7 +186,7 @@ func (g GoodJob) parseFun(task GoodTask) func() {
 		return func() {
 			ctx := context.Background()
 			if g.ops.autoRequestId {
-				ctx = query.NewRequestId(ctx)
+				ctx = tracing.NewId(ctx)
 			}
 			ctx = context.WithValue(ctx, g.ops.taskNameCtxKey, task.Name)
 			task.Func(ctx)

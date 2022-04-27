@@ -2,10 +2,9 @@ package mq
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
-	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"sync/atomic"
@@ -192,7 +191,7 @@ func (co *Consume) newContext(ctx context.Context) context.Context {
 		ctx = context.Background()
 	}
 	if co.ops.autoRequestId {
-		ctx = context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, uuid.NewString())
+		ctx = tracing.NewId(ctx)
 	}
 	return ctx
 }

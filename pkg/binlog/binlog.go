@@ -27,6 +27,7 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	if ops.db == nil {
 		return errors.Errorf("binlog db is empty")
 	}
+	ops.db = ops.db.WithContext(ops.ctx)
 	if ops.dsn == nil {
 		return errors.Errorf("binlog dsn is empty")
 	}

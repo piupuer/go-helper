@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"os"
 )
 
@@ -142,12 +143,17 @@ func (w *Wrapper) WithFields(fields map[string]interface{}) *Wrapper {
 }
 
 func (w *Wrapper) WithContext(ctx context.Context) *Wrapper {
-	requestId := getRequestId(ctx)
+	requestId, traceId, spanId := tracing.GetId(ctx)
 	if requestId == "" {
 		return w
 	}
 	ns := copyFields(w.fields)
-	ns[constant.MiddlewareRequestIdCtxKey] = requestId
+	if traceId != "" {
+		ns[constant.MiddlewareTraceIdCtxKey] = traceId
+		ns[constant.MiddlewareSpanIdCtxKey] = spanId
+	} else {
+		ns[constant.MiddlewareRequestIdCtxKey] = requestId
+	}
 	return &Wrapper{
 		log:    w.log,
 		fields: ns,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/thedevsaddam/gojsonq/v2"
@@ -39,7 +40,7 @@ func NewRedis(options ...func(*RedisOptions)) Redis {
 		ops:   *ops,
 		clone: 1,
 	}
-	rc := NewRequestId(ops.ctx)
+	rc := tracing.NewId(ops.ctx)
 	rd.Ctx = rc
 	return rd
 }
