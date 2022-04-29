@@ -5,10 +5,13 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"strings"
 )
 
 func (my MySql) FindOperationLog(r *req.OperationLog) []ms.SysOperationLog {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindOperationLog"))
+	defer span.End()
 	list := make([]ms.SysOperationLog, 0)
 	q := my.Tx.
 		Model(&ms.SysOperationLog{}).

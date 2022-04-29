@@ -4,11 +4,14 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 // get menu tree by role id
 func (my MySql) GetMenuTree(roleId, roleSort uint) ([]ms.SysMenu, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetMenuTree"))
+	defer span.End()
 	tree := make([]ms.SysMenu, 0)
 	// q all menus
 	allMenu := make([]ms.SysMenu, 0)
@@ -23,6 +26,8 @@ func (my MySql) GetMenuTree(roleId, roleSort uint) ([]ms.SysMenu, error) {
 }
 
 func (my MySql) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindMenu"))
+	defer span.End()
 	tree := make([]ms.SysMenu, 0)
 	menus := my.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	tree = my.GenMenuTree(0, menus)
@@ -31,6 +36,8 @@ func (my MySql) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
 
 // generate menu tree
 func (my MySql) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GenMenuTree"))
+	defer span.End()
 	roleMenuIds := make([]uint, 0)
 	allMenu := make([]ms.SysMenu, 0)
 	my.Tx.
@@ -61,6 +68,8 @@ func genMenuTree(parentId uint, roleMenuIds []uint, allMenu []ms.SysMenu) []ms.S
 }
 
 func (my MySql) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([]ms.SysMenu, []uint, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindMenuByRoleId"))
+	defer span.End()
 	tree := make([]ms.SysMenu, 0)
 	accessIds := make([]uint, 0)
 	allMenu := my.findMenuByCurrentRole(currentRoleId, currentRoleSort)
@@ -123,6 +132,8 @@ func FindIncrementalMenu(r req.UpdateMenuIncrementalIds, oldMenuIds []uint, allM
 }
 
 func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMenu) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateMenu"))
+	defer span.End()
 	var menu ms.SysMenu
 	utils.Struct2StructByJson(r, &menu)
 	err = my.Tx.Create(&menu).Error
@@ -134,6 +145,8 @@ func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMen
 }
 
 func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, r req.UpdateMenuIncrementalIds) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateMenuByRoleId"))
+	defer span.End()
 	allMenu := my.FindMenu(currentRoleId, currentRoleSort)
 	roleMenus := my.findMenuByRoleId(targetRoleId, constant.Zero)
 	menuIds := make([]uint, 0)

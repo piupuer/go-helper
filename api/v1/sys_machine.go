@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 )
 
 // FindMachine
@@ -20,6 +21,9 @@ import (
 func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindMachine"))
+		defer span.End()
 		var r req.Machine
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -48,6 +52,9 @@ func FindMachine(options ...func(*Options)) gin.HandlerFunc {
 func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateMachine"))
+		defer span.End()
 		var r req.CreateMachine
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
@@ -72,6 +79,9 @@ func CreateMachine(options ...func(*Options)) gin.HandlerFunc {
 func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateMachineById"))
+		defer span.End()
 		var r req.UpdateMachine
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -95,6 +105,9 @@ func UpdateMachineById(options ...func(*Options)) gin.HandlerFunc {
 func ConnectMachineById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "ConnectMachineById"))
+		defer span.End()
 		id := req.UintId(c)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
@@ -116,6 +129,9 @@ func ConnectMachineById(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteMachineByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteMachineByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

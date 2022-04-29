@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
@@ -26,6 +27,9 @@ func FindMessage(options ...func(*Options)) gin.HandlerFunc {
 		panic("findUserByIds is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindMessage"))
+		defer span.End()
 		var r req.Message
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -84,6 +88,9 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetUnReadMessageCount"))
+		defer span.End()
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		var total int64
@@ -116,6 +123,9 @@ func PushMessage(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "PushMessage"))
+		defer span.End()
 		var r req.PushMessage
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -140,6 +150,9 @@ func PushMessage(options ...func(*Options)) gin.HandlerFunc {
 func BatchUpdateMessageRead(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchUpdateMessageRead"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -162,6 +175,9 @@ func BatchUpdateMessageRead(options ...func(*Options)) gin.HandlerFunc {
 func BatchUpdateMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchUpdateMessageDeleted"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -186,6 +202,9 @@ func UpdateAllMessageRead(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateAllMessageRead"))
+		defer span.End()
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)
@@ -209,6 +228,9 @@ func UpdateAllMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateAllMessageDeleted"))
+		defer span.End()
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"net/http"
 	"strings"
@@ -13,6 +14,9 @@ func Cors(options ...func(*CorsOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Cors"))
+		defer span.End()
 		method := c.Request.Method
 		methods := strings.Split(ops.method, ",")
 		if !utils.Contains(methods, method) {

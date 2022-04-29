@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/delay"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 )
 
 // FindDelayExport
@@ -19,6 +20,9 @@ import (
 func FindDelayExport(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindDelayExport"))
+		defer span.End()
 		var r req.DelayExportHistory
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -41,6 +45,9 @@ func FindDelayExport(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteDelayExportByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteDelayExportByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

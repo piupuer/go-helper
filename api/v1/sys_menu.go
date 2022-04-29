@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
@@ -24,6 +25,9 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetMenuTree"))
+		defer span.End()
 		u := ops.getCurrentUser(c)
 		oldCache, ok := CacheGetMenuTree(c, u.Id, *ops)
 		if ok {
@@ -57,6 +61,9 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindMenuByRoleId"))
+		defer span.End()
 		id := req.UintId(c)
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
@@ -94,6 +101,9 @@ func FindMenu(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindMenu"))
+		defer span.End()
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		list := make([]ms.SysMenu, 0)
@@ -126,6 +136,9 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateMenu"))
+		defer span.End()
 		u := ops.getCurrentUser(c)
 		var r req.CreateMenu
 		req.ShouldBind(c, &r)
@@ -151,6 +164,9 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 func UpdateMenuById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateMenuById"))
+		defer span.End()
 		var r req.UpdateMenu
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -179,6 +195,9 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateMenuByRoleId"))
+		defer span.End()
 		var r req.UpdateMenuIncrementalIds
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -211,6 +230,9 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteMenuByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteMenuByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

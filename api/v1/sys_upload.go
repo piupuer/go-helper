@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/siddontang/go/ioutil2"
 	"io"
@@ -27,6 +28,9 @@ import (
 func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UploadUnZip"))
+		defer span.End()
 		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
@@ -63,6 +67,9 @@ func UploadUnZip(options ...func(*Options)) gin.HandlerFunc {
 func UploadFileChunkExists(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UploadFileChunkExists"))
+		defer span.End()
 		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
@@ -86,6 +93,9 @@ func UploadFileChunkExists(options ...func(*Options)) gin.HandlerFunc {
 func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UploadMerge"))
+		defer span.End()
 		var r req.FilePartInfo
 		req.ShouldBind(c, &r)
 		r.SaveDir = ops.uploadSaveDir
@@ -175,6 +185,9 @@ func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UploadFile"))
+		defer span.End()
 		// limit file maximum memory( << 20 = 1MB)
 		err := c.Request.ParseMultipartForm(ops.uploadSingleMaxSize << 20)
 		if err != nil {

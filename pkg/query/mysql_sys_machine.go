@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -11,6 +12,8 @@ import (
 )
 
 func (my MySql) FindMachine(r *req.Machine) []ms.SysMachine {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindMachine"))
+	defer span.End()
 	list := make([]ms.SysMachine, 0)
 	q := my.Tx.
 		Model(&ms.SysMachine{}).
@@ -36,6 +39,8 @@ func (my MySql) FindMachine(r *req.Machine) []ms.SysMachine {
 
 // connect machine
 func (my MySql) ConnectMachine(id uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "ConnectMachine"))
+	defer span.End()
 	var oldMachine ms.SysMachine
 	q := my.Tx.Model(&oldMachine).Where("id = ?", id).First(&oldMachine)
 	if errors.Is(q.Error, gorm.ErrRecordNotFound) {

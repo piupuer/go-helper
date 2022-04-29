@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 )
 
 // FindOperationLog
@@ -20,6 +21,9 @@ import (
 func FindOperationLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindOperationLog"))
+		defer span.End()
 		var r req.OperationLog
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -41,6 +45,9 @@ func FindOperationLog(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteOperationLogByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteOperationLogByIds"))
+		defer span.End()
 		if !ops.operationAllowedToDelete {
 			resp.CheckErr("this feature has been turned off by the administrator")
 		}

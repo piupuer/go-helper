@@ -3,10 +3,13 @@ package query
 import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
 func (rd Redis) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindMenu"))
+	defer span.End()
 	tree := make([]ms.SysMenu, 0)
 	menus := rd.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	tree = rd.GenMenuTree(0, menus)
@@ -15,6 +18,8 @@ func (rd Redis) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
 
 // generate menu tree
 func (rd Redis) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "GenMenuTree"))
+	defer span.End()
 	roleMenuIds := make([]uint, 0)
 	allMenu := make([]ms.SysMenu, 0)
 	rd.
@@ -31,6 +36,8 @@ func (rd Redis) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu 
 }
 
 func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([]ms.SysMenu, []uint, error) {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindMenuByRoleId"))
+	defer span.End()
 	tree := make([]ms.SysMenu, 0)
 	accessIds := make([]uint, 0)
 	allMenu := rd.findMenuByCurrentRole(currentRoleId, currentRoleSort)

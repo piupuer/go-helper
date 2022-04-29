@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 	"time"
 )
 
@@ -25,6 +27,9 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "AccessLog"))
+		defer span.End()
 		startTime := time.Now()
 
 		w := &accessWriter{
@@ -50,6 +55,9 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		detail := make(map[string]interface{})
 		if ops.detail {
 			detail = getRequestDetail(c)
+			span.SetAttributes(
+				attribute.String(constant.MiddlewareParamsRespLogKey, detail[constant.MiddlewareParamsRespLogKey].(string)),
+			)
 		}
 
 		detail[constant.MiddlewareAccessLogIpLogKey] = clientIP

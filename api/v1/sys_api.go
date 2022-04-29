@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
@@ -22,6 +23,9 @@ import (
 func FindApi(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindApi"))
+		defer span.End()
 		var r req.Api
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -54,6 +58,9 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindApiGroupByCategoryByRoleKeyword"))
+		defer span.End()
 		var r req.Api
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -92,6 +99,9 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 		panic("findRoleKeywordByRoleIds is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateApi"))
+		defer span.End()
 		var r req.CreateApi
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
@@ -117,6 +127,9 @@ func CreateApi(options ...func(*Options)) gin.HandlerFunc {
 func UpdateApiById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateApiById"))
+		defer span.End()
 		var r req.UpdateApi
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -144,6 +157,9 @@ func UpdateApiByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateApiByRoleId"))
+		defer span.End()
 		var r req.UpdateMenuIncrementalIds
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -176,6 +192,9 @@ func UpdateApiByRoleId(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteApiByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteApiByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

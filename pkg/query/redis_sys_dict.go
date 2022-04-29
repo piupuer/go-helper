@@ -3,10 +3,13 @@ package query
 import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"strings"
 )
 
 func (rd Redis) FindDict(r *req.Dict) []ms.SysDict {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindDict"))
+	defer span.End()
 	list := make([]ms.SysDict, 0)
 	q := rd.
 		Table("sys_dict").
@@ -28,6 +31,8 @@ func (rd Redis) FindDict(r *req.Dict) []ms.SysDict {
 }
 
 func (rd Redis) FindDictData(r *req.DictData) []ms.SysDictData {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindDictData"))
+	defer span.End()
 	list := make([]ms.SysDictData, 0)
 	q := rd.
 		Table("sys_dict_data").

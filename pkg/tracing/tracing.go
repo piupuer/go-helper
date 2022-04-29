@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
+	"strings"
 )
 
 func NewId(ctx context.Context) context.Context {
@@ -88,6 +89,10 @@ func RealCtx(ctx context.Context) context.Context {
 		ctx = c.Request.Context()
 	}
 	return ctx
+}
+
+func Name(name ...string) string {
+	return strings.Join(name, ".")
 }
 
 func interfaceIsNil(i interface{}) bool {

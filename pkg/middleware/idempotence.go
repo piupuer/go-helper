@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"strings"
 	"time"
 )
@@ -30,6 +31,9 @@ end
 func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	ops := ParseIdempotenceOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Idempotence"))
+		defer span.End()
 		// read token from header at first
 		token := c.Request.Header.Get(ops.tokenName)
 		if token == "" {
@@ -61,6 +65,9 @@ func GetIdempotenceToken(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetIdempotenceToken"))
+		defer span.End()
 		ops.successWithData(GenIdempotenceToken(c, *ops))
 	}
 }

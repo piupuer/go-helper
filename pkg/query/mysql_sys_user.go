@@ -7,6 +7,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"regexp"
@@ -15,6 +16,8 @@ import (
 )
 
 func (my MySql) GetUserStatus(r req.UserStatus) (rp resp.UserStatus) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetUserStatus"))
+	defer span.End()
 	timestamp := time.Now().Unix()
 	flag := my.UserNeedCaptcha(req.UserNeedCaptcha{
 		Wrong: r.Wrong,
@@ -29,6 +32,8 @@ func (my MySql) GetUserStatus(r req.UserStatus) (rp resp.UserStatus) {
 }
 
 func (my MySql) UserNeedCaptcha(r req.UserNeedCaptcha) (flag bool) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UserNeedCaptcha"))
+	defer span.End()
 	d := my.GetDictData(constant.UserLoginDict, constant.UserLoginCaptcha)
 	if d.Val != "" {
 		if r.Wrong >= utils.Str2Int(d.Val) {
@@ -39,6 +44,8 @@ func (my MySql) UserNeedCaptcha(r req.UserNeedCaptcha) (flag bool) {
 }
 
 func (my MySql) GetCaptcha() (rp resp.Captcha) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetCaptcha"))
+	defer span.End()
 	rp.Id, rp.Img = captcha.New(
 		captcha.WithRedis(my.ops.redis),
 		captcha.WithCtx(my.Ctx),
@@ -47,6 +54,8 @@ func (my MySql) GetCaptcha() (rp resp.Captcha) {
 }
 
 func (my MySql) VerifyCaptcha(r req.LoginCheck) bool {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "VerifyCaptcha"))
+	defer span.End()
 	return captcha.New(
 		captcha.WithRedis(my.ops.redis),
 		captcha.WithCtx(my.Ctx),
@@ -54,6 +63,8 @@ func (my MySql) VerifyCaptcha(r req.LoginCheck) bool {
 }
 
 func (my MySql) UserNeedResetPwd(r req.UserNeedResetPwd) (flag bool) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UserNeedResetPwd"))
+	defer span.End()
 	if r.First == constant.One {
 		d1 := my.GetDictData(constant.UserResetPwdDict, constant.UserResetPwdFirstLogin)
 		if d1.Val == fmt.Sprintf("%v", constant.One) {
@@ -83,6 +94,8 @@ func (my MySql) UserNeedResetPwd(r req.UserNeedResetPwd) (flag bool) {
 }
 
 func (my MySql) ResetUserPwd(r req.ResetUserPwd) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "ResetUserPwd"))
+	defer span.End()
 	pass, msg := my.CheckWeakPwd(r.NewPassword)
 	if !pass {
 		if msg == "" {
@@ -100,6 +113,8 @@ func (my MySql) ResetUserPwd(r req.ResetUserPwd) error {
 }
 
 func (my MySql) CheckWeakPwd(pwd string) (pass bool, msg string) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CheckWeakPwd"))
+	defer span.End()
 	// check weak password
 	d1 := my.GetDictData(constant.UserResetPwdDict, constant.UserResetPwdWeakLen)
 	if d1.Val != "" {

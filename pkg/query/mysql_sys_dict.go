@@ -5,12 +5,15 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/req"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
 
 func (my MySql) GetDictData(dictName, dictDataKey string) ms.SysDictData {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetDictData"))
+	defer span.End()
 	dict, err := my.GetDictDataWithErr(dictName, dictDataKey)
 	if err != nil || dict == nil {
 		return ms.SysDictData{}
@@ -19,6 +22,8 @@ func (my MySql) GetDictData(dictName, dictDataKey string) ms.SysDictData {
 }
 
 func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictData, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetDictDataWithErr"))
+	defer span.End()
 	oldCache, ok := my.CacheDictDataItem(my.Ctx, dictName, dictDataKey)
 	if ok {
 		return oldCache, nil
@@ -40,6 +45,8 @@ func (my MySql) GetDictDataWithErr(dictName, dictDataKey string) (*ms.SysDictDat
 }
 
 func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindDictDataByName"))
+	defer span.End()
 	oldCache, ok := my.CacheDictDataList(my.Ctx, name)
 	if ok {
 		return oldCache, nil
@@ -63,6 +70,8 @@ func (my MySql) FindDictDataByName(name string) ([]ms.SysDictData, error) {
 }
 
 func (my MySql) FindDictDataValByName(name string) []string {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindDictDataValByName"))
+	defer span.End()
 	oldCache, ok := my.CacheDictDataValList(my.Ctx, name)
 	if ok {
 		return oldCache
@@ -85,6 +94,8 @@ func (my MySql) FindDictDataValByName(name string) []string {
 }
 
 func (my MySql) FindDict(r *req.Dict) []ms.SysDict {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindDict"))
+	defer span.End()
 	list := make([]ms.SysDict, 0)
 	q := my.Tx.
 		Model(&ms.SysDict{}).
@@ -106,6 +117,8 @@ func (my MySql) FindDict(r *req.Dict) []ms.SysDict {
 }
 
 func (my MySql) FindDictData(r *req.DictData) []ms.SysDictData {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindDictData"))
+	defer span.End()
 	list := make([]ms.SysDictData, 0)
 	q := my.Tx.
 		Model(&ms.SysDictData{}).
@@ -130,6 +143,8 @@ func (my MySql) FindDictData(r *req.DictData) []ms.SysDictData {
 }
 
 func (my MySql) CreateDict(r *req.CreateDict) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateDict"))
+	defer span.End()
 	err = my.Create(r, new(ms.SysDict))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)
@@ -138,6 +153,8 @@ func (my MySql) CreateDict(r *req.CreateDict) (err error) {
 }
 
 func (my MySql) UpdateDictById(id uint, r req.UpdateDict) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateDictById"))
+	defer span.End()
 	err = my.UpdateById(id, r, new(ms.SysDict))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)
@@ -146,6 +163,8 @@ func (my MySql) UpdateDictById(id uint, r req.UpdateDict) (err error) {
 }
 
 func (my MySql) DeleteDictByIds(ids []uint) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteDictByIds"))
+	defer span.End()
 	err = my.DeleteByIds(ids, new(ms.SysDict))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)
@@ -154,6 +173,8 @@ func (my MySql) DeleteDictByIds(ids []uint) (err error) {
 }
 
 func (my MySql) CreateDictData(r *req.CreateDictData) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateDictData"))
+	defer span.End()
 	err = my.Create(r, new(ms.SysDictData))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)
@@ -162,6 +183,8 @@ func (my MySql) CreateDictData(r *req.CreateDictData) (err error) {
 }
 
 func (my MySql) UpdateDictDataById(id uint, r req.UpdateDictData) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateDictDataById"))
+	defer span.End()
 	err = my.UpdateById(id, r, new(ms.SysDictData))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)
@@ -170,6 +193,8 @@ func (my MySql) UpdateDictDataById(id uint, r req.UpdateDictData) (err error) {
 }
 
 func (my MySql) DeleteDictDataByIds(ids []uint) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteDictDataByIds"))
+	defer span.End()
 	err = my.DeleteByIds(ids, new(ms.SysDictData))
 	my.CacheFlushDictDataList(my.Ctx)
 	my.CacheFlushDictDataValList(my.Ctx)

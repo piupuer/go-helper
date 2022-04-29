@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
@@ -20,6 +21,9 @@ import (
 func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindFsm"))
+		defer span.End()
 		var r req.FsmMachine
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -51,6 +55,9 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		panic("findUserByIds is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindFsmApprovingLog"))
+		defer span.End()
 		var r req.FsmPendingLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -116,6 +123,9 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindFsmLogTrack"))
+		defer span.End()
 		var r req.FsmLog
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -141,6 +151,9 @@ func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 		panic("getFsmSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetFsmSubmitterDetail"))
+		defer span.End()
 		var r req.FsmSubmitterDetail
 		req.ShouldBind(c, &r)
 		resp.SuccessWithData(ops.getFsmSubmitterDetail(c, r))
@@ -165,6 +178,9 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 		panic("updateFsmSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateFsmSubmitterDetail"))
+		defer span.End()
 		var r req.UpdateFsmSubmitterDetail
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -201,6 +217,9 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FsmApproveLog"))
+		defer span.End()
 		var r req.FsmApproveLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -229,6 +248,9 @@ func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FsmCancelLogByUuids"))
+		defer span.End()
 		var r req.FsmCancelLog
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
@@ -254,6 +276,9 @@ func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateFsm"))
+		defer span.End()
 		var r req.FsmCreateMachine
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -277,6 +302,9 @@ func CreateFsm(options ...func(*Options)) gin.HandlerFunc {
 func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateFsmById"))
+		defer span.End()
 		var r req.FsmUpdateMachine
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -300,6 +328,9 @@ func UpdateFsmById(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteFsmByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteFsmByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

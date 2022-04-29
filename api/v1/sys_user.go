@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 )
 
 // GetCaptcha
@@ -18,6 +19,9 @@ import (
 func GetCaptcha(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetCaptcha"))
+		defer span.End()
 		ops.addCtx(c)
 		my := query.NewMySql(ops.dbOps...)
 		resp.SuccessWithData(my.GetCaptcha())
@@ -38,6 +42,9 @@ func GetUserStatus(options ...func(*Options)) gin.HandlerFunc {
 		panic("getUserLoginStatus is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetUserStatus"))
+		defer span.End()
 		var r req.UserStatus
 		req.ShouldBind(c, &r)
 		err := ops.getUserLoginStatus(c, &r)
@@ -63,6 +70,9 @@ func ResetUserPwd(options ...func(*Options)) gin.HandlerFunc {
 		panic("getCurrentUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "ResetUserPwd"))
+		defer span.End()
 		var r req.ResetUserPwd
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)

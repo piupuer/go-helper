@@ -4,11 +4,14 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 )
 
 func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindRoleCasbin"))
+	defer span.End()
 	cs := make([]ms.SysRoleCasbin, 0)
 	if my.ops.enforcer == nil {
 		log.WithContext(my.Ctx).Warn("casbin enforcer is empty")
@@ -26,6 +29,8 @@ func (my MySql) FindRoleCasbin(c ms.SysRoleCasbin) []ms.SysRoleCasbin {
 }
 
 func (my MySql) CreateRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateRoleCasbin"))
+	defer span.End()
 	if my.ops.enforcer == nil {
 		return false, errors.Errorf("casbin enforcer is empty")
 	}
@@ -33,6 +38,8 @@ func (my MySql) CreateRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
 }
 
 func (my MySql) BatchCreateRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchCreateRoleCasbin"))
+	defer span.End()
 	rules := make([][]string, 0)
 	if my.ops.enforcer == nil {
 		return false, errors.Errorf("casbin enforcer is empty")
@@ -48,6 +55,8 @@ func (my MySql) BatchCreateRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 }
 
 func (my MySql) DeleteRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteRoleCasbin"))
+	defer span.End()
 	if my.ops.enforcer == nil {
 		return false, errors.Errorf("casbin enforcer is empty")
 	}
@@ -55,6 +64,8 @@ func (my MySql) DeleteRoleCasbin(c ms.SysRoleCasbin) (bool, error) {
 }
 
 func (my MySql) BatchDeleteRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchDeleteRoleCasbin"))
+	defer span.End()
 	if my.ops.enforcer == nil {
 		return false, errors.Errorf("casbin enforcer is empty")
 	}

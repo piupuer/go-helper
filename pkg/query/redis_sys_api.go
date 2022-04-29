@@ -5,12 +5,15 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"strings"
 )
 
 func (rd Redis) FindApi(r *req.Api) []ms.SysApi {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindApi"))
+	defer span.End()
 	list := make([]ms.SysApi, 0)
 	q := rd.
 		Table("sys_api").
@@ -33,6 +36,8 @@ func (rd Redis) FindApi(r *req.Api) []ms.SysApi {
 
 // find all api group by api category
 func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindApiGroupByCategoryByRoleKeyword"))
+	defer span.End()
 	tree := make([]resp.ApiGroupByCategory, 0)
 	accessIds := make([]uint, 0)
 	allApi := make([]ms.SysApi, 0)

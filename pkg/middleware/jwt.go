@@ -10,6 +10,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"net/http"
@@ -24,6 +25,9 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 	mw := initJwt(*ops)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Jwt"))
+		defer span.End()
 		claims, err := mw.GetClaimsFromJWT(c)
 		if err != nil {
 			unauthorized(c, http.StatusUnauthorized, err, *ops)
@@ -79,6 +83,9 @@ func JwtLogin(options ...func(*JwtOptions)) gin.HandlerFunc {
 		panic("jwt login private bytes is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "JwtLogin"))
+		defer span.End()
 		data, err := login(c, *ops)
 
 		if err != nil {
@@ -141,6 +148,9 @@ func JwtLogout(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 	mw := initJwt(*ops)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "JwtLogout"))
+		defer span.End()
 		if mw.SendCookie {
 			if mw.CookieSameSite != 0 {
 				c.SetSameSite(mw.CookieSameSite)
@@ -177,6 +187,9 @@ func JwtRefresh(options ...func(*JwtOptions)) gin.HandlerFunc {
 	}
 	mw := initJwt(*ops)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "JwtRefresh"))
+		defer span.End()
 		claims, err := mw.CheckIfTokenExpire(c)
 		if err != nil {
 			unauthorized(c, http.StatusUnauthorized, err, *ops)

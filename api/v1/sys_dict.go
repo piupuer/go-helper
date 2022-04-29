@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 )
 
 // FindDict
@@ -20,6 +21,9 @@ import (
 func FindDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindDict"))
+		defer span.End()
 		var r req.Dict
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -48,6 +52,9 @@ func FindDict(options ...func(*Options)) gin.HandlerFunc {
 func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateDict"))
+		defer span.End()
 		var r req.CreateDict
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
@@ -72,6 +79,9 @@ func CreateDict(options ...func(*Options)) gin.HandlerFunc {
 func UpdateDictById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateDictById"))
+		defer span.End()
 		var r req.UpdateDict
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -95,6 +105,9 @@ func UpdateDictById(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteDictByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteDictByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -117,6 +130,9 @@ func BatchDeleteDictByIds(options ...func(*Options)) gin.HandlerFunc {
 func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindDictData"))
+		defer span.End()
 		var r req.DictData
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
@@ -145,6 +161,9 @@ func FindDictData(options ...func(*Options)) gin.HandlerFunc {
 func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "CreateDictData"))
+		defer span.End()
 		var r req.CreateDictData
 		req.ShouldBind(c, &r)
 		req.Validate(c, r, r.FieldTrans())
@@ -169,6 +188,9 @@ func CreateDictData(options ...func(*Options)) gin.HandlerFunc {
 func UpdateDictDataById(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateDictDataById"))
+		defer span.End()
 		var r req.UpdateDictData
 		req.ShouldBind(c, &r)
 		id := req.UintId(c)
@@ -192,6 +214,9 @@ func UpdateDictDataById(options ...func(*Options)) gin.HandlerFunc {
 func BatchDeleteDictDataByIds(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "BatchDeleteDictDataByIds"))
+		defer span.End()
 		var r req.Ids
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)

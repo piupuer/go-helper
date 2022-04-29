@@ -10,6 +10,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"net/http"
 	"regexp"
@@ -25,6 +26,9 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 		panic("getSignUser is empty")
 	}
 	return func(c *gin.Context) {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Sign"))
+		defer span.End()
 		if ops.findSkipPath != nil {
 			list := ops.findSkipPath(c)
 			for _, item := range list {

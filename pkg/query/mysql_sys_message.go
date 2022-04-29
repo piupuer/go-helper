@@ -6,6 +6,7 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"strings"
@@ -14,6 +15,8 @@ import (
 
 // find status!=ms.SysMessageLogStatusDeleted messages
 func (my MySql) FindUnDeleteMessage(r *req.Message) []resp.Message {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindUnDeleteMessage"))
+	defer span.End()
 	sysMessageLogTableName := my.Tx.NamingStrategy.TableName("sys_message_log")
 	sysMessageTableName := my.Tx.NamingStrategy.TableName("sys_message")
 	list := make([]resp.Message, 0)
@@ -59,6 +62,8 @@ func (my MySql) FindUnDeleteMessage(r *req.Message) []resp.Message {
 }
 
 func (my MySql) GetUnReadMessageCount(userId uint) (int64, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetUnReadMessageCount"))
+	defer span.End()
 	var total int64
 	err := my.Tx.
 		Model(&ms.SysMessageLog{}).
@@ -69,18 +74,26 @@ func (my MySql) GetUnReadMessageCount(userId uint) (int64, error) {
 }
 
 func (my MySql) BatchUpdateMessageRead(messageLogIds []uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchUpdateMessageRead"))
+	defer span.End()
 	return my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusRead)
 }
 
 func (my MySql) BatchUpdateMessageDeleted(messageLogIds []uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchUpdateMessageDeleted"))
+	defer span.End()
 	return my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusDeleted)
 }
 
 func (my MySql) UpdateAllMessageRead(userId uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateAllMessageRead"))
+	defer span.End()
 	return my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusRead)
 }
 
 func (my MySql) UpdateAllMessageDeleted(userId uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateAllMessageDeleted"))
+	defer span.End()
 	return my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusDeleted)
 }
 
@@ -103,6 +116,8 @@ func (my MySql) UpdateAllMessageStatus(userId uint, status uint) error {
 }
 
 func (my MySql) SyncMessageByUserIds(users []ms.User) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "SyncMessageByUserIds"))
+	defer span.End()
 	for _, user := range users {
 		messages := make([]ms.SysMessage, 0)
 		my.Tx.
@@ -144,6 +159,8 @@ func (my MySql) SyncMessageByUserIds(users []ms.User) error {
 }
 
 func (my MySql) CreateMessage(r *req.PushMessage) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateMessage"))
+	defer span.End()
 	if r.Type != nil {
 		message := ms.SysMessage{
 			FromUserId: r.FromUserId,
@@ -171,6 +188,8 @@ func (my MySql) CreateMessage(r *req.PushMessage) error {
 
 // one2one message
 func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchCreateOneToOneMessage"))
+	defer span.End()
 	message.Type = ms.SysMessageTypeOneToOne
 
 	// default expire
@@ -200,6 +219,8 @@ func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) 
 
 // one2many message
 func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []uint) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchCreateOneToManyMessage"))
+	defer span.End()
 	message.Type = ms.SysMessageTypeOneToMany
 
 	if message.ExpiredAt == nil {
@@ -223,6 +244,8 @@ func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []u
 
 // one2all message
 func (my MySql) CreateSystemMessage(message ms.SysMessage) error {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateSystemMessage"))
+	defer span.End()
 	message.Type = ms.SysMessageTypeSystem
 
 	if message.ExpiredAt == nil {

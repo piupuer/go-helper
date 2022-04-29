@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -12,6 +13,8 @@ import (
 )
 
 func (my MySql) FindApi(r *req.Api) []ms.SysApi {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindApi"))
+	defer span.End()
 	list := make([]ms.SysApi, 0)
 	q := my.Tx.
 		Model(&ms.SysApi{}).
@@ -34,6 +37,8 @@ func (my MySql) FindApi(r *req.Api) []ms.SysApi {
 
 // find all api group by api category
 func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindApiGroupByCategoryByRoleKeyword"))
+	defer span.End()
 	tree := make([]resp.ApiGroupByCategory, 0)
 	accessIds := make([]uint, 0)
 	allApi := make([]ms.SysApi, 0)
@@ -105,6 +110,8 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 }
 
 func (my MySql) CreateApi(r *req.CreateApi) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateApi"))
+	defer span.End()
 	api := new(ms.SysApi)
 	err = my.Create(r, new(ms.SysApi))
 	if err != nil {
@@ -126,6 +133,8 @@ func (my MySql) CreateApi(r *req.CreateApi) (err error) {
 }
 
 func (my MySql) UpdateApiById(id uint, r req.UpdateApi) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateApiById"))
+	defer span.End()
 	var api ms.SysApi
 	q := my.Tx.Model(&api).Where("id = ?", id).First(&api)
 	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
@@ -173,6 +182,8 @@ func (my MySql) UpdateApiById(id uint, r req.UpdateApi) (err error) {
 }
 
 func (my MySql) UpdateApiByRoleKeyword(keyword string, r req.UpdateMenuIncrementalIds) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateApiByRoleKeyword"))
+	defer span.End()
 	if len(r.Delete) > 0 {
 		deleteApis := make([]ms.SysApi, 0)
 		my.Tx.
@@ -208,6 +219,8 @@ func (my MySql) UpdateApiByRoleKeyword(keyword string, r req.UpdateMenuIncrement
 }
 
 func (my MySql) DeleteApiByIds(ids []uint) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteApiByIds"))
+	defer span.End()
 	var list []ms.SysApi
 	q := my.Tx.Where("id IN (?)", ids).Find(&list)
 	casbins := make([]ms.SysRoleCasbin, 0)

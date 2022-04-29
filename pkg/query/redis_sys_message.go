@@ -4,12 +4,15 @@ import (
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"strings"
 )
 
 // find status!=ms.SysMessageLogStatusDeleted messages
 func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindUnDeleteMessage"))
+	defer span.End()
 	currentUserAllLogs := make([]ms.SysMessageLog, 0)
 	rd.
 		Table("sys_message_log").
@@ -65,6 +68,8 @@ func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
 
 // un read total count
 func (rd Redis) GetUnReadMessageCount(userId uint) (int64, error) {
+	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "GetUnReadMessageCount"))
+	defer span.End()
 	var total int64
 	err := rd.
 		Table("sys_message_log").
