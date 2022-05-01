@@ -1,11 +1,11 @@
 package mq
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
+	"google.golang.org/protobuf/proto"
 	"sync/atomic"
 	"time"
 )
