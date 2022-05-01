@@ -3,9 +3,9 @@ package job
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
-	"github.com/hibiken/asynq"
 	"github.com/libi/dcron"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/query"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -53,6 +53,7 @@ type GoodDistributeTask struct {
 	c *dcron.Dcron
 }
 
+// Deprecated: use delay.NewQueue instead;
 func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	// init fields
 	job := GoodJob{}
@@ -67,7 +68,7 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 		if cfg.RedisUri == "" {
 			cfg.RedisUri = "redis://127.0.0.1:6379/0"
 		}
-		r, err := ParseRedisURI(cfg.RedisUri)
+		r, err := query.ParseRedisURI(cfg.RedisUri)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -93,19 +94,6 @@ func New(cfg Config, options ...func(*Options)) (*GoodJob, error) {
 	job.driver = drv
 	job.tasks = make(map[string]GoodDistributeTask, 0)
 	return &job, nil
-}
-
-func ParseRedisURI(uri string) (redis.UniversalClient, error) {
-	var opt asynq.RedisConnOpt
-	var err error
-	if uri != "" {
-		opt, err = asynq.ParseRedisURI(uri)
-		if err != nil {
-			return nil, err
-		}
-		return opt.MakeRedisClient().(redis.UniversalClient), nil
-	}
-	return nil, errors.Errorf("invalid redis config")
 }
 
 func (g *GoodJob) AddTask(task GoodTask) *GoodJob {

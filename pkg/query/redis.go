@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
+	"github.com/hibiken/asynq"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -31,7 +33,15 @@ func NewRedis(options ...func(*RedisOptions)) Redis {
 		f(ops)
 	}
 	if ops.redis == nil {
-		panic("redis client is empty")
+		if ops.redisUri != "" {
+			var err error
+			ops.redis, err = ParseRedisURI(ops.redisUri)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic("redis client is empty")
+		}
 	}
 	if ops.namingStrategy == nil {
 		panic("redis namingStrategy is empty")
@@ -43,6 +53,20 @@ func NewRedis(options ...func(*RedisOptions)) Redis {
 	rc := tracing.NewId(ops.ctx)
 	rd.Ctx = rc
 	return rd
+}
+
+func ParseRedisURI(uri string) (client redis.UniversalClient, err error) {
+	var opt asynq.RedisConnOpt
+	if uri != "" {
+		opt, err = asynq.ParseRedisURI(uri)
+		if err != nil {
+			return
+		}
+		client = opt.MakeRedisClient().(redis.UniversalClient)
+		return
+	}
+	err = errors.Errorf("invalid redis config")
+	return
 }
 
 // add error to db

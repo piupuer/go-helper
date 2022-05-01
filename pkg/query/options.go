@@ -128,6 +128,7 @@ func getMysqlReadOptionsOrSetDefault(options *MysqlReadOptions) *MysqlReadOption
 type RedisOptions struct {
 	ctx            context.Context
 	redis          redis.UniversalClient
+	redisUri       string
 	enforcer       *casbin.Enforcer
 	database       string
 	namingStrategy schema.Namer
@@ -138,6 +139,12 @@ func WithRedisClient(rd redis.UniversalClient) func(*RedisOptions) {
 		if rd != nil {
 			getRedisOptionsOrSetDefault(options).redis = rd
 		}
+	}
+}
+
+func WithRedisUri(uri string) func(*RedisOptions) {
+	return func(options *RedisOptions) {
+		getRedisOptionsOrSetDefault(options).redisUri = uri
 	}
 }
 
