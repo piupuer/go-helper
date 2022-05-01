@@ -171,7 +171,7 @@ func WithQueueCallback(s string) func(*QueueOptions) {
 func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 	if options == nil {
 		return &QueueOptions{
-			name:           "xyz",
+			name:           "delay",
 			redisUri:       "redis://127.0.0.1:6379/0",
 			redisPeriodKey: "delay.queue.period",
 			retention:      60,
