@@ -21,6 +21,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	table := e.Table.Name
 	idIndex := -1
 	deletedAtIndex := -1
+	primaryKey := idName
 	for i, column := range e.Table.Columns {
 		name := utils.CamelCaseLowerFirst(column.Name)
 		if name == idName {
@@ -32,6 +33,11 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 		if idIndex >= 0 && deletedAtIndex >= 0 {
 			break
 		}
+	}
+	// use first column as default primary key
+	if idIndex == -1 {
+		idIndex = 0
+		primaryKey = utils.CamelCaseLowerFirst(e.Table.Columns[0].Name)
 	}
 	// gorm v2 e.Rows some fields type is []uint8(alias for []byte)
 	// so convert uint8 to string
@@ -86,7 +92,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 		for i, l := 0, len(changeRows); i < l; i += 2 {
 			oldRow := changeRows[i]
 			newRow := changeRows[i+1]
-			index := getIndexById(newRows, oldRow[idIndex])
+			index := getIndexById(newRows, oldRow[idIndex], primaryKey)
 			if len(newRows) > 0 && index >= 0 {
 				if deletedAtIndex >= 0 && oldRow[deletedAtIndex] == nil && newRow[deletedAtIndex] != nil {
 					if index < rowCount-1 {
@@ -104,7 +110,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	case canal.DeleteAction:
 		indexes := make([]int, 0)
 		for _, changeRow := range changeRows {
-			index := getIndexById(newRows, changeRow[idIndex])
+			index := getIndexById(newRows, changeRow[idIndex], primaryKey)
 			if index > -1 {
 				indexes = append(indexes, index)
 			}
@@ -132,9 +138,9 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 }
 
 // get index by id
-func getIndexById(rows []map[string]interface{}, id interface{}) int {
+func getIndexById(rows []map[string]interface{}, id interface{}, primaryKey string) int {
 	for i, row := range rows {
-		if row[idName] == id {
+		if row[primaryKey] == id {
 			return i
 		}
 	}

@@ -63,6 +63,9 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	for i, item := range ops.ignores {
+		ops.ignores[i] = ops.db.NamingStrategy.TableName(item)
+	}
 	// add ignore tables
 	c.AddDumpIgnoreTables(cfg.Dump.TableDB, ops.ignores...)
 	// event handler
