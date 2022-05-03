@@ -145,7 +145,7 @@ func verifySign(secret, signature, method, uri, timestamp, body string) (flag bo
 
 func abort(c *gin.Context, format interface{}, a ...interface{}) {
 	rp := resp.GetFailWithMsg(format, a...)
-	rp.RequestId = c.GetString(constant.MiddlewareRequestIdCtxKey)
+	rp.RequestId, _, _ = tracing.GetId(c)
 	c.JSON(http.StatusForbidden, rp)
 	c.Abort()
 }
