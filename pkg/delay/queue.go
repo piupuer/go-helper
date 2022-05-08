@@ -267,7 +267,7 @@ func (qu Queue) processed(uid string) {
 	defer qu.lock.Unlock()
 	ctx := context.Background()
 	t, e := qu.redis.HGet(ctx, qu.ops.redisPeriodKey, uid).Result()
-	if e != redis.Nil {
+	if e == nil || e != redis.Nil {
 		var item periodTask
 		utils.Json2Struct(t, &item)
 		item.Processed++
