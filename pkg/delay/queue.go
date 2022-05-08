@@ -25,15 +25,16 @@ type Queue struct {
 }
 
 type periodTask struct {
-	Expr    string `json:"expr"` // cron expr github.com/robfig/cron/v3
-	Name    string `json:"name"`
-	Uid     string `json:"uid"`
-	Payload string `json:"payload"`
-	Next    int64  `json:"next"` // next schedule unix timestamp
+	Expr      string `json:"expr"` // cron expr github.com/robfig/cron/v3
+	Name      string `json:"name"`
+	Uid       string `json:"uid"`
+	Payload   string `json:"payload"`
+	Next      int64  `json:"next"`      // next schedule unix timestamp
+	Processed int64  `json:"processed"` // run times
 }
 
 type periodTaskHandler struct {
-	ops QueueOptions
+	qu Queue
 }
 
 type Task struct {
@@ -49,9 +50,9 @@ func (p periodTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) (err 
 		Uid:     t.ResultWriter().TaskID(),
 		Payload: string(t.Payload()),
 	}
-	if p.ops.handler != nil {
-		err = p.ops.handler(ctx, task)
-	} else if p.ops.callback != "" {
+	if p.qu.ops.handler != nil {
+		err = p.qu.ops.handler(ctx, task)
+	} else if p.qu.ops.callback != "" {
 		err = p.httpCallback(ctx, task)
 	} else {
 		log.
@@ -61,6 +62,8 @@ func (p periodTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) (err 
 			}).
 			Info("no task handler")
 	}
+	// save processed count
+	p.qu.processed(task.Uid)
 	return
 }
 
@@ -70,7 +73,7 @@ func (p periodTaskHandler) httpCallback(ctx context.Context, task Task) (err err
 	}
 	body := utils.Struct2Json(task)
 	var r *http.Request
-	r, _ = http.NewRequest(http.MethodPost, p.ops.callback, bytes.NewReader([]byte(body)))
+	r, _ = http.NewRequest(http.MethodPost, p.qu.ops.callback, bytes.NewReader([]byte(body)))
 	var res *http.Response
 	res, err = client.Do(r)
 	if e, ok := err.(net.Error); ok && e.Timeout() {
@@ -159,7 +162,7 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	)
 	go func() {
 		var h periodTaskHandler
-		h.ops = *ops
+		h.qu = *qu
 		if e := srv.Run(h); e != nil {
 			log.WithError(err).Error("run task handler failed")
 		}
@@ -245,16 +248,31 @@ func (qu Queue) Remove(uid string) (err error) {
 		time.Sleep(100 * time.Millisecond)
 	}
 	defer qu.lock.Unlock()
-	m, _ := qu.redis.HGetAll(context.Background(), qu.ops.redisPeriodKey).Result()
-	for k := range m {
-		if k == uid {
-			qu.redis.HDel(context.Background(), qu.ops.redisPeriodKey, k)
-			break
-		}
-	}
+	qu.redis.HDel(context.Background(), qu.ops.redisPeriodKey, uid)
 
 	ins := asynq.NewInspector(qu.redisOpt)
 	err = ins.DeleteTask(qu.ops.name, uid)
+	return
+}
+
+func (qu Queue) processed(uid string) {
+	var ok bool
+	for {
+		ok = qu.lock.Lock()
+		if ok {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	defer qu.lock.Unlock()
+	ctx := context.Background()
+	t, e := qu.redis.HGet(ctx, qu.ops.redisPeriodKey, uid).Result()
+	if e != redis.Nil {
+		var item periodTask
+		utils.Json2Struct(t, &item)
+		item.Processed++
+		qu.redis.HSet(ctx, qu.ops.redisPeriodKey, uid, utils.Struct2Json(item))
+	}
 	return
 }
 
