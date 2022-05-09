@@ -225,7 +225,7 @@ func (qu Queue) Cron(options ...func(*QueueTaskOptions)) (err error) {
 	}
 	t := periodTask{
 		Expr:    ops.expr,
-		Name:    qu.ops.name + ".cron",
+		Name:    ops.name + ".cron",
 		Uid:     ops.uid,
 		Payload: ops.payload,
 		Next:    next,
@@ -289,27 +289,18 @@ func (qu Queue) scan() {
 	for _, v := range m {
 		var item periodTask
 		utils.Json2Struct(v, &item)
-		now := time.Now().Unix()
 		next, _ := getNext(item.Expr, item.Next)
-		diff := (next - item.Next) / 2
-		if diff < 3 {
-			diff = 0
+		t := asynq.NewTask(item.Name, []byte(item.Payload), asynq.TaskID(item.Uid))
+		taskOpts := []asynq.Option{
+			asynq.Queue(ops.name),
 		}
-		if now >= item.Next-diff {
-			t := asynq.NewTask(item.Name, []byte(item.Payload), asynq.TaskID(item.Uid))
-			taskOpts := []asynq.Option{
-				asynq.Queue(ops.name),
-			}
-			if diff > 3 {
-				taskOpts = append(taskOpts, asynq.ProcessIn(time.Duration(diff)*time.Second))
-				taskOpts = append(taskOpts, asynq.Retention(time.Duration(diff/2)*time.Second))
-			}
-			_, err := qu.client.Enqueue(t, taskOpts...)
-			// enqueue success, update next
-			if err == nil {
-				item.Next = next
-				p.HSet(ctx, qu.ops.redisPeriodKey, item.Uid, utils.Struct2Json(item))
-			}
+		taskOpts = append(taskOpts, asynq.ProcessAt(time.Unix(item.Next, 0)))
+		taskOpts = append(taskOpts, asynq.Retention(time.Duration((next-item.Next)/2)*time.Second))
+		_, err := qu.client.Enqueue(t, taskOpts...)
+		// enqueue success, update next
+		if err == nil {
+			item.Next = next
+			p.HSet(ctx, qu.ops.redisPeriodKey, item.Uid, utils.Struct2Json(item))
 		}
 	}
 	// batch save to cache
