@@ -295,11 +295,17 @@ func (qu Queue) scan() {
 			asynq.Queue(ops.name),
 			asynq.MaxRetry(ops.maxRetry),
 		}
-		taskOpts = append(taskOpts, asynq.ProcessAt(time.Unix(item.Next, 0)))
-		if next-item.Next > 10 {
+		diff := next - item.Next
+		if diff > 10 {
+			retention := diff / 3
+			if diff > 600 {
+				// max retention 10min
+				retention = 600
+			}
 			// set retention avoid repeat in short time
-			taskOpts = append(taskOpts, asynq.Retention(time.Duration((next-item.Next)/3)*time.Second))
+			taskOpts = append(taskOpts, asynq.Retention(time.Duration(retention)*time.Second))
 		}
+		taskOpts = append(taskOpts, asynq.ProcessAt(time.Unix(item.Next, 0)))
 		_, err := qu.client.Enqueue(t, taskOpts...)
 		// enqueue success, update next
 		if err == nil {
