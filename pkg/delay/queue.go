@@ -293,9 +293,13 @@ func (qu Queue) scan() {
 		t := asynq.NewTask(item.Name, []byte(item.Payload), asynq.TaskID(item.Uid))
 		taskOpts := []asynq.Option{
 			asynq.Queue(ops.name),
+			asynq.MaxRetry(ops.maxRetry),
 		}
 		taskOpts = append(taskOpts, asynq.ProcessAt(time.Unix(item.Next, 0)))
-		taskOpts = append(taskOpts, asynq.Retention(time.Duration((next-item.Next)/2)*time.Second))
+		if next-item.Next > 10 {
+			// set retention avoid repeat in short time
+			taskOpts = append(taskOpts, asynq.Retention(time.Duration((next-item.Next)/3)*time.Second))
+		}
 		_, err := qu.client.Enqueue(t, taskOpts...)
 		// enqueue success, update next
 		if err == nil {
