@@ -38,11 +38,24 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	l := len(ops.models)
 	tableNames := make([]string, l)
 	for i := 0; i < l; i++ {
-		t := reflect.ValueOf(ops.models[i]).Type()
+		v := reflect.ValueOf(ops.models[i])
+		t := v.Type()
 		if t.Kind() == reflect.Ptr {
 			t = t.Elem()
 		}
-		tableNames[i] = ops.db.NamingStrategy.TableName(reflect.New(t).Elem().Type().Name())
+		var tableName string
+		m := v.MethodByName("TableName")
+		if m.IsValid() {
+			res := m.Call([]reflect.Value{})
+			s, ok := res[0].Interface().(string)
+			if ok {
+				tableName = s
+			}
+		}
+		if tableName == "" {
+			tableName = ops.db.NamingStrategy.TableName(reflect.New(t).Elem().Type().Name())
+		}
+		tableNames[i] = tableName
 	}
 	// gen config
 	cfg := canal.NewDefaultConfig()
