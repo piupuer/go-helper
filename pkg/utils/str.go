@@ -47,7 +47,7 @@ func RemoveRepeat(arr []string) []string {
 }
 
 func Str2Uint(str string) uint {
-	num, err := strconv.ParseUint(str, 10, 32)
+	num, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {
 		return 0
 	}
