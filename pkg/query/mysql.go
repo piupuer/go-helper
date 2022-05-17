@@ -199,22 +199,23 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 			}
 		}
 	}
-	q := my.Tx
+	// clone=2, so need to set q = q.xxx
+	q := my.Tx.Session(&gorm.Session{NewDB: true})
 	for _, item := range ops.preloads {
-		q.Preload(item)
+		q = q.Preload(item)
 	}
 	if !newIdsIsArr {
-		q.
+		q = q.
 			Where(fmt.Sprintf("`%s` = ?", ops.column), newIds).
 			First(model)
 	} else {
 		if newIdsIsArr && newIdsRv.Kind() != reflect.Slice {
 			// column not primary, value maybe array
-			q.
+			q = q.
 				Where(fmt.Sprintf("`%s` = ?", ops.column), firstId).
 				Find(model)
 		} else {
-			q.
+			q = q.
 				Where(fmt.Sprintf("`%s` IN (?)", ops.column), newIds).
 				Find(model)
 		}
