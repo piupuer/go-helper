@@ -18,7 +18,7 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 		for k2, v2 := range m2 {
 			switch v1.(type) {
 			// skip complex structure
-			case map[string]interface{}:
+			case map[string]interface{}, []interface{}:
 				continue
 			}
 			rv := reflect.ValueOf(v1)
