@@ -172,30 +172,38 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 			list := gojsonq.New().FromString(oldCache).Get()
 			if list != nil {
 				arr := false
+				noSize := false
 				switch list.(type) {
 				case []interface{}:
 					v, _ := list.([]interface{})
 					if len(v) > 0 {
 						arr = true
+					} else {
+						noSize = true
 					}
+				default:
+					noSize = true
 				}
-				if rv.Elem().Kind() == reflect.Struct && arr {
-					utils.Struct2StructByJson(list.([]interface{})[0], model)
-				} else if rv.Elem().Kind() == reflect.Slice && !arr {
-					// set first value
-					newArr1 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
-					v := newArr1.Index(0)
-					i := reflect.New(rv.Elem().Type()).Interface()
-					utils.Struct2StructByJson(list.([]interface{})[0], i)
-					v.Set(reflect.ValueOf(i))
-					// copy new array
-					newArr2 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
-					reflect.Copy(newArr2, newArr1)
-					rv.Elem().Set(newArr2)
-				} else {
-					utils.Struct2StructByJson(list, model)
+				if !noSize {
+					// size > 0 parse data otherwise get data from db
+					if rv.Elem().Kind() == reflect.Struct && arr {
+						utils.Struct2StructByJson(list.([]interface{})[0], model)
+					} else if rv.Elem().Kind() == reflect.Slice && !arr {
+						// set first value
+						newArr1 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
+						v := newArr1.Index(0)
+						i := reflect.New(rv.Elem().Type()).Interface()
+						utils.Struct2StructByJson(list.([]interface{})[0], i)
+						v.Set(reflect.ValueOf(i))
+						// copy new array
+						newArr2 := reflect.MakeSlice(rv.Elem().Type(), 1, 1)
+						reflect.Copy(newArr2, newArr1)
+						rv.Elem().Set(newArr2)
+					} else {
+						utils.Struct2StructByJson(list, model)
+					}
+					return
 				}
-				return
 			}
 		}
 	}
