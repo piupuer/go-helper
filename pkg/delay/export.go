@@ -97,7 +97,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 		Model(&ExportHistory{}).
 		Where("uuid = ?", id).
 		First(&h)
-	if h.Id > constant.Zero {
+	if h.Id == constant.Zero {
 		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
@@ -132,7 +132,7 @@ func (ex Export) End(uid string, args ...string) (err error) {
 		Model(&ExportHistory{}).
 		Where("uuid = ?", id).
 		First(&h)
-	if h.Id > constant.Zero {
+	if h.Id == constant.Zero {
 		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
