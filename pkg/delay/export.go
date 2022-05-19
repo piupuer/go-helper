@@ -93,10 +93,11 @@ func (ex Export) Pending(uid, progress string) (err error) {
 	}
 	session := ex.initSession().Begin()
 	var h ExportHistory
-	err = session.
+	session.
 		Model(&ExportHistory{}).
-		First(&h).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+		Where("uuid = ?", id).
+		First(&h)
+	if h.Id > constant.Zero {
 		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
@@ -127,33 +128,37 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 	}
 	session := ex.initSession().Begin()
 	var h ExportHistory
-	err = session.
+	session.
 		Model(&ExportHistory{}).
-		First(&h).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+		Where("uuid = ?", id).
+		First(&h)
+	if h.Id > constant.Zero {
 		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrUuidInvalid, id))
 		err = errors.WithStack(ErrUuidInvalid)
 		return
 	}
 
-	var bucket *oss.Bucket
-	bucket, err = ex.getBucket()
-	if err != nil {
-		err = errors.WithStack(err)
-		return
-	}
-
-	objName := fmt.Sprintf("%s/%s/%s/%s", ex.ops.objPrefix, carbon.Now().ToDateString(), ex.ops.machineId, filepath.Base(filename))
-	err = bucket.PutObjectFromFile(objName, filename)
-	if err != nil {
-		log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrOssPutObjectFailed, err.Error()))
-		err = errors.WithStack(ErrOssPutObjectFailed)
-		return
-	}
 	m := make(map[string]interface{})
+	if filename != "" {
+		// 文件名不为空需要上传文件到oss
+		var bucket *oss.Bucket
+		bucket, err = ex.getBucket()
+		if err != nil {
+			err = errors.WithStack(err)
+			return
+		}
+
+		objName := fmt.Sprintf("%s/%s/%s/%s", ex.ops.objPrefix, carbon.Now().ToDateString(), ex.ops.machineId, filepath.Base(filename))
+		err = bucket.PutObjectFromFile(objName, filename)
+		if err != nil {
+			log.WithContext(ex.ops.ctx).Error(errors.Wrap(ErrOssPutObjectFailed, err.Error()))
+			err = errors.WithStack(ErrOssPutObjectFailed)
+			return
+		}
+		m["url"] = objName
+	}
 	m["progress"] = progress
 	m["end"] = constant.One
-	m["url"] = objName
 	err = session.
 		Model(&ExportHistory{}).
 		Where("uuid = ?", uid).
