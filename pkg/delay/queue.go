@@ -3,6 +3,7 @@ package delay
 import (
 	"bytes"
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/piupuer/go-helper/pkg/log"
@@ -74,6 +75,7 @@ func (p periodTaskHandler) httpCallback(ctx context.Context, task Task) (err err
 	body := utils.Struct2Json(task)
 	var r *http.Request
 	r, _ = http.NewRequest(http.MethodPost, p.qu.ops.callback, bytes.NewReader([]byte(body)))
+	r.Header.Add("Content-Type", gin.MIMEJSON)
 	var res *http.Response
 	res, err = client.Do(r)
 	if e, ok := err.(net.Error); ok && e.Timeout() {
