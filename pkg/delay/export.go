@@ -115,7 +115,7 @@ func (ex Export) Pending(uid, progress string) (err error) {
 	return
 }
 
-func (ex Export) End(uid, progress, filename string) (err error) {
+func (ex Export) End(uid string, args ...string) (err error) {
 	if ex.Error != nil {
 		err = ex.Error
 		return
@@ -139,6 +139,14 @@ func (ex Export) End(uid, progress, filename string) (err error) {
 	}
 
 	m := make(map[string]interface{})
+	var progress, filename string
+	switch len(args) {
+	case 1:
+		progress = args[0]
+	case 2:
+		progress = args[0]
+		filename = args[1]
+	}
 	if filename != "" {
 		// 文件名不为空需要上传文件到oss
 		var bucket *oss.Bucket
