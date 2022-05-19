@@ -229,7 +229,7 @@ func (ex Export) FindHistory(r *req.DelayExportHistory) (rp []resp.DelayExportHi
 		return
 	}
 	for i, item := range list {
-		if item.End == constant.One {
+		if item.End == constant.One && item.Url != "" {
 			// get signature url
 			var url string
 			url, err = bucket.SignURL(item.Url, http.MethodGet, ex.ops.expire*60)
