@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/golang-module/carbon/v2"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/shopspring/decimal"
 	"reflect"
 )
@@ -65,7 +67,26 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 						}
 					default:
 						// rv convert to e
-						e.Set(rv.Convert(realT))
+						if rv.CanConvert(realT) {
+							e.Set(rv.Convert(realT))
+						} else {
+							// call SetString method
+							v := reflect.New(realT)
+							m := v.MethodByName("SetString")
+							if m.IsValid() {
+								switch v1.(type) {
+								case string:
+									// v1 type is string
+									m.Call([]reflect.Value{rv})
+								default:
+									// convert v1 to string
+									m.Call([]reflect.Value{reflect.ValueOf(fmt.Sprintf("%v", v1))})
+								}
+							} else {
+								log.Warn("%s's type %s missing SetString method, convert ignored", k1, realT.Name())
+							}
+							e = v.Elem()
+						}
 						m3[k1] = e.Interface()
 					}
 					break
