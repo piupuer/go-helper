@@ -196,8 +196,12 @@ func (qu Queue) Once(options ...func(*QueueTaskOptions)) (err error) {
 	t := asynq.NewTask(ops.name+".once", []byte(ops.payload), asynq.TaskID(ops.uid))
 	taskOpts := []asynq.Option{
 		asynq.Queue(qu.ops.name),
-		asynq.Retention(time.Duration(qu.ops.retention) * time.Second),
 		asynq.MaxRetry(qu.ops.maxRetry),
+	}
+	if ops.retention > 0 {
+		taskOpts = append(taskOpts, asynq.Retention(time.Duration(ops.retention)*time.Second))
+	} else {
+		taskOpts = append(taskOpts, asynq.Retention(time.Duration(qu.ops.retention)*time.Second))
 	}
 	if ops.in != nil {
 		taskOpts = append(taskOpts, asynq.ProcessIn(*ops.in))

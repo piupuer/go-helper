@@ -182,13 +182,14 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 }
 
 type QueueTaskOptions struct {
-	uid     string
-	name    string
-	payload string
-	expr    string         // only period task
-	in      *time.Duration // only once task
-	at      *time.Time     // only once task
-	now     bool           // only once task
+	uid       string
+	name      string
+	payload   string
+	expr      string         // only period task
+	in        *time.Duration // only once task
+	at        *time.Time     // only once task
+	now       bool           // only once task
+	retention int            // only once task
 }
 
 func WithQueueTaskUuid(s string) func(*QueueTaskOptions) {
@@ -230,6 +231,14 @@ func WithQueueTaskAt(at time.Time) func(*QueueTaskOptions) {
 func WithQueueTaskNow(flag bool) func(*QueueTaskOptions) {
 	return func(options *QueueTaskOptions) {
 		getQueueTaskOptionsOrSetDefault(options).now = flag
+	}
+}
+
+func WithQueueTaskRetention(second int) func(*QueueTaskOptions) {
+	return func(options *QueueTaskOptions) {
+		if second > 0 {
+			getQueueTaskOptionsOrSetDefault(options).retention = second
+		}
 	}
 }
 
