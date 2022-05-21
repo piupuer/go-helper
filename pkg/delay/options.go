@@ -140,7 +140,7 @@ func WithQueueRedisPeriodKey(s string) func(*QueueOptions) {
 	}
 }
 
-func WithQueueRedisRetention(second int) func(*QueueOptions) {
+func WithQueueRetention(second int) func(*QueueOptions) {
 	return func(options *QueueOptions) {
 		if second > 0 {
 			getQueueOptionsOrSetDefault(options).retention = second
