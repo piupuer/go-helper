@@ -120,6 +120,7 @@ type QueueOptions struct {
 	maxRetry       int
 	handler        func(ctx context.Context, t Task) error
 	callback       string
+	clearArchived  int
 }
 
 func WithQueueName(s string) func(*QueueOptions) {
@@ -168,6 +169,14 @@ func WithQueueCallback(s string) func(*QueueOptions) {
 	}
 }
 
+func WithQueueClearArchived(second int) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		if second > 0 {
+			getQueueOptionsOrSetDefault(options).clearArchived = second
+		}
+	}
+}
+
 func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 	if options == nil {
 		return &QueueOptions{
@@ -176,6 +185,7 @@ func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 			redisPeriodKey: "delay.queue.period",
 			retention:      60,
 			maxRetry:       3,
+			clearArchived:  300,
 		}
 	}
 	return options

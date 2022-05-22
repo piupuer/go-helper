@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/golang-module/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/tracing"
@@ -13,16 +14,18 @@ import (
 	"github.com/robfig/cron/v3"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type Queue struct {
-	ops      QueueOptions
-	redis    redis.UniversalClient
-	redisOpt asynq.RedisConnOpt
-	lock     nxLock
-	client   *asynq.Client
-	Error    error
+	ops       QueueOptions
+	redis     redis.UniversalClient
+	redisOpt  asynq.RedisConnOpt
+	lock      nxLock
+	client    *asynq.Client
+	inspector *asynq.Inspector
+	Error     error
 }
 
 type periodTask struct {
@@ -147,6 +150,7 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	}
 	rd := rs.MakeRedisClient().(redis.UniversalClient)
 	client := asynq.NewClient(rs)
+	inspector := asynq.NewInspector(rs)
 	// initialize redis lock
 	lock := nxLock{
 		key:   ops.redisPeriodKey + ".lock",
@@ -174,6 +178,7 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	qu.redisOpt = rs
 	qu.lock = lock
 	qu.client = client
+	qu.inspector = inspector
 	// initialize scanner
 	go func() {
 		for {
@@ -181,6 +186,15 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 			qu.scan()
 		}
 	}()
+	if qu.ops.clearArchived > 0 {
+		// initialize clear archived
+		go func() {
+			for {
+				time.Sleep(time.Duration(qu.ops.clearArchived) * time.Second)
+				qu.clearArchived()
+			}
+		}()
+	}
 	return
 }
 
@@ -256,8 +270,7 @@ func (qu Queue) Remove(uid string) (err error) {
 	defer qu.lock.Unlock()
 	qu.redis.HDel(context.Background(), qu.ops.redisPeriodKey, uid)
 
-	ins := asynq.NewInspector(qu.redisOpt)
-	err = ins.DeleteTask(qu.ops.name, uid)
+	err = qu.inspector.DeleteTask(qu.ops.name, uid)
 	return
 }
 
@@ -322,6 +335,57 @@ func (qu Queue) scan() {
 	// batch save to cache
 	p.Exec(ctx)
 	return
+}
+
+func (qu Queue) clearArchived() {
+	list, err := qu.inspector.ListArchivedTasks(qu.ops.name, asynq.Page(1), asynq.PageSize(100))
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	for _, item := range list {
+		last := carbon.Time2Carbon(item.LastFailedAt)
+		if !last.IsZero() && item.Retried < item.MaxRetry {
+			continue
+		}
+		uid := item.ID
+		var flag bool
+		if strings.HasSuffix(item.Type, ".cron") {
+			// cron task
+			t, e := qu.redis.HGet(ctx, qu.ops.redisPeriodKey, uid).Result()
+			if e == nil || e != redis.Nil {
+				var task periodTask
+				utils.Json2Struct(t, &task)
+				next, _ := getNext(task.Expr, task.Next)
+				diff := next - task.Next
+				if diff <= 60 {
+					if carbon.Now().Gt(last.AddMinutes(5)) {
+						flag = true
+					}
+				} else if diff <= 600 {
+					if carbon.Now().Gt(last.AddMinutes(30)) {
+						flag = true
+					}
+				} else if diff <= 3600 {
+					if carbon.Now().Gt(last.AddHours(2)) {
+						flag = true
+					}
+				} else {
+					if carbon.Now().Gt(last.AddHours(5)) {
+						flag = true
+					}
+				}
+			}
+		} else {
+			// once task, has failed for more than 5 minutes
+			if carbon.Now().Gt(last.AddMinutes(5)) {
+				flag = true
+			}
+		}
+		if flag {
+			qu.inspector.DeleteTask(qu.ops.name, uid)
+		}
+	}
 }
 
 func getNext(expr string, timestamp int64) (next int64, err error) {
