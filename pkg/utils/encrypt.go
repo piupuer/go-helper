@@ -2,12 +2,40 @@ package utils
 
 import (
 	"crypto"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"github.com/pkg/errors"
 )
+
+func Ed25519GenKey() (hexPri, hexPub string) {
+	var privateKey ed25519.PrivateKey
+	var publicKey ed25519.PublicKey
+	var err error
+	publicKey, privateKey, err = ed25519.GenerateKey(nil)
+	if err != nil {
+		return
+	}
+	hexPri = hex.EncodeToString(privateKey)
+	hexPub = hex.EncodeToString(publicKey)
+	return
+}
+
+func Ed25519Sign(msg, hexPri string) (hexSignature string) {
+	privateKey, _ := hex.DecodeString(hexPri)
+	hexSignature = hex.EncodeToString(ed25519.Sign(privateKey, []byte(msg)))
+	return
+}
+
+func Ed25519Verify(msg, hexSignature, hexPub string) (pass bool) {
+	publicKey, _ := hex.DecodeString(hexPub)
+	signature, _ := hex.DecodeString(hexSignature)
+	pass = ed25519.Verify(publicKey, []byte(msg), signature)
+	return
+}
 
 func RSAGenKey(customBlock string, bits int) (privateBytes []byte, publicBytes []byte, err error) {
 	// generate private key
