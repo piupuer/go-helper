@@ -38,24 +38,7 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	l := len(ops.models)
 	tableNames := make([]string, l)
 	for i := 0; i < l; i++ {
-		v := reflect.ValueOf(ops.models[i])
-		t := v.Type()
-		if t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-		var tableName string
-		m := v.MethodByName("TableName")
-		if m.IsValid() {
-			res := m.Call([]reflect.Value{})
-			s, ok := res[0].Interface().(string)
-			if ok {
-				tableName = s
-			}
-		}
-		if tableName == "" {
-			tableName = ops.db.NamingStrategy.TableName(reflect.New(t).Elem().Type().Name())
-		}
-		tableNames[i] = tableName
+		tableNames[i] = getTableNameFromModel(*ops, ops.models[i])
 	}
 	// gen config
 	cfg := canal.NewDefaultConfig()
@@ -65,25 +48,16 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	cfg.Flavor = "mysql"
 	// cluster server id(random setting of single machine)
 	cfg.ServerID = ops.serverId
-	// mysqldump path
-	cfg.Dump.ExecutionPath = ops.executionPath
-	// target database
-	cfg.Dump.TableDB = ops.dsn.DBName
-	// target tables
-	cfg.Dump.Tables = tableNames
-
+	// use binlog only
+	cfg.Dump.ExecutionPath = ""
 	c, err := canal.NewCanal(cfg)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	for i, item := range ops.ignores {
-		ops.ignores[i] = ops.db.NamingStrategy.TableName(item)
-	}
-	// add ignore tables
-	c.AddDumpIgnoreTables(cfg.Dump.TableDB, ops.ignores...)
 	// event handler
 	c.SetEventHandler(&EventHandler{
-		ops: *ops,
+		ops:    *ops,
+		tables: tableNames,
 	})
 	// refresh cache before run
 	err = refresh(*ops, tableNames)
@@ -96,9 +70,24 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	return nil
 }
 
-type EventHandler struct {
-	canal.DummyEventHandler
-	ops Options
+func getTableNameFromModel(ops Options, model interface{}) (tableName string) {
+	v := reflect.ValueOf(model)
+	t := v.Type()
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	m := v.MethodByName("TableName")
+	if m.IsValid() {
+		res := m.Call([]reflect.Value{})
+		s, ok := res[0].Interface().(string)
+		if ok {
+			tableName = s
+		}
+	}
+	if tableName == "" {
+		tableName = ops.db.NamingStrategy.TableName(reflect.New(t).Elem().Type().Name())
+	}
+	return
 }
 
 // clear old redis cache
@@ -202,19 +191,38 @@ func getRows(ops Options, table string, model interface{}) ([]map[string]interfa
 	return list, nil
 }
 
+type EventHandler struct {
+	canal.DummyEventHandler
+	ops    Options
+	tables []string
+}
+
 // row change event
 func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
-	if utils.Contains(eh.ops.ignores, e.Table.Name) {
+	if !utils.Contains(eh.tables, e.Table.Name) {
 		return nil
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithContext(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog row change]runtime exception, stack: %v", string(debug.Stack()))
+			log.
+				WithContext(eh.ops.ctx).
+				WithError(errors.Errorf("%v", err)).
+				WithFields(map[string]interface{}{
+					"Table":  e.Table.Name,
+					"Action": e.Action,
+				}).
+				Error("runtime exception, stack: %v", string(debug.Stack()))
 			return
 		}
 	}()
 	RowChange(eh.ops, e)
-	log.WithContext(eh.ops.ctx).Debug("[binlog row change]%s %v", e.Action, e.Rows)
+	log.
+		WithContext(eh.ops.ctx).
+		WithFields(map[string]interface{}{
+			"Table":  e.Table.Name,
+			"Action": e.Action,
+		}).
+		Info("changed")
 	return nil
 }
 
@@ -230,9 +238,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithContext(eh.ops.ctx).WithError(err).Error("[binlog ddl]drop table %s sync to redis failed", table)
+				log.WithContext(eh.ops.ctx).WithError(err).Error("drop table %s sync to redis failed", table)
 			} else {
-				log.WithContext(eh.ops.ctx).Debug("[binlog ddl]drop table %s success", table)
+				log.WithContext(eh.ops.ctx).Info("drop table %s success", table)
 			}
 		}
 	}
@@ -249,9 +257,9 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
 			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
 			if err != nil {
-				log.WithContext(eh.ops.ctx).WithError(err).Error("[binlog ddl]truncate table %s sync to redis failed", table)
+				log.WithContext(eh.ops.ctx).WithError(err).Error("truncate table %s sync to redis failed", table)
 			} else {
-				log.WithContext(eh.ops.ctx).Debug("[binlog ddl]truncate table %s success", table)
+				log.WithContext(eh.ops.ctx).Info("truncate table %s success", table)
 			}
 		}
 	}
@@ -262,12 +270,25 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) error {
 	defer func() {
 		if err := recover(); err != nil {
-			log.WithContext(eh.ops.ctx).WithError(errors.Errorf("%v", err)).Error("[binlog pos change]runtime exception, stack: %s", string(debug.Stack()))
+			log.
+				WithContext(eh.ops.ctx).
+				WithError(errors.Errorf("%v", err)).
+				WithFields(map[string]interface{}{
+					"Name": pos.Name,
+					"Pos":  pos.Pos,
+				}).
+				Error("runtime exception, stack: %s", string(debug.Stack()))
 			return
 		}
 	}()
 	PosChange(eh.ops, pos)
-	log.WithContext(eh.ops.ctx).Debug("[binlog pos change]%s %v %t", pos, set, force)
+	log.
+		WithContext(eh.ops.ctx).
+		WithFields(map[string]interface{}{
+			"Name": pos.Name,
+			"Pos":  pos.Pos,
+		}).
+		Info("synced")
 	return nil
 }
 

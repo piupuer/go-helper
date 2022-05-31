@@ -9,15 +9,13 @@ import (
 )
 
 type Options struct {
-	ctx           context.Context
-	dsn           *mysql.Config
-	db            *gorm.DB
-	redis         redis.UniversalClient
-	ignores       []string
-	models        []interface{}
-	serverId      uint32
-	executionPath string
-	binlogPos     string
+	ctx       context.Context
+	dsn       *mysql.Config
+	db        *gorm.DB
+	redis     redis.UniversalClient
+	models    []interface{}
+	serverId  uint32
+	binlogPos string
 }
 
 func WithCtx(ctx context.Context) func(*Options) {
@@ -52,12 +50,6 @@ func WithRedis(rd redis.UniversalClient) func(*Options) {
 	}
 }
 
-func WithIgnore(ignores ...string) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).ignores = append(getOptionsOrSetDefault(options).ignores, ignores...)
-	}
-}
-
 func WithModels(models ...interface{}) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).models = append(getOptionsOrSetDefault(options).models, models...)
@@ -72,12 +64,6 @@ func WithServerId(serverId uint32) func(*Options) {
 	}
 }
 
-func WithExecutionPath(p string) func(*Options) {
-	return func(options *Options) {
-		getOptionsOrSetDefault(options).executionPath = p
-	}
-}
-
 func WithBinlogPos(key string) func(*Options) {
 	return func(options *Options) {
 		getOptionsOrSetDefault(options).binlogPos = key
@@ -87,11 +73,9 @@ func WithBinlogPos(key string) func(*Options) {
 func getOptionsOrSetDefault(options *Options) *Options {
 	if options == nil {
 		return &Options{
-			ctx:           context.Background(),
-			ignores:       []string{},
-			serverId:      100,
-			executionPath: "mysqldump",
-			binlogPos:     "mysql_binlog_pos",
+			ctx:       context.Background(),
+			serverId:  100,
+			binlogPos: "mysql_binlog_pos",
 		}
 	}
 	return options
