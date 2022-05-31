@@ -210,6 +210,7 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 				WithFields(map[string]interface{}{
 					"Table":  e.Table.Name,
 					"Action": e.Action,
+					"Pos":    e.Header.LogPos,
 				}).
 				Error("runtime exception, stack: %v", string(debug.Stack()))
 			return
@@ -221,6 +222,7 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 		WithFields(map[string]interface{}{
 			"Table":  e.Table.Name,
 			"Action": e.Action,
+			"Pos":    e.Header.LogPos,
 		}).
 		Info("changed")
 	return nil
