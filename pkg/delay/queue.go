@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/golang-module/carbon/v2"
 	"github.com/hibiken/asynq"
+	"github.com/piupuer/go-helper/pkg/lock"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
@@ -22,7 +23,7 @@ type Queue struct {
 	ops       QueueOptions
 	redis     redis.UniversalClient
 	redisOpt  asynq.RedisConnOpt
-	lock      nxLock
+	nxLock    lock.NxLock
 	client    *asynq.Client
 	inspector *asynq.Inspector
 	Error     error
@@ -117,21 +118,6 @@ func (p periodTaskHandler) httpCallback(ctx context.Context, task Task) (err err
 	return
 }
 
-type nxLock struct {
-	key   string
-	redis redis.UniversalClient
-}
-
-func (n nxLock) Lock() (ok bool) {
-	ok, _ = n.redis.SetNX(context.Background(), n.key, true, 10*time.Second).Result()
-	return
-}
-
-func (n nxLock) Unlock() {
-	n.redis.Del(context.Background(), n.key)
-	return
-}
-
 // NewQueue delay queue implemented by asynq: https://github.com/hibiken/asynq
 func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	ops := getQueueOptionsOrSetDefault(nil)
@@ -152,9 +138,10 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	client := asynq.NewClient(rs)
 	inspector := asynq.NewInspector(rs)
 	// initialize redis lock
-	lock := nxLock{
-		key:   ops.redisPeriodKey + ".lock",
-		redis: rd,
+	nxLock := lock.NxLock{
+		Key:        ops.redisPeriodKey + ".lock",
+		Redis:      rd,
+		Expiration: 10 * time.Second,
 	}
 	// initialize server
 	srv := asynq.NewServer(
@@ -176,7 +163,7 @@ func NewQueue(options ...func(*QueueOptions)) (qu *Queue) {
 	qu.ops = *ops
 	qu.redis = rd
 	qu.redisOpt = rs
-	qu.lock = lock
+	qu.nxLock = nxLock
 	qu.client = client
 	qu.inspector = inspector
 	// initialize scanner
@@ -261,13 +248,13 @@ func (qu Queue) Cron(options ...func(*QueueTaskOptions)) (err error) {
 func (qu Queue) Remove(uid string) (err error) {
 	var ok bool
 	for {
-		ok = qu.lock.Lock()
+		ok = qu.nxLock.Lock()
 		if ok {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	defer qu.lock.Unlock()
+	defer qu.nxLock.Unlock()
 	qu.redis.HDel(context.Background(), qu.ops.redisPeriodKey, uid)
 
 	err = qu.inspector.DeleteTask(qu.ops.name, uid)
@@ -277,13 +264,13 @@ func (qu Queue) Remove(uid string) (err error) {
 func (qu Queue) processed(uid string) {
 	var ok bool
 	for {
-		ok = qu.lock.Lock()
+		ok = qu.nxLock.Lock()
 		if ok {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	defer qu.lock.Unlock()
+	defer qu.nxLock.Unlock()
 	ctx := context.Background()
 	t, e := qu.redis.HGet(ctx, qu.ops.redisPeriodKey, uid).Result()
 	if e == nil || e != redis.Nil {
@@ -297,11 +284,11 @@ func (qu Queue) processed(uid string) {
 
 func (qu Queue) scan() {
 	ctx := context.Background()
-	ok := qu.lock.Lock()
+	ok := qu.nxLock.Lock()
 	if !ok {
 		return
 	}
-	defer qu.lock.Unlock()
+	defer qu.nxLock.Unlock()
 	m, _ := qu.redis.HGetAll(ctx, qu.ops.redisPeriodKey).Result()
 	p := qu.redis.Pipeline()
 	ops := qu.ops
