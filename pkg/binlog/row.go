@@ -1,9 +1,9 @@
 package binlog
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
-	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/schema"
 	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/pkg/log"
@@ -15,8 +15,8 @@ const (
 	deletedAtName = "deletedAt"
 )
 
-// mysql row change, set to redis
-func RowChange(ops Options, e *canal.RowsEvent) {
+// RowChange mysql row change, set to redis
+func RowChange(ctx context.Context, ops Options, e *canal.RowsEvent) {
 	database := e.Table.Schema
 	table := e.Table.Name
 	idIndex := -1
@@ -64,7 +64,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 
 	cacheKey := fmt.Sprintf("%s_%s", database, table)
 	// get old rows
-	oldRowsStr, err := ops.redis.Get(ops.ctx, cacheKey).Result()
+	oldRowsStr, err := ops.redis.Get(ctx, cacheKey).Result()
 	newRows := make([]map[string]interface{}, 0)
 	changeRows := make([][]interface{}, 0)
 	if err == nil {
@@ -80,7 +80,7 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	case canal.InsertAction:
 		// insert change
 		for _, changeRow := range changeRows {
-			row := getRow(ops, changeRow, e.Table)
+			row := getRow(ctx, changeRow, e.Table)
 			if row[deletedAtName] == nil {
 				// when deleteAt is null to set cache because gorm soft deleted
 				newRows = append(newRows, row)
@@ -101,10 +101,10 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 						newRows = append(newRows[:index])
 					}
 				} else {
-					newRows[index] = getRow(ops, newRow, e.Table)
+					newRows[index] = getRow(ctx, newRow, e.Table)
 				}
 			} else {
-				newRows = append(newRows, getRow(ops, newRow, e.Table))
+				newRows = append(newRows, getRow(ctx, newRow, e.Table))
 			}
 		}
 	case canal.DeleteAction:
@@ -128,12 +128,12 @@ func RowChange(ops Options, e *canal.RowsEvent) {
 	}
 	compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 	if err != nil {
-		log.WithContext(ops.ctx).WithError(err).Error("compress failed")
+		log.WithContext(ctx).WithError(err).Error("compress failed")
 		return
 	}
-	err = ops.redis.Set(ops.ctx, cacheKey, compress, 0).Err()
+	err = ops.redis.Set(ctx, cacheKey, compress, 0).Err()
 	if err != nil {
-		log.WithContext(ops.ctx).WithError(err).Error("set to redis failed")
+		log.WithContext(ctx).WithError(err).Error("set to redis failed")
 	}
 }
 
@@ -148,7 +148,7 @@ func getIndexById(rows []map[string]interface{}, id interface{}, primaryKey stri
 }
 
 // get row fields map from data
-func getRow(ops Options, data []interface{}, table *schema.Table) map[string]interface{} {
+func getRow(ctx context.Context, data []interface{}, table *schema.Table) map[string]interface{} {
 	row := make(map[string]interface{}, 0)
 	count := len(data)
 	for i, column := range table.Columns {
@@ -169,14 +169,7 @@ func getRow(ops Options, data []interface{}, table *schema.Table) map[string]int
 		}
 	}
 	if count != len(table.Columns) {
-		log.WithContext(ops.ctx).Warn("inconsistent data: columns: %v, data: %v", table.Columns, data)
+		log.WithContext(ctx).Warn("inconsistent data: columns: %v, data: %v", table.Columns, data)
 	}
 	return row
-}
-
-func PosChange(ops Options, pos mysql.Position) {
-	err := ops.redis.Set(ops.ctx, fmt.Sprintf("%s_%s", ops.dsn.DBName, ops.binlogPos), utils.Struct2Json(pos), 0).Err()
-	if err != nil {
-		log.WithContext(ops.ctx).WithError(err).Error("save pos failed")
-	}
 }

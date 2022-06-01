@@ -1,38 +1,44 @@
 package binlog
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/golang-module/carbon/v2"
 	"github.com/piupuer/go-helper/pkg/log"
+	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"reflect"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// listen mysql binlog by siddontang/go-mysql
-func NewMysqlBinlog(options ...func(*Options)) error {
+// NewMysqlBinlog listen mysql binlog by siddontang/go-mysql
+func NewMysqlBinlog(options ...func(*Options)) (err error) {
 	ops := getOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
 
 	if ops.db == nil {
-		return errors.Errorf("binlog db is empty")
+		err = errors.Errorf("binlog db is empty")
+		return
 	}
 	ops.db = ops.db.WithContext(ops.ctx)
 	if ops.dsn == nil {
-		return errors.Errorf("binlog dsn is empty")
+		err = errors.Errorf("binlog dsn is empty")
+		return
 	}
 	if ops.redis == nil {
-		return errors.Errorf("binlog redis is empty")
+		err = errors.Errorf("binlog redis is empty")
+		return
 	}
 
 	l := len(ops.models)
@@ -48,26 +54,44 @@ func NewMysqlBinlog(options ...func(*Options)) error {
 	cfg.Flavor = "mysql"
 	// cluster server id(random setting of single machine)
 	cfg.ServerID = ops.serverId
+	cfg.HeartbeatPeriod = 200 * time.Millisecond
 	// use binlog only
 	cfg.Dump.ExecutionPath = ""
-	c, err := canal.NewCanal(cfg)
+	start(MysqlBinlog{
+		ops:    *ops,
+		cfg:    cfg,
+		tables: tableNames,
+	})
+	return
+}
+
+type MysqlBinlog struct {
+	ops    Options
+	cfg    *canal.Config
+	tables []string
+}
+
+func start(ins MysqlBinlog) {
+	c, err := canal.NewCanal(ins.cfg)
 	if err != nil {
-		return errors.WithStack(err)
+		err = errors.WithStack(err)
+		return
 	}
 	// event handler
 	c.SetEventHandler(&EventHandler{
-		ops:    *ops,
-		tables: tableNames,
+		ops:    ins.ops,
+		tables: ins.tables,
 	})
 	// refresh cache before run
-	err = refresh(*ops, tableNames)
+	err = refresh(ins.ops, ins.tables)
 	if err != nil {
-		return errors.WithStack(err)
+		err = errors.WithStack(err)
+		return
 	}
 	// run from the last position
 	pos, _ := c.GetMasterPos()
 	go c.RunFrom(pos)
-	return nil
+	go currentPos(ins, c)
 }
 
 func getTableNameFromModel(ops Options, model interface{}) (tableName string) {
@@ -197,15 +221,16 @@ type EventHandler struct {
 	tables []string
 }
 
-// row change event
-func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
+// OnRow row change event
+func (eh EventHandler) OnRow(e *canal.RowsEvent) error {
 	if !utils.Contains(eh.tables, e.Table.Name) {
 		return nil
 	}
+	ctx := tracing.NewId(nil)
 	defer func() {
 		if err := recover(); err != nil {
 			log.
-				WithContext(eh.ops.ctx).
+				WithContext(ctx).
 				WithError(errors.Errorf("%v", err)).
 				WithFields(map[string]interface{}{
 					"Table":  e.Table.Name,
@@ -216,20 +241,13 @@ func (eh *EventHandler) OnRow(e *canal.RowsEvent) error {
 			return
 		}
 	}()
-	RowChange(eh.ops, e)
-	log.
-		WithContext(eh.ops.ctx).
-		WithFields(map[string]interface{}{
-			"Table":  e.Table.Name,
-			"Action": e.Action,
-			"Pos":    e.Header.LogPos,
-		}).
-		Info("changed")
+	RowChange(ctx, eh.ops, e)
 	return nil
 }
 
-// ddl event
-func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.QueryEvent) error {
+// OnDDL ddl event
+func (eh EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.QueryEvent) (err error) {
+	ctx := tracing.NewId(nil)
 	database := string(queryEvent.Schema)
 	sql := strings.ToLower(string(queryEvent.Query))
 	dropReg := regexp.MustCompile("drop table `(.+?)`")
@@ -238,11 +256,11 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 		if m := dropReg.FindAllStringSubmatch(sql, -1); len(m) == 1 {
 			table := strings.Trim(m[0][1], "`")
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
-			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
+			err = eh.ops.redis.Del(ctx, cacheKey).Err()
 			if err != nil {
-				log.WithContext(eh.ops.ctx).WithError(err).Error("drop table %s sync to redis failed", table)
+				log.WithContext(ctx).WithError(err).Error("drop table %s sync to redis failed", table)
 			} else {
-				log.WithContext(eh.ops.ctx).Info("drop table %s success", table)
+				log.WithContext(ctx).Info("drop table %s success", table)
 			}
 		}
 	}
@@ -257,24 +275,25 @@ func (eh *EventHandler) OnDDL(nextPos mysql.Position, queryEvent *replication.Qu
 		}
 		if table != "" {
 			cacheKey := fmt.Sprintf("%s_%s", database, table)
-			err := eh.ops.redis.Del(eh.ops.ctx, cacheKey).Err()
+			err = eh.ops.redis.Del(ctx, cacheKey).Err()
 			if err != nil {
-				log.WithContext(eh.ops.ctx).WithError(err).Error("truncate table %s sync to redis failed", table)
+				log.WithContext(ctx).WithError(err).Error("truncate table %s sync to redis failed", table)
 			} else {
-				log.WithContext(eh.ops.ctx).Info("truncate table %s success", table)
+				log.WithContext(ctx).Info("truncate table %s success", table)
 			}
 		}
 	}
-	return nil
+	return
 }
 
-// pos change event
-func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) error {
+// OnPosSynced pos change event
+func (eh EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force bool) (err error) {
+	ctx := tracing.NewId(nil)
 	defer func() {
-		if err := recover(); err != nil {
+		if e := recover(); e != nil {
 			log.
-				WithContext(eh.ops.ctx).
-				WithError(errors.Errorf("%v", err)).
+				WithContext(ctx).
+				WithError(errors.Errorf("%v", e)).
 				WithFields(map[string]interface{}{
 					"Name": pos.Name,
 					"Pos":  pos.Pos,
@@ -283,17 +302,43 @@ func (eh *EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force
 			return
 		}
 	}()
-	PosChange(eh.ops, pos)
-	log.
-		WithContext(eh.ops.ctx).
-		WithFields(map[string]interface{}{
-			"Name": pos.Name,
-			"Pos":  pos.Pos,
-		}).
-		Info("synced")
-	return nil
+	err = eh.ops.redis.Set(ctx, fmt.Sprintf("%s_%s", eh.ops.dsn.DBName, eh.ops.binlogPos), utils.Struct2Json(pos), 0).Err()
+	if err != nil {
+		log.WithContext(ctx).WithError(err).Error("save pos failed")
+	}
+	return
 }
 
 func (eh EventHandler) String() string {
 	return "EventHandler"
+}
+
+// show current position to know it is running
+func currentPos(ins MysqlBinlog, c *canal.Canal) {
+	for {
+		fmt.Println(runtime.NumGoroutine())
+		if c.Ctx().Err() == context.Canceled {
+			log.
+				WithContext(ins.ops.ctx).
+				Info("canal exited, will restart after 10s")
+			// restart after 10s
+			time.Sleep(10 * time.Second)
+			log.
+				WithContext(ins.ops.ctx).
+				Info("canal restarting...")
+			start(ins)
+			log.
+				WithContext(ins.ops.ctx).
+				Info("canal started")
+			break
+		}
+		pos := c.SyncedPosition()
+		log.
+			WithContext(ins.ops.ctx).
+			WithFields(map[string]interface{}{
+				"Name": pos.Name,
+				"Pos":  pos.Pos,
+			}).Info("current position")
+		time.Sleep(30 * time.Second)
+	}
 }
