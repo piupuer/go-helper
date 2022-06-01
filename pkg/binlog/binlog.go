@@ -6,14 +6,16 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
+	"github.com/go-redis/redis/v8"
 	"github.com/golang-module/carbon/v2"
+	"github.com/google/uuid"
+	"github.com/piupuer/go-helper/pkg/lock"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"reflect"
 	"regexp"
-	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -54,44 +56,114 @@ func NewMysqlBinlog(options ...func(*Options)) (err error) {
 	cfg.Flavor = "mysql"
 	// cluster server id(random setting of single machine)
 	cfg.ServerID = ops.serverId
-	cfg.HeartbeatPeriod = 200 * time.Millisecond
 	// use binlog only
 	cfg.Dump.ExecutionPath = ""
-	start(MysqlBinlog{
+	ins := MysqlBinlog{
 		ops:    *ops,
 		cfg:    cfg,
 		tables: tableNames,
-	})
+		id:     uuid.NewString(),
+	}
+	// if it is invalid will return err
+	_, err = canal.NewCanal(ins.cfg)
+	if err != nil {
+		err = errors.WithStack(err)
+		return
+	}
+	go ins.heartbeat()
 	return
 }
 
 type MysqlBinlog struct {
-	ops    Options
-	cfg    *canal.Config
-	tables []string
+	ops     Options
+	cfg     *canal.Config
+	tables  []string
+	id      string
+	oldId   string
+	c       *canal.Canal
+	stopped bool
 }
 
-func start(ins MysqlBinlog) {
-	c, err := canal.NewCanal(ins.cfg)
-	if err != nil {
-		err = errors.WithStack(err)
+func (ins *MysqlBinlog) start() {
+	if ins.c == nil {
+		c, _ := canal.NewCanal(ins.cfg)
+		ins.c = c
+	} else if ins.c.Ctx().Err() != context.Canceled {
 		return
 	}
+
 	// event handler
-	c.SetEventHandler(&EventHandler{
+	ins.c.SetEventHandler(&EventHandler{
 		ops:    ins.ops,
 		tables: ins.tables,
 	})
 	// refresh cache before run
-	err = refresh(ins.ops, ins.tables)
-	if err != nil {
-		err = errors.WithStack(err)
-		return
-	}
+	refresh(ins.ops, ins.tables)
 	// run from the last position
-	pos, _ := c.GetMasterPos()
-	go c.RunFrom(pos)
-	go currentPos(ins, c)
+	pos, _ := ins.c.GetMasterPos()
+	go ins.c.RunFrom(pos)
+	go ins.currentPos()
+}
+
+// show current position to know it is running
+func (ins MysqlBinlog) currentPos() {
+	for {
+		if ins.c == nil {
+			break
+		}
+		time.Sleep(30 * time.Second)
+		pos := ins.c.SyncedPosition()
+		log.
+			WithContext(ins.ops.ctx).
+			WithFields(map[string]interface{}{
+				"Id":   ins.id,
+				"Name": pos.Name,
+				"Pos":  pos.Pos,
+			}).Info("current position")
+	}
+}
+
+func (ins *MysqlBinlog) stop() {
+	if ins.c != nil {
+		ins.c.Close()
+		time.Sleep(time.Second)
+		ins.c = nil
+	}
+}
+
+func (ins *MysqlBinlog) heartbeat() {
+	for {
+		nxLock := lock.NxLock{
+			Key:        "binlog.heartbeat.lock",
+			Redis:      ins.ops.redis,
+			Expiration: 10 * time.Second,
+		}
+		ok := nxLock.Lock()
+		if ok {
+			ctx := tracing.NewId(nil)
+			key := fmt.Sprintf("binlog.%d", ins.ops.serverId)
+			v, err := ins.ops.redis.Get(ctx, key).Result()
+			if err == redis.Nil {
+				// first set
+				ins.ops.redis.Set(ctx, key, ins.id, 30*time.Second)
+				if ins.oldId != "" {
+					ins.stop()
+				}
+				ins.start()
+			} else if v == ins.id {
+				ins.oldId = v
+				// add expiration
+				ins.ops.redis.Expire(ctx, key, 30*time.Second)
+				ins.start()
+			} else if v != ins.id {
+				log.WithContext(ctx).Info("binlog is running in %s, skip", v)
+				ins.oldId = v
+				ins.stop()
+			}
+			nxLock.Unlock()
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func getTableNameFromModel(ops Options, model interface{}) (tableName string) {
@@ -115,14 +187,11 @@ func getTableNameFromModel(ops Options, model interface{}) (tableName string) {
 }
 
 // clear old redis cache
-func refresh(ops Options, tableNames []string) error {
+func refresh(ops Options, tableNames []string) {
 	for i, table := range tableNames {
 		cacheKey := fmt.Sprintf("%s_%s", ops.dsn.DBName, table)
-		// get old rows
-		oldRows, err := getRows(ops, table, ops.models[i])
-		if err != nil {
-			continue
-		}
+		// find old rows
+		oldRows := findRow(ops, table, ops.models[i])
 		newRows := make([]map[string]interface{}, 0)
 		for _, oldRow := range oldRows {
 			row := make(map[string]interface{}, 0)
@@ -133,29 +202,22 @@ func refresh(ops Options, tableNames []string) error {
 			newRows = append(newRows, row)
 		}
 		// compress by zlib
-		compress, err := utils.CompressStrByZlib(utils.Struct2Json(newRows))
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		compress, _ := utils.CompressStrByZlib(utils.Struct2Json(newRows))
 		// set to redis
-		err = ops.redis.Set(ops.ctx, cacheKey, compress, 0).Err()
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		ops.redis.Set(ops.ctx, cacheKey, compress, 0)
 	}
-	return nil
 }
 
-func getRows(ops Options, table string, model interface{}) ([]map[string]interface{}, error) {
-	list := make([]map[string]interface{}, 0)
-	rows, err := ops.db.Table(table).Rows()
-	if err != nil {
-		return nil, errors.WithStack(err)
+func findRow(ops Options, table string, model interface{}) (list []map[string]interface{}) {
+	list = make([]map[string]interface{}, 0)
+	rows, _ := ops.db.Table(table).Rows()
+	if rows == nil {
+		return
 	}
 	defer rows.Close()
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, errors.WithStack(err)
+	cols, _ := rows.Columns()
+	if len(cols) == 0 {
+		return
 	}
 	mt := reflect.TypeOf(model).Elem()
 
@@ -212,7 +274,7 @@ func getRows(ops Options, table string, model interface{}) ([]map[string]interfa
 		}
 		list = append(list, item)
 	}
-	return list, nil
+	return
 }
 
 type EventHandler struct {
@@ -222,27 +284,27 @@ type EventHandler struct {
 }
 
 // OnRow row change event
-func (eh EventHandler) OnRow(e *canal.RowsEvent) error {
-	if !utils.Contains(eh.tables, e.Table.Name) {
-		return nil
+func (eh EventHandler) OnRow(event *canal.RowsEvent) (err error) {
+	if !utils.Contains(eh.tables, event.Table.Name) {
+		return
 	}
 	ctx := tracing.NewId(nil)
 	defer func() {
-		if err := recover(); err != nil {
+		if e := recover(); e != nil {
 			log.
 				WithContext(ctx).
-				WithError(errors.Errorf("%v", err)).
+				WithError(errors.Errorf("%v", e)).
 				WithFields(map[string]interface{}{
-					"Table":  e.Table.Name,
-					"Action": e.Action,
-					"Pos":    e.Header.LogPos,
+					"Table":  event.Table.Name,
+					"Action": event.Action,
+					"Pos":    event.Header.LogPos,
 				}).
 				Error("runtime exception, stack: %v", string(debug.Stack()))
 			return
 		}
 	}()
-	RowChange(ctx, eh.ops, e)
-	return nil
+	RowChange(ctx, eh.ops, event)
+	return
 }
 
 // OnDDL ddl event
@@ -311,34 +373,4 @@ func (eh EventHandler) OnPosSynced(pos mysql.Position, set mysql.GTIDSet, force 
 
 func (eh EventHandler) String() string {
 	return "EventHandler"
-}
-
-// show current position to know it is running
-func currentPos(ins MysqlBinlog, c *canal.Canal) {
-	for {
-		fmt.Println(runtime.NumGoroutine())
-		if c.Ctx().Err() == context.Canceled {
-			log.
-				WithContext(ins.ops.ctx).
-				Info("canal exited, will restart after 10s")
-			// restart after 10s
-			time.Sleep(10 * time.Second)
-			log.
-				WithContext(ins.ops.ctx).
-				Info("canal restarting...")
-			start(ins)
-			log.
-				WithContext(ins.ops.ctx).
-				Info("canal started")
-			break
-		}
-		pos := c.SyncedPosition()
-		log.
-			WithContext(ins.ops.ctx).
-			WithFields(map[string]interface{}{
-				"Name": pos.Name,
-				"Pos":  pos.Pos,
-			}).Info("current position")
-		time.Sleep(30 * time.Second)
-	}
 }
