@@ -86,7 +86,15 @@ func RealCtx(ctx context.Context) context.Context {
 		return context.Background()
 	}
 	if c, ok := ctx.(*gin.Context); ok {
-		ctx = c.Request.Context()
+		// gin context contains cancel ctx, remove it
+		requestId, traceId, spanId := GetId(c.Request.Context())
+		ctx = context.Background()
+		if traceId != "" {
+			ctx = context.WithValue(ctx, constant.MiddlewareTraceIdCtxKey, traceId)
+			ctx = context.WithValue(ctx, constant.MiddlewareSpanIdCtxKey, spanId)
+		} else {
+			ctx = context.WithValue(ctx, constant.MiddlewareRequestIdCtxKey, requestId)
+		}
 	}
 	return ctx
 }
