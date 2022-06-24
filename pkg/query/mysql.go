@@ -45,17 +45,9 @@ func NewMySql(options ...func(*MysqlOptions)) MySql {
 func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 	tx := dbNoTx
 	if ops.ctx != nil {
-		method := ""
-		if c, ok := ops.ctx.(*gin.Context); ok {
-			if c.Request != nil {
-				method = c.Request.Method
-			}
-		}
-		if !(method == "OPTIONS" || method == "GET") {
-			txValue := ops.ctx.Value(constant.MiddlewareTransactionTxCtxKey)
-			if item, ok := txValue.(*gorm.DB); ok {
-				tx = item
-			}
+		txValue := ops.ctx.Value(constant.MiddlewareTransactionTxCtxKey)
+		if item, ok := txValue.(*gorm.DB); ok {
+			tx = item
 		}
 	}
 	return tx
