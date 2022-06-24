@@ -597,7 +597,8 @@ func getRateOptionsOrSetDefault(options *RateOptions) *RateOptions {
 }
 
 type TransactionOptions struct {
-	dbNoTx *gorm.DB
+	dbNoTx               *gorm.DB
+	forceTransactionPath []string
 }
 
 func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
@@ -608,9 +609,19 @@ func WithTransactionDbNoTx(db *gorm.DB) func(*TransactionOptions) {
 	}
 }
 
+func WithTransactionForceTransactionPath(paths ...string) func(*TransactionOptions) {
+	return func(options *TransactionOptions) {
+		if len(paths) > 0 {
+			getTransactionOptionsOrSetDefault(options).forceTransactionPath = append(getTransactionOptionsOrSetDefault(options).forceTransactionPath, paths...)
+		}
+	}
+}
+
 func getTransactionOptionsOrSetDefault(options *TransactionOptions) *TransactionOptions {
 	if options == nil {
-		return &TransactionOptions{}
+		return &TransactionOptions{
+			forceTransactionPath: []string{},
+		}
 	}
 	return options
 }

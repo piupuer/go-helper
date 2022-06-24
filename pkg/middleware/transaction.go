@@ -5,6 +5,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/tracing"
+	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -26,6 +27,9 @@ func Transaction(options ...func(*TransactionOptions)) gin.HandlerFunc {
 		if method == "OPTIONS" || method == "GET" {
 			// OPTIONS/GET skip transaction
 			noTransaction = true
+		}
+		if funk.ContainsString(ops.forceTransactionPath, c.Request.URL.Path) {
+			noTransaction = false
 		}
 		defer func() {
 			// get db transaction
