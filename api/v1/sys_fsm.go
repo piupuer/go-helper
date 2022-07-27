@@ -28,8 +28,7 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.FindFsm(&r)
-		resp.CheckErr(err)
+		list := q.FindFsm(&r)
 		resp.SuccessWithPageData(list, &[]resp.FsmMachine{}, r.Page)
 	}
 }
@@ -65,13 +64,12 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		r.ApprovalUserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.FindFsmApprovingLog(&r)
-		resp.CheckErr(err)
+		list := q.FindFsmApprovingLog(&r)
 		roleIds := make([]uint, 0)
 		for _, item := range list {
 			roleIds = append(roleIds, item.SubmitterRoleId)
-			for _, u := range item.CanApprovalRoles {
-				roleIds = append(roleIds, u.Id)
+			for _, uu := range item.CanApprovalRoles {
+				roleIds = append(roleIds, uu.Id)
 			}
 		}
 		roles := ops.findRoleByIds(c, roleIds)
@@ -83,15 +81,15 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		}
 		for i, item := range list {
 			list[i].SubmitterRole = m1[item.SubmitterRoleId]
-			for j, u := range item.CanApprovalRoles {
-				list[i].CanApprovalRoles[j] = m1[u.Id]
+			for j, uu := range item.CanApprovalRoles {
+				list[i].CanApprovalRoles[j] = m1[uu.Id]
 			}
 		}
 		userIds := make([]uint, 0)
 		for _, item := range list {
 			userIds = append(userIds, item.SubmitterUserId)
-			for _, u := range item.CanApprovalUsers {
-				userIds = append(userIds, u.Id)
+			for _, uu := range item.CanApprovalUsers {
+				userIds = append(userIds, uu.Id)
 			}
 		}
 		users := ops.findUserByIds(c, userIds)
@@ -103,8 +101,8 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 		}
 		for i, item := range list {
 			list[i].SubmitterUser = m2[item.SubmitterUserId]
-			for j, u := range item.CanApprovalUsers {
-				list[i].CanApprovalUsers[j] = m2[u.Id]
+			for j, uu := range item.CanApprovalUsers {
+				list[i].CanApprovalUsers[j] = m2[uu.Id]
 			}
 		}
 		resp.SuccessWithPageData(list, &[]resp.FsmApprovingLog{}, r.Page)
@@ -130,9 +128,8 @@ func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		item, err := q.FindFsmLogTrack(r)
-		resp.CheckErr(err)
-		resp.SuccessWithData(item)
+		list := q.FindFsmLogTrack(r)
+		resp.SuccessWithData(list)
 	}
 }
 
@@ -227,9 +224,9 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 		r.ApprovalUserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		item, err := q.FsmApproveLog(r)
+		err := q.FsmApproveLog(r)
 		resp.CheckErr(err)
-		resp.SuccessWithData(item)
+		resp.Success()
 	}
 }
 

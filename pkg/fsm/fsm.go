@@ -20,11 +20,10 @@ type Fsm struct {
 	Error   error
 }
 
-// mysql DDL migrate rollback is not supported, Migrate before New
+// Migrate mysql DDL migrate rollback is not supported, Migrate before New
 func Migrate(options ...func(*Options)) (err error) {
 	fs := New(options...)
 	if fs.Error != nil {
-		err = fs.Error
 		return
 	}
 	session := fs.initSession()
@@ -41,56 +40,50 @@ func Migrate(options ...func(*Options)) (err error) {
 	return
 }
 
-func New(options ...func(*Options)) *Fsm {
+func New(options ...func(*Options)) (fs *Fsm) {
 	ops := getOptionsOrSetDefault(nil)
 	for _, f := range options {
 		f(ops)
 	}
-	fs := &Fsm{
+	fs = &Fsm{
 		ops: *ops,
 	}
 	if ops.db != nil {
 		fs.session = fs.initSession()
 	} else {
-		fs.Error = errors.WithStack(ErrDbNil)
+		fs.Error = ErrDbNil
 	}
-	return fs
+	return
 }
 
-func (fs Fsm) DeleteMachineByIds(ids []uint) error {
+func (fs *Fsm) DeleteMachineByIds(ids []uint) {
 	if fs.Error != nil {
-		return fs.Error
+		return
+	}
+	if len(ids) == 0 {
+		return
 	}
 	machines := make([]Machine, 0)
 	fs.session.
 		Model(&Machine{}).
 		Where("id IN (?)", ids).
-		Preload("Events").
 		Find(&machines)
-	eventIds := make([]uint, 0)
-	for _, machine := range machines {
-		for _, event := range machine.Events {
-			eventIds = append(eventIds, event.Id)
-		}
+	categories := make([]uint, 0)
+	for _, item := range machines {
+		categories = append(categories, item.Category)
 	}
-	if len(eventIds) > 0 {
-		logs := make([]Log, 0)
-		fs.session.
-			Model(&Log{}).
-			Where("next_event_id IN (?)", eventIds).
-			Find(&logs)
-		if len(logs) > 0 {
-			return errors.Errorf("remove machine so that old approve log cannot be displayed normally")
-		}
+	for _, item := range categories {
+		fs.CancelLog(item)
 	}
-	return fs.session.
+	fs.session.
 		Where("id IN (?)", ids).
-		Delete(&Machine{}).Error
+		Delete(&Machine{})
+	return
 }
 
-func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
+func (fs *Fsm) CreateMachine(r req.FsmCreateMachine) (rp Machine) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	var machine Machine
 	utils.Struct2StructByJson(r, &machine)
@@ -101,42 +94,38 @@ func (fs Fsm) CreateMachine(r req.FsmCreateMachine) (*Machine, error) {
 		Where("category = ?", machine.Category).
 		Count(&count)
 	if count > 0 {
-		return nil, errors.Errorf("fsm category %d already exists", machine.Category)
+		fs.AddError(ErrMachineCategoryAlreadyExists)
+		return
 	}
 	// save json for query
 	machine.EventsJson = utils.Struct2Json(r.Levels)
-	err := fs.session.Create(&machine).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	fs.session.Create(&machine)
 	// batch fsm event
-	err = fs.batchCreateEvent(machine.Id, r.Levels)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	fs.batchCreateEvent(machine.Id, r.Levels)
+	if fs.Error != nil {
+		return
 	}
-	_, err = fs.findEventDesc(machine.Id)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	fs.findEventDesc(machine.Id)
+	if fs.Error != nil {
+		return
 	}
-	return &machine, nil
+	rp = machine
+	return
 }
 
-func (fs Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (*Machine, error) {
+func (fs *Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (rp Machine) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	var oldMachine Machine
-	err := fs.session.
+	fs.session.
 		Model(&Machine{}).
 		Where("id = ?", id).
-		First(&oldMachine).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+		First(&oldMachine)
 	// cancel log when machine config change
-	err = fs.CancelLog(oldMachine.Category)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	fs.CancelLog(oldMachine.Category)
+	if fs.Error != nil {
+		return
 	}
 	levels := make([]req.FsmCreateEvent, len(r.Levels))
 	copy(levels, r.Levels)
@@ -147,102 +136,102 @@ func (fs Fsm) UpdateMachineById(id uint, r req.FsmUpdateMachine) (*Machine, erro
 	if oldMachine.EventsJson != eventsJson {
 		m["events_json"] = eventsJson
 	}
-	err = fs.session.
+	fs.session.
 		Model(&Machine{}).
 		Where("id = ?", id).
-		Updates(&m).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+		Updates(&m)
 	// batch fsm event
-	err = fs.batchCreateEvent(oldMachine.Id, levels)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	fs.batchCreateEvent(oldMachine.Id, levels)
+	if fs.Error != nil {
+		return
 	}
-	_, err = fs.findEventDesc(oldMachine.Id)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	fs.findEventDesc(oldMachine.Id)
+	if fs.Error != nil {
+		return
 	}
-	return &oldMachine, nil
+	rp = oldMachine
+	return
 }
 
+// SubmitLog
 // =======================================================
 // approval log function
 // =======================================================
 // first submit log
-func (fs Fsm) SubmitLog(r req.FsmCreateLog) ([]EventItem, error) {
+func (fs *Fsm) SubmitLog(r req.FsmCreateLog) (rp []EventItem) {
+	rp = make([]EventItem, 0)
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
-	machine, err := fs.GetMachineByCategory(uint(r.Category))
-	if err != nil {
-		return nil, errors.WithStack(err)
+	machine := fs.GetMachineByCategory(uint(r.Category))
+	if machine.Id == constant.Zero {
+		fs.AddError(ErrMachineNotFound)
+		return
 	}
 	// check whether approval is pending
-	_, err = fs.getLastPendingLog(req.FsmLog{
+	last := fs.getLastPendingLog(req.FsmLog{
 		Category: r.Category,
 		Uuid:     r.Uuid,
 	})
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.WithStack(ErrRepeatSubmit)
+	if last.Id > constant.Zero {
+		fs.AddError(ErrRepeatSubmit)
+		return
 	}
-	startEvent, err := fs.getStartEvent(machine.Id)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	startEvent := fs.getStartEvent(machine.Id)
+	if fs.Error != nil {
+		return
 	}
 
 	// first create log
-	var log Log
-	log.Category = uint(r.Category)
-	log.Uuid = r.Uuid
-	nextEvent, err := fs.getNextEvent(machine.Id, startEvent.Level)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	var l Log
+	l.Category = uint(r.Category)
+	l.Uuid = r.Uuid
+	nextEvent := fs.getNextEvent(machine.Id, startEvent.Level)
+	if fs.Error != nil {
+		return
 	}
-	log.ProgressId = startEvent.DstId
-	log.CanApprovalRoles = nextEvent.Roles
-	log.CanApprovalUsers = nextEvent.Users
-	log.SubmitterRoleId = r.SubmitterRoleId
-	log.SubmitterUserId = r.SubmitterUserId
-	log.PrevDetail = startEvent.Dst.Name
-	log.Detail = nextEvent.Name.Name
-	log.CurrentEventId = startEvent.Id
-	log.NextEventId = nextEvent.Id
-	err = fs.session.Create(&log).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	l.ProgressId = startEvent.DstId
+	l.CanApprovalRoles = nextEvent.Roles
+	l.CanApprovalUsers = nextEvent.Users
+	l.SubmitterRoleId = r.SubmitterRoleId
+	l.SubmitterUserId = r.SubmitterUserId
+	l.PrevDetail = startEvent.Dst.Name
+	l.Detail = nextEvent.Name.Name
+	l.CurrentEventId = startEvent.Id
+	l.NextEventId = nextEvent.Id
+	fs.session.Create(&l)
 
-	return []EventItem{
+	rp = append(rp, []EventItem{
 		startEvent.Dst,
 		nextEvent.Name,
-	}, nil
+	}...)
+	return
 }
 
-// start approve log
-func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
+// ApproveLog start approve log
+func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
-	machine, err := fs.GetMachineByCategory(uint(r.Category))
-	if err != nil {
-		return nil, errors.WithStack(err)
+	machine := fs.GetMachineByCategory(uint(r.Category))
+	if fs.Error != nil {
+		return
 	}
 	approved := uint(r.Approved)
-	rp := resp.FsmApprovalLog{
+	rp = resp.FsmApprovalLog{
 		Uuid:     r.Uuid,
 		Category: uint(r.Category),
 	}
 	// check current user/role permission
-	oldLog, err := fs.CheckLogPermission(req.FsmPermissionLog{
+	oldLog := fs.CheckLogPermission(req.FsmPermissionLog{
 		Category:       r.Category,
 		Uuid:           r.Uuid,
 		ApprovalRoleId: r.ApprovalRoleId,
 		ApprovalUserId: r.ApprovalUserId,
 		Approved:       approved,
 	})
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if fs.Error != nil {
+		return
 	}
 
 	// submitter cancel
@@ -255,19 +244,16 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		m["next_event_id"] = constant.Zero
 		m["detail"] = constant.FsmMsgSubmitterCancel
 		rp.Cancel = constant.One
-		err = fs.session.
+		fs.session.
 			Model(&Log{}).
 			Where("id = ?", oldLog.Id).
-			Updates(&m).Error
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		return &rp, nil
+			Updates(&m)
+		return
 	}
 
-	desc, err := fs.findEventDesc(machine.Id)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	desc := fs.findEventDesc(machine.Id)
+	if fs.Error != nil {
+		return
 	}
 	// create fsm instance from current progress
 	f := fsm.NewFSM(oldLog.Progress.Name, desc, nil)
@@ -293,17 +279,19 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	}
 
 	if eventName == "" {
-		return nil, errors.Wrap(ErrParams, "approved")
+		fs.AddError(errors.Wrap(ErrParams, "approved"))
+		return
 	}
 	nextName := getNextItemName(approved, eventName)
 	f.SetState(nextName)
-	event, err := fs.getEvent(machine.Id, eventName)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	event := fs.getEvent(machine.Id, eventName)
+	if fs.Error != nil {
+		return
 	}
-	progressItem, err := fs.getEventItemByName(nextName)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	progressItem := fs.getEventItemByName(nextName)
+	if progressItem.Id == constant.Zero {
+		fs.AddError(gorm.ErrRecordNotFound)
+		return
 	}
 	var newLog Log
 	newLog.Category = uint(r.Category)
@@ -314,14 +302,14 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	newLog.CurrentEventId = event.Id
 	if len(f.AvailableTransitions()) != 0 {
 		// bind next approver
-		var nextEvent *Event
+		var nextEvent Event
 		if approved == constant.FsmLogStatusApproved {
-			nextEvent, err = fs.getNextEvent(machine.Id, event.Level)
+			nextEvent = fs.getNextEvent(machine.Id, event.Level)
 		} else {
-			nextEvent, err = fs.getPrevEvent(machine.Id, event.Level)
+			nextEvent = fs.getPrevEvent(machine.Id, event.Level)
 		}
-		if err != nil {
-			return nil, errors.WithStack(err)
+		if fs.Error != nil {
+			return
 		}
 		// no users/roles, maybe submitter resubmit/confirm
 		noUser := false
@@ -362,10 +350,7 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 		newLog.Approved = constant.FsmLogStatusApproved
 		newLog.Detail = constant.FsmMsgEnded
 	}
-	err = fs.session.Create(&newLog).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	fs.session.Create(&newLog)
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusApproved
 	if approved == constant.FsmLogStatusRefused {
@@ -375,25 +360,23 @@ func (fs Fsm) ApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
 	m["approval_user_id"] = r.ApprovalUserId
 	m["approval_opinion"] = r.ApprovalOpinion
 	// update oldLog approved
-	err = fs.session.
+	fs.session.
 		Model(&Log{}).
 		Where("id = ?", oldLog.Id).
-		Updates(&m).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+		Updates(&m)
 	// status transition
 	if fs.ops.transition == nil {
 		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
-		return &rp, nil
+		return
 	}
-	return &rp, fs.ops.transition(fs.ops.ctx, rp)
+	fs.AddError(fs.ops.transition(fs.ops.ctx, rp))
+	return
 }
 
-// cancel log by category(it is applicable to the automatic cancellation of records to be approved when the approval configuration changes)
-func (fs Fsm) CancelLog(category uint) error {
+// CancelLog cancel log by category(it is applicable to the automatic cancellation of records to be approved when the approval configuration changes)
+func (fs *Fsm) CancelLog(category uint) {
 	if fs.Error != nil {
-		return fs.Error
+		return
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
@@ -413,29 +396,23 @@ func (fs Fsm) CancelLog(category uint) error {
 			Cancel:   constant.One,
 		})
 	}
-	// status transition
-	err := fs.ops.transition(fs.ops.ctx, list...)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	err = q.Updates(&m).Error
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	// status transition
+	q.Updates(&m)
 	if fs.ops.transition == nil {
 		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
-		return nil
+		return
 	}
-	return fs.ops.transition(fs.ops.ctx, list...)
+	// status transition
+	fs.AddError(fs.ops.transition(fs.ops.ctx, list...))
+	return
 }
 
-func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
+func (fs *Fsm) CancelLogByUuids(r req.FsmCancelLog) {
 	if fs.Error != nil {
-		return fs.Error
+		return
 	}
 	if len(r.Uuids) == 0 {
-		return errors.Wrap(ErrParams, "uuids")
+		fs.AddError(errors.Wrap(ErrParams, "uuids"))
+		return
 	}
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
@@ -450,7 +427,8 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 	oldLogs := make([]Log, 0)
 	q.Find(&oldLogs)
 	if len(oldLogs) == 0 {
-		return errors.WithStack(ErrNoPermissionOrEnded)
+		fs.AddError(ErrNoPermissionOrEnded)
+		return
 	}
 	list := make([]resp.FsmApprovalLog, 0)
 	for i, l := 0, len(oldLogs); i < l; i++ {
@@ -460,89 +438,95 @@ func (fs Fsm) CancelLogByUuids(r req.FsmCancelLog) error {
 			Cancel:   constant.One,
 		})
 	}
-	err := q.Updates(&m).Error
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	q.Updates(&m)
 	// status transition
 	if fs.ops.transition == nil {
 		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
-		return nil
+		return
 	}
-	return fs.ops.transition(fs.ops.ctx, list...)
+	fs.AddError(fs.ops.transition(fs.ops.ctx, list...))
+	return
 }
 
+// CheckLogPermission
 // =======================================================
 // query function
 // =======================================================
 // check verify whether the current user/role has permission to approve
-func (fs Fsm) CheckLogPermission(r req.FsmPermissionLog) (*Log, error) {
+func (fs *Fsm) CheckLogPermission(r req.FsmPermissionLog) (rp Log) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	// check whether approval is pending
-	log, err := fs.getLastPendingLog(req.FsmLog{
+	last := fs.getLastPendingLog(req.FsmLog{
 		Category: r.Category,
 		Uuid:     r.Uuid,
 	})
-	if err != nil {
-		return nil, errors.WithStack(ErrNoPermissionOrEnded)
+	if last.Id == constant.Zero {
+		fs.AddError(ErrNoPermissionOrEnded)
+		return
 	}
 	if r.Approved == constant.FsmLogStatusCancelled {
-		if log.SubmitterRoleId != r.ApprovalRoleId && log.SubmitterUserId != r.ApprovalUserId {
-			return nil, errors.WithStack(ErrOnlySubmitterCancel)
+		if last.SubmitterRoleId != r.ApprovalRoleId && last.SubmitterUserId != r.ApprovalUserId {
+			fs.AddError(ErrOnlySubmitterCancel)
+			return
 		} else {
-			if log.CurrentEvent.Level > constant.Zero {
-				return nil, errors.WithStack(ErrStartedCannotCancel)
+			if last.CurrentEvent.Level > constant.Zero {
+				fs.AddError(ErrStartedCannotCancel)
+				return
 			}
-			return log, nil
+			rp = last
+			return
 		}
 	}
 	roles := make([]uint, 0)
 	users := make([]uint, 0)
-	for _, role := range log.CanApprovalRoles {
+	for _, role := range last.CanApprovalRoles {
 		roles = append(roles, role.Id)
 	}
-	for _, user := range log.CanApprovalUsers {
+	for _, user := range last.CanApprovalUsers {
 		users = append(users, user.Id)
 	}
 	if !utils.Contains(roles, r.ApprovalRoleId) && !utils.Contains(users, r.ApprovalUserId) {
-		return nil, errors.WithStack(ErrNoPermissionApprove)
+		fs.AddError(ErrNoPermissionApprove)
+		return
 	}
-	return log, nil
+	rp = last
+	return
 }
 
-// check verify whether the current user/role has permission to edit log detail
-func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
+// CheckEditLogDetailPermission check verify whether the current user/role has permission to edit log detail
+func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) {
 	if fs.Error != nil {
-		return fs.Error
+		return
 	}
 	// check whether approval is pending
-	log, err := fs.getLastPendingLog(req.FsmLog{
+	last := fs.getLastPendingLog(req.FsmLog{
 		Category: r.Category,
 		Uuid:     r.Uuid,
 	})
-	if err != nil {
-		return errors.WithStack(ErrNoEditLogDetailPermission)
+	if fs.Error != nil {
+		fs.AddError(ErrNoEditLogDetailPermission)
+		return
 	}
 	submitter := false
 	confirm := false
-	if log.SubmitterRoleId == r.ApprovalRoleId && log.SubmitterUserId == r.ApprovalUserId {
+	if last.SubmitterRoleId == r.ApprovalRoleId && last.SubmitterUserId == r.ApprovalUserId {
 		submitter = true
 	}
 	if r.Approver {
 		submitter = false
 	}
-	if submitter && log.NextEventId == 0 {
+	if submitter && last.NextEventId == 0 {
 		confirm = true
 	}
 	edit := false
 	editFields := ""
 	if submitter || confirm {
-		var machine *Machine
-		machine, err = fs.GetMachineByCategory(uint(r.Category))
-		if err != nil {
-			return errors.WithStack(err)
+		var machine Machine
+		machine = fs.GetMachineByCategory(uint(r.Category))
+		if fs.Error != nil {
+			return
 		}
 		edit = true
 		if submitter {
@@ -551,45 +535,43 @@ func (fs Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission
 			editFields = machine.SubmitterConfirmEditFields
 		}
 	} else {
-		edit = log.NextEvent.Edit == constant.One
-		editFields = log.NextEvent.EditFields
+		edit = last.NextEvent.Edit == constant.One
+		editFields = last.NextEvent.EditFields
 	}
 
 	if !edit {
-		return errors.WithStack(ErrNoEditLogDetailPermission)
+		fs.AddError(ErrNoEditLogDetailPermission)
+		return
 	}
 	// split permission fields
 	fields := strings.Split(utils.SnakeCase(editFields), ",")
 	if len(fields) > 0 {
 		for _, f := range r.Fields {
 			if !utils.Contains(fields, utils.SnakeCase(f)) {
-				return errors.Wrap(ErrNoEditLogDetailPermission, f)
+				fs.AddError(errors.Wrap(ErrNoEditLogDetailPermission, f))
+				return
 			}
 		}
 	}
-	return nil
+	return
 }
 
-// get machine by category
-func (fs Fsm) GetMachineByCategory(category uint) (*Machine, error) {
+// GetMachineByCategory get machine by category
+func (fs *Fsm) GetMachineByCategory(category uint) (machine Machine) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
-	var machine Machine
-	err := fs.session.
+	fs.session.
 		Model(&Machine{}).
 		Where("category = ?", category).
-		First(&machine).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &machine, nil
+		First(&machine)
+	return
 }
 
-// find machines
-func (fs Fsm) FindMachine(r *req.FsmMachine) ([]resp.FsmMachine, error) {
+func (fs *Fsm) FindMachine(r *req.FsmMachine) (rp []resp.FsmMachine) {
+	rp = make([]resp.FsmMachine, 0)
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	list := make([]Machine, 0)
 	q := fs.session.Model(&Machine{})
@@ -627,17 +609,16 @@ func (fs Fsm) FindMachine(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 		page.GetLimit()
 	}
 	page.CountCache = &countCache
-	newList := make([]resp.FsmMachine, 0)
-	utils.Struct2StructByJson(list, &newList)
-	return newList, nil
+	utils.Struct2StructByJson(list, &rp)
+	return
 }
 
-// find logs
-func (fs Fsm) FindLog(r req.FsmLog) ([]Log, error) {
+// FindLog find logs
+func (fs *Fsm) FindLog(r req.FsmLog) (rp []Log) {
+	rp = make([]Log, 0)
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
-	var logs []Log
 	fs.session.
 		Preload("CurrentEvent").
 		Preload("CurrentEvent.Roles").
@@ -650,27 +631,27 @@ func (fs Fsm) FindLog(r req.FsmLog) ([]Log, error) {
 		Preload("CanApprovalUsers").
 		Where("category = ?", r.Category).
 		Where("uuid = ?", r.Uuid).
-		Find(&logs)
-	return logs, nil
+		Find(&rp)
+	return
 }
 
-// find log tracks
-func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
+// FindLogTrack find log tracks
+func (fs *Fsm) FindLogTrack(logs []Log) (rp []resp.FsmLogTrack) {
+	rp = make([]resp.FsmLogTrack, 0)
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
-	track := make([]resp.FsmLogTrack, 0)
 	if len(logs) == 0 {
-		return track, nil
+		return
 	}
 	l := len(logs)
-	for i, log := range logs {
+	for i, item := range logs {
 		prevApproved := constant.FsmLogStatusWaiting
 		prevCancel := constant.Zero
 		prevOpinion := ""
 		end := constant.Zero
 		cancel := constant.Zero
-		if log.Approved == constant.FsmLogStatusCancelled {
+		if item.Approved == constant.FsmLogStatusCancelled {
 			cancel = constant.One
 		}
 		if i > 0 {
@@ -680,58 +661,59 @@ func (fs Fsm) FindLogTrack(logs []Log) ([]resp.FsmLogTrack, error) {
 			}
 			prevOpinion = logs[i-1].ApprovalOpinion
 		}
-		if i == l-1 && log.NextEventId == constant.Zero {
+		if i == l-1 && item.NextEventId == constant.Zero {
 			end = constant.One
 		}
 		if end == constant.One || cancel == constant.One {
-			track = append(track, resp.FsmLogTrack{
+			rp = append(rp, resp.FsmLogTrack{
 				Time: resp.Time{
-					CreatedAt: log.CreatedAt,
-					UpdatedAt: log.UpdatedAt,
+					CreatedAt: item.CreatedAt,
+					UpdatedAt: item.UpdatedAt,
 				},
-				Name:    log.PrevDetail,
+				Name:    item.PrevDetail,
 				Opinion: prevOpinion,
 				Status:  prevApproved,
 				Cancel:  prevCancel,
 			}, resp.FsmLogTrack{
 				Time: resp.Time{
-					CreatedAt: log.CreatedAt,
-					UpdatedAt: log.UpdatedAt,
+					CreatedAt: item.CreatedAt,
+					UpdatedAt: item.UpdatedAt,
 				},
-				Name:    log.Detail,
-				Opinion: log.ApprovalOpinion,
-				Status:  log.Approved,
+				Name:    item.Detail,
+				Opinion: item.ApprovalOpinion,
+				Status:  item.Approved,
 				End:     end,
 				Cancel:  cancel,
 			})
 		} else {
-			track = append(track, resp.FsmLogTrack{
+			rp = append(rp, resp.FsmLogTrack{
 				Time: resp.Time{
-					CreatedAt: log.CreatedAt,
-					UpdatedAt: log.UpdatedAt,
+					CreatedAt: item.CreatedAt,
+					UpdatedAt: item.UpdatedAt,
 				},
-				Name:    log.PrevDetail,
+				Name:    item.PrevDetail,
 				Opinion: prevOpinion,
 				Status:  prevApproved,
 				End:     end,
 				Cancel:  cancel,
 			})
 		}
-		if i == l-1 && log.Approved == constant.FsmLogStatusWaiting {
-			track = append(track, resp.FsmLogTrack{
+		if i == l-1 && item.Approved == constant.FsmLogStatusWaiting {
+			rp = append(rp, resp.FsmLogTrack{
 				Name:     logs[i].Detail,
-				Resubmit: log.Resubmit,
-				Confirm:  log.Confirm,
+				Resubmit: item.Resubmit,
+				Confirm:  item.Confirm,
 			})
 		}
 	}
-	return track, nil
+	return
 }
 
-// get the pending approval list of a approver
-func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]resp.FsmApprovingLog, error) {
+// FindPendingLogByApprover get the pending approval list of a approver
+func (fs *Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) (rp []resp.FsmApprovingLog) {
+	rp = make([]resp.FsmApprovingLog, 0)
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	// get user relation
 	logIds1 := make([]uint, 0)
@@ -746,7 +728,6 @@ func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]resp.FsmApprovin
 		Where("role_id = ?", r.ApprovalRoleId).
 		Pluck("log_id", &logIds2)
 	list := make([]Log, 0)
-	newList := make([]resp.FsmApprovingLog, 0)
 	ids := append(logIds1, logIds2...)
 	if len(ids) > 0 {
 		q := fs.session.
@@ -779,20 +760,16 @@ func (fs Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) ([]resp.FsmApprovin
 		}
 		page.CountCache = &countCache
 	}
-	utils.Struct2StructByJson(list, &newList)
-	return newList, nil
+	utils.Struct2StructByJson(list, &rp)
+	return
 }
 
 // =======================================================
 // private function
 // =======================================================
 // get last pending log, err will be returned when it does not exist
-func (fs Fsm) getLastPendingLog(r req.FsmLog) (*Log, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-	var log Log
-	err := fs.session.
+func (fs *Fsm) getLastPendingLog(r req.FsmLog) (rp Log) {
+	fs.session.
 		Preload("CanApprovalRoles").
 		Preload("CanApprovalUsers").
 		Preload("Progress").
@@ -801,16 +778,13 @@ func (fs Fsm) getLastPendingLog(r req.FsmLog) (*Log, error) {
 		Where("category = ?", r.Category).
 		Where("uuid = ?", r.Uuid).
 		Where("approved = ?", constant.FsmLogStatusWaiting).
-		First(&log).Error
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &log, nil
+		First(&rp)
+	return
 }
 
-func (fs Fsm) getEvent(machineId uint, name string) (*Event, error) {
+func (fs *Fsm) getEvent(machineId uint, name string) (rp Event) {
 	if fs.Error != nil {
-		return nil, fs.Error
+		return
 	}
 	var events []Event
 	fs.session.
@@ -820,44 +794,34 @@ func (fs Fsm) getEvent(machineId uint, name string) (*Event, error) {
 		Find(&events)
 	for _, event := range events {
 		if event.Name.Name == name {
-			return &event, nil
+			rp = event
+			return
 		}
 	}
-	return nil, errors.WithStack(gorm.ErrRecordNotFound)
+	fs.AddError(gorm.ErrRecordNotFound)
+	return
 }
 
-func (fs Fsm) getEventItemByName(name string) (*EventItem, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-	var item EventItem
-	err := fs.session.
+func (fs *Fsm) getEventItemByName(name string) (rp EventItem) {
+	fs.session.
 		Where("name = ?", name).
-		First(&item).Error
-	return &item, err
+		First(&rp)
+	return
 }
 
-func (fs Fsm) getStartEvent(machineId uint) (*Event, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-	var event Event
-	err := fs.session.
+func (fs *Fsm) getStartEvent(machineId uint) (rp Event) {
+	fs.session.
 		Preload("Name").
 		Preload("Src").
 		Preload("Dst").
 		Where("machine_id = ?", machineId).
 		Where("sort = ?", constant.Zero).
-		First(&event).Error
-	return &event, err
+		First(&rp)
+	return
 }
 
-func (fs Fsm) getPrevEvent(machineId uint, level uint) (*Event, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-
-	var events []Event
+func (fs *Fsm) getPrevEvent(machineId uint, level uint) (rp Event) {
+	events := make([]Event, 0)
 	fs.session.
 		Preload("Name").
 		Preload("Src").
@@ -870,17 +834,15 @@ func (fs Fsm) getPrevEvent(machineId uint, level uint) (*Event, error) {
 		Find(&events)
 	for _, event := range events {
 		if strings.HasSuffix(event.Name.Name, constant.FsmSuffixWaiting) || strings.HasSuffix(event.Name.Name, constant.FsmSuffixResubmit) {
-			return &event, nil
+			rp = event
+			return
 		}
 	}
-	return nil, errors.WithStack(gorm.ErrRecordNotFound)
+	return
 }
 
-func (fs Fsm) getNextEvent(machineId uint, level uint) (*Event, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-	var events []Event
+func (fs *Fsm) getNextEvent(machineId uint, level uint) (rp Event) {
+	events := make([]Event, 0)
 	fs.session.
 		Preload("Name").
 		Preload("Src").
@@ -893,33 +855,27 @@ func (fs Fsm) getNextEvent(machineId uint, level uint) (*Event, error) {
 		Find(&events)
 	for _, event := range events {
 		if strings.HasSuffix(event.Name.Name, constant.FsmSuffixWaiting) || strings.HasSuffix(event.Name.Name, constant.FsmSuffixConfirm) {
-			return &event, nil
+			rp = event
+			return
 		}
 	}
-	return nil, errors.WithStack(gorm.ErrRecordNotFound)
+	return
 }
 
-func (fs Fsm) getEndEvent(machineId uint) (*Event, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
-	var event Event
-	err := fs.session.
+func (fs *Fsm) getEndEvent(machineId uint) (rp Event) {
+	fs.session.
 		Preload("Name").
 		Preload("Src").
 		Preload("Dst").
 		Where("machine_id = ?", machineId).
 		Order("sort DESC").
-		First(&event).Error
-	return &event, err
+		First(&rp)
+	return
 }
 
-func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
-	if fs.Error != nil {
-		return nil, fs.Error
-	}
+func (fs *Fsm) findEventDesc(machineId uint) (rp []fsm.EventDesc) {
 	events := make([]Event, 0)
-	desc := make([]fsm.EventDesc, 0)
+	list := make([]fsm.EventDesc, 0)
 	fs.session.
 		Preload("Name").
 		Preload("Src").
@@ -932,17 +888,17 @@ func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 		for _, item := range event.Src {
 			src = append(src, item.Name)
 		}
-		desc = append(desc, fsm.EventDesc{
+		list = append(list, fsm.EventDesc{
 			Name: event.Name.Name,
 			Src:  src,
 			Dst:  event.Dst.Name,
 		})
 	}
-	err := checkEvent(desc)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if fs.AddError(checkEvent(list)) != nil {
+		return
 	}
-	return desc, nil
+	rp = list
+	return
 }
 
 // batch create events
@@ -974,29 +930,28 @@ func (fs Fsm) findEventDesc(machineId uint) ([]fsm.EventDesc, error) {
 // L2 waiting refuse  / L1 approved               / L2 refused
 // L0 waiting confirm / L2 approved               / L0 confirmed
 // end
-func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err error) {
+func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 	if fs.Error != nil {
-		return fs.Error
+		return
 	}
 	if len(r) == 0 {
-		return errors.WithStack(ErrEventsNil)
+		fs.AddError(ErrEventsNil)
+		return
 	}
 	// clear old machine
-	err = fs.session.
+	fs.session.
 		Unscoped().
 		Where("machine_id = ?", machineId).
-		Delete(&Event{}).Error
-	if err != nil {
-		return errors.WithStack(err)
-	}
+		Delete(&Event{})
 
 	var machine Machine
-	err = fs.session.
+	fs.session.
 		Model(&Machine{}).
 		Where("id = ?", machineId).
-		First(&machine).Error
-	if err != nil {
-		return errors.WithStack(err)
+		First(&machine)
+	if machine.Id == constant.Zero {
+		fs.AddError(gorm.ErrRecordNotFound)
+		return
 	}
 
 	// save event names and event desc
@@ -1115,10 +1070,7 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 		}
 	}
 	if len(items) > 0 {
-		err = fs.session.Create(&items).Error
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		fs.session.Create(&items)
 	}
 	newItems := make([]EventItem, 0)
 	fs.session.
@@ -1178,15 +1130,12 @@ func (fs Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) (err erro
 		})
 	}
 	if len(events) > 0 {
-		err = fs.session.Create(&events).Error
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		fs.session.Create(&events)
 	}
 	return
 }
 
-func (fs Fsm) findUser(ids []uint) []User {
+func (fs *Fsm) findUser(ids []uint) []User {
 	users := make([]User, 0)
 	fs.session.
 		Model(&User{}).
@@ -1209,7 +1158,7 @@ func (fs Fsm) findUser(ids []uint) []User {
 	return users
 }
 
-func (fs Fsm) findRole(ids []uint) []Role {
+func (fs *Fsm) findRole(ids []uint) []Role {
 	roles := make([]Role, 0)
 	fs.session.
 		Model(&Role{}).
@@ -1232,7 +1181,7 @@ func (fs Fsm) findRole(ids []uint) []Role {
 	return roles
 }
 
-func (fs Fsm) initSession() *gorm.DB {
+func (fs *Fsm) initSession() *gorm.DB {
 	namingStrategy := schema.NamingStrategy{
 		TablePrefix:   fs.ops.prefix,
 		SingularTable: true,
@@ -1240,6 +1189,15 @@ func (fs Fsm) initSession() *gorm.DB {
 	session := fs.ops.db.WithContext(fs.ops.ctx).Session(&gorm.Session{})
 	session.NamingStrategy = namingStrategy
 	return session
+}
+
+func (fs *Fsm) AddError(err error) error {
+	if fs.Error == nil {
+		fs.Error = err
+	} else if err != nil && !errors.Is(err, fs.Error) {
+		fs.Error = fmt.Errorf("%v; %w", fs.Error, err)
+	}
+	return fs.Error
 }
 
 func getNextItemName(approved uint, eventName string) string {
@@ -1261,7 +1219,7 @@ func getNextItemName(approved uint, eventName string) string {
 }
 
 // check that the state machine is valid(traverse each event, only one end position)
-func checkEvent(desc []fsm.EventDesc) error {
+func checkEvent(desc []fsm.EventDesc) (err error) {
 	names := make([]string, 0)
 	for _, item := range desc {
 		names = append(names, item.Dst)
@@ -1269,7 +1227,8 @@ func checkEvent(desc []fsm.EventDesc) error {
 	}
 	names = utils.RemoveRepeat(names)
 	if len(names) == 0 {
-		return errors.WithStack(ErrEventNameNil)
+		err = ErrEventNameNil
+		return
 	}
 
 	f := fsm.NewFSM(names[0], desc, nil)
@@ -1282,7 +1241,8 @@ func checkEvent(desc []fsm.EventDesc) error {
 		}
 	}
 	if endCount != 1 {
-		return errors.WithStack(ErrEventEndPointNotUnique)
+		err = ErrEventEndPointNotUnique
+		return
 	}
-	return nil
+	return
 }

@@ -5,11 +5,10 @@ import (
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
-// find finite state machine
-func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
+// FindFsm find finite state machine
+func (my MySql) FindFsm(r *req.FsmMachine) []resp.FsmMachine {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsm"))
 	defer span.End()
 	f := fsm.New(
@@ -19,8 +18,8 @@ func (my MySql) FindFsm(r *req.FsmMachine) ([]resp.FsmMachine, error) {
 	return f.FindMachine(r)
 }
 
-// find waiting approve log
-func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLog, error) {
+// FindFsmApprovingLog find waiting approve log
+func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) []resp.FsmApprovingLog {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsmApprovingLog"))
 	defer span.End()
 	f := fsm.New(
@@ -30,23 +29,33 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) ([]resp.FsmApprovingLo
 	return f.FindPendingLogByApprover(r)
 }
 
-// find approve log
-func (my MySql) FindFsmLogTrack(r req.FsmLog) ([]resp.FsmLogTrack, error) {
+// FindFsmLogTrack find approve log
+func (my MySql) FindFsmLogTrack(r req.FsmLog) []resp.FsmLogTrack {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsmLogTrack"))
 	defer span.End()
 	f := fsm.New(
 		fsm.WithCtx(my.Ctx),
 		fsm.WithDb(my.Tx),
 	)
-	logs, err := f.FindLog(r)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	logs := f.FindLog(r)
 	return f.FindLogTrack(logs)
 }
 
-// find waiting approve log
-func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error) {
+// FsmSubmitLog submit log
+func (my MySql) FsmSubmitLog(r req.FsmCreateLog) (err error) {
+	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmSubmitLog"))
+	defer span.End()
+	f := fsm.New(
+		fsm.WithCtx(my.Ctx),
+		fsm.WithDb(my.Tx),
+		fsm.WithTransition(my.ops.fsmTransition),
+	)
+	f.SubmitLog(r)
+	return f.Error
+}
+
+// FsmApproveLog approve log
+func (my MySql) FsmApproveLog(r req.FsmApproveLog) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmApproveLog"))
 	defer span.End()
 	f := fsm.New(
@@ -54,10 +63,11 @@ func (my MySql) FsmApproveLog(r req.FsmApproveLog) (*resp.FsmApprovalLog, error)
 		fsm.WithDb(my.Tx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
-	return f.ApproveLog(r)
+	f.ApproveLog(r)
+	return f.Error
 }
 
-// cancel finite state machine log by uuids
+// FsmCancelLogByUuids cancel finite state machine log by uuids
 func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmCancelLogByUuids"))
 	defer span.End()
@@ -66,10 +76,11 @@ func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 		fsm.WithDb(my.Tx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
-	return f.CancelLogByUuids(r)
+	f.CancelLogByUuids(r)
+	return f.Error
 }
 
-// check edit log detail permission
+// FsmCheckEditLogDetailPermission check edit log detail permission
 func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmCheckEditLogDetailPermission"))
 	defer span.End()
@@ -77,10 +88,11 @@ func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermi
 		fsm.WithCtx(my.Ctx),
 		fsm.WithDb(my.Tx),
 	)
-	return f.CheckEditLogDetailPermission(r)
+	f.CheckEditLogDetailPermission(r)
+	return f.Error
 }
 
-// create finite state machine
+// CreateFsm create finite state machine
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateFsm"))
 	defer span.End()
@@ -88,11 +100,11 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 		fsm.WithCtx(my.Ctx),
 		fsm.WithDb(my.Tx),
 	)
-	_, err := f.CreateMachine(r)
-	return err
+	f.CreateMachine(r)
+	return f.Error
 }
 
-// update finite state machine
+// UpdateFsmById update finite state machine
 func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateFsmById"))
 	defer span.End()
@@ -101,17 +113,19 @@ func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 		fsm.WithDb(my.Tx),
 		fsm.WithTransition(my.ops.fsmTransition),
 	)
-	_, err := f.UpdateMachineById(id, r)
-	return err
+	f.UpdateMachineById(id, r)
+	return f.Error
 }
 
-// delete finite state machine
+// DeleteFsmByIds delete finite state machine
 func (my MySql) DeleteFsmByIds(ids []uint) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteFsmByIds"))
 	defer span.End()
 	f := fsm.New(
 		fsm.WithCtx(my.Ctx),
 		fsm.WithDb(my.Tx),
+		fsm.WithTransition(my.ops.fsmTransition),
 	)
-	return f.DeleteMachineByIds(ids)
+	f.DeleteMachineByIds(ids)
+	return f.Error
 }

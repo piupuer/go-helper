@@ -2,7 +2,6 @@ package fsm
 
 import "github.com/piupuer/go-helper/ms"
 
-// finite state machine
 type Machine struct {
 	ms.M
 	Category                   uint    `gorm:"comment:custom category(>0)" json:"category"`
@@ -15,7 +14,6 @@ type Machine struct {
 	Events                     []Event `gorm:"foreignKey:MachineId" json:"events"`
 }
 
-// fsm event
 type Event struct {
 	ms.M
 	MachineId  uint        `gorm:"index:idx_m_id_sort,unique;" json:"machineId"`
@@ -33,12 +31,10 @@ type Event struct {
 	Users      []User      `gorm:"many2many:event_user_relation;comment:approver user ids" json:"users"`
 }
 
-// fsm event user
 type User struct {
 	Id uint `gorm:"primaryKey;comment:primary key" json:"id"`
 }
 
-// fsm event role
 type Role struct {
 	Id uint `gorm:"primaryKey;comment:primary key" json:"id"`
 }
@@ -58,13 +54,11 @@ type EventUserRelation struct {
 	UserId  uint `json:"userId"`
 }
 
-// fsm event item(save event name)
 type EventItem struct {
 	Id   uint   `gorm:"primaryKey;comment:primary key" json:"id"`
 	Name string `gorm:"index:idx_name,unique;comment:fsm event name" json:"name"`
 }
 
-// fsm log(save every operation)
 type Log struct {
 	ms.M
 	Category         uint      `gorm:"comment:custom category(>0)" json:"category"`
