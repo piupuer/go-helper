@@ -45,9 +45,9 @@ type orderCondition struct {
 
 func (stmt *Statement) Preload(schema string) *Statement {
 	var preloads []searchPreload
-	for _, preload := range stmt.preloads {
-		if preload.schema != schema {
-			preloads = append(preloads, preload)
+	for _, item := range stmt.preloads {
+		if item.schema != schema {
+			preloads = append(preloads, item)
 		}
 	}
 	preloads = append(preloads, searchPreload{schema})
@@ -152,5 +152,5 @@ func (stmt *Statement) Parse(value interface{}) (err error) {
 
 		stmt.Table = stmt.Schema.Table
 	}
-	return err
+	return
 }

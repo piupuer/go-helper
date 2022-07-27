@@ -2,7 +2,7 @@ package utils
 
 import "github.com/thoas/go-funk"
 
-// whether the array contains interface
+// Contains whether the array contains interface
 func Contains(arr interface{}, item interface{}) bool {
 	switch arr.(type) {
 	case []uint:
@@ -46,7 +46,7 @@ func Contains(arr interface{}, item interface{}) bool {
 	return funk.Contains(arr, item)
 }
 
-// whether the array contains uint
+// ContainsUint whether the array contains uint
 func ContainsUint(arr []uint, item uint) bool {
 	for _, v := range arr {
 		if v == item {
@@ -56,7 +56,7 @@ func ContainsUint(arr []uint, item uint) bool {
 	return false
 }
 
-// whether the array contains uint return index or return -1
+// ContainsUintIndex whether the array contains uint return index or return -1
 func ContainsUintIndex(arr []uint, item uint) int {
 	for i, v := range arr {
 		if v == item {
@@ -66,7 +66,7 @@ func ContainsUintIndex(arr []uint, item uint) int {
 	return -1
 }
 
-// whether the array contains uint and remove it
+// ContainsUintThenRemove whether the array contains uint and remove it
 func ContainsUintThenRemove(arr []uint, item uint) []uint {
 	index := ContainsUintIndex(arr, item)
 	if index >= 0 {

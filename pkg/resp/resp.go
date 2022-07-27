@@ -12,13 +12,13 @@ type Time struct {
 	UpdatedAt carbon.DateTime `json:"updatedAt" swaggertype:"string" example:"2019-01-01 00:00:00"` // update time
 }
 
-// base fields(like Id/CreatedAt/UpdatedAt common fields)
+// Base base fields(like Id/CreatedAt/UpdatedAt common fields)
 type Base struct {
 	Id uint `json:"id"` // primary key
 	Time
 }
 
-// http resp structure
+// Resp http resp structure
 type Resp struct {
 	Code      int         `json:"code" enums:"201,401,403,405,500"`                         // response code
 	Data      interface{} `json:"data" swaggertype:"string" example:"{}"`                   // response data if code=201
@@ -26,7 +26,7 @@ type Resp struct {
 	RequestId string      `json:"requestId" example:"4cb6e3f6-1f52-4fba-9b7d-e65098600f02"` // request id
 }
 
-// array data page info
+// Page array data page info
 type Page struct {
 	PageNum      uint   `json:"pageNum" form:"pageNum"`           // current page
 	PageSize     uint   `json:"pageSize" form:"pageSize"`         // page per count
@@ -37,13 +37,13 @@ type Page struct {
 	LimitPrimary string `json:"-"`                                // When there is a large amount of data, limit is optimized by specifying a field (the field is usually self incremented ID or indexed), which can improve the query efficiency (if it is not transmitted, it will not be optimized)
 }
 
-// array data page with list
+// PageData array data page with list
 type PageData struct {
 	Page
 	List interface{} `json:"list"`
 }
 
-// calc limit/offset
+// GetLimit calc limit/offset
 func (s *Page) GetLimit() (int, int) {
 	var pageSize int64
 	var pageNum int64

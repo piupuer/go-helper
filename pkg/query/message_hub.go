@@ -163,9 +163,9 @@ func (h *MessageHub) run() {
 					if client.User.Id == id {
 						var total int64
 						if h.ops.rd != nil {
-							total, _ = h.ops.rd.GetUnReadMessageCount(id)
+							total = h.ops.rd.GetUnReadMessageCount(id)
 						} else {
-							total, _ = h.ops.dbNoTx.GetUnReadMessageCount(id)
+							total = h.ops.dbNoTx.GetUnReadMessageCount(id)
 						}
 						msg := resp.MessageWs{
 							Type: MessageRespUnRead,
@@ -265,11 +265,8 @@ func (c *MessageClient) receive() {
 		case MessageReqBatchRead:
 			var d req.Ids
 			utils.Struct2StructByJson(r.Data, &d)
-			err = c.hub.ops.dbNoTx.BatchUpdateMessageRead(d.Uints())
+			c.hub.ops.dbNoTx.BatchUpdateMessageRead(d.Uints())
 			detail := resp.GetSuccess()
-			if err != nil {
-				detail = resp.GetFailWithMsg(err)
-			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
@@ -278,33 +275,24 @@ func (c *MessageClient) receive() {
 		case MessageReqBatchDeleted:
 			var d req.Ids
 			utils.Struct2StructByJson(r.Data, &d)
-			err = c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(d.Uints())
+			c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(d.Uints())
 			detail := resp.GetSuccess()
-			if err != nil {
-				detail = resp.GetFailWithMsg(err)
-			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
 		case MessageReqAllRead:
-			err = c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.Id)
+			c.hub.ops.dbNoTx.UpdateAllMessageRead(c.User.Id)
 			detail := resp.GetSuccess()
-			if err != nil {
-				detail = resp.GetFailWithMsg(err)
-			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,
 				Detail: detail,
 			})
 		case MessageReqAllDeleted:
-			err = c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.Id)
+			c.hub.ops.dbNoTx.UpdateAllMessageDeleted(c.User.Id)
 			detail := resp.GetSuccess()
-			if err != nil {
-				detail = resp.GetFailWithMsg(err)
-			}
 			c.hub.refreshUserMessage.SafeSend(c.hub.userIds)
 			c.Send.SafeSend(resp.MessageWs{
 				Type:   MessageRespNormal,

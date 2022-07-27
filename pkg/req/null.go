@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// request param uint
+// NullUint request param uint
 type NullUint uint
 
 func (r *NullUint) UnmarshalJSON(data []byte) (err error) {
@@ -27,13 +27,14 @@ func (r NullUint) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("%d", r)), nil
 }
 
+// Value
 // gorm set to mysql
 // driver.Value types: int64/float64/bool/[]byte/string/time.Time
 func (r NullUint) Value() (driver.Value, error) {
 	return int64(r), nil
 }
 
-// gorm get from mysql
+// Scan gorm get from mysql
 func (r *NullUint) Scan(v interface{}) error {
 	value, ok := v.(NullUint)
 	if ok {

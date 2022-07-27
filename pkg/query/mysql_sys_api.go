@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/tracing"
@@ -35,22 +36,22 @@ func (my MySql) FindApi(r *req.Api) []ms.SysApi {
 	return list
 }
 
-// find all api group by api category
-func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) (tree []resp.ApiGroupByCategory, accessIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindApiGroupByCategoryByRoleKeyword"))
 	defer span.End()
-	tree := make([]resp.ApiGroupByCategory, 0)
-	accessIds := make([]uint, 0)
+	tree = make([]resp.ApiGroupByCategory, 0)
+	accessIds = make([]uint, 0)
+	if my.ops.enforcer == nil {
+		log.WithContext(my.Ctx).Warn("casbin enforcer is empty")
+		return
+	}
 	allApi := make([]ms.SysApi, 0)
 	// find all api
 	my.Tx.Find(&allApi)
 	// find all casbin by current user's role id
-	currentCasbins, err := FindCasbinByRoleKeyword(my.ops.enforcer, currentRoleKeyword)
+	currentCasbins := FindCasbinByRoleKeyword(my.ops.enforcer, currentRoleKeyword)
 	// find all casbin by current role id
-	casbins, err := FindCasbinByRoleKeyword(my.ops.enforcer, roleKeyword)
-	if err != nil {
-		return tree, accessIds, errors.WithStack(err)
-	}
+	casbins := FindCasbinByRoleKeyword(my.ops.enforcer, roleKeyword)
 
 	newApi := make([]ms.SysApi, 0)
 	for _, api := range allApi {
@@ -106,7 +107,7 @@ func (my MySql) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 			})
 		}
 	}
-	return tree, accessIds, err
+	return
 }
 
 func (my MySql) CreateApi(r *req.CreateApi) (err error) {

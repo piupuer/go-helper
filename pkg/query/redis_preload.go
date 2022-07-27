@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/piupuer/go-helper/pkg/log"
 	localUtils "github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -16,8 +17,8 @@ import (
 func (rd *Redis) processPreload() {
 	if rd.Error == nil && len(rd.Statement.preloads) > 0 {
 		preloadMap := map[string][]string{}
-		for _, preload := range rd.Statement.preloads {
-			preloadFields := strings.Split(preload.schema, ".")
+		for _, item := range rd.Statement.preloads {
+			preloadFields := strings.Split(item.schema, ".")
 			for idx := range preloadFields {
 				preloadMap[strings.Join(preloadFields[:idx+1], ".")] = preloadFields[:idx+1]
 			}
@@ -180,9 +181,9 @@ func preload(db *Redis, rels []*schema.Relationship) {
 
 	// column: 1.clause.Column 2.[]clause.Column
 	cols := make([]clause.Column, 0)
-	if col1, ok := column.(clause.Column); ok {
+	if col1, ok1 := column.(clause.Column); ok1 {
 		cols = append(cols, col1)
-	} else if col2, ok := column.([]clause.Column); ok {
+	} else if col2, ok2 := column.([]clause.Column); ok2 {
 		cols = append(cols, col2...)
 	}
 	for _, col := range cols {
@@ -246,12 +247,12 @@ func preload(db *Redis, rels []*schema.Relationship) {
 func toQueryValues(values []interface{}) (results []int) {
 	for _, v := range values {
 		// uint primary key convert to redis json int
-		if item, ok := v.(uint); ok {
-			results = append(results, int(item))
-		} else if item, ok := v.(int); ok {
-			results = append(results, item)
+		if item1, ok1 := v.(uint); ok1 {
+			results = append(results, int(item1))
+		} else if item2, ok2 := v.(int); ok2 {
+			results = append(results, item2)
 		} else {
-			fmt.Println("the primary key type of the current association table is incompatible")
+			log.Warn("the primary key type of the current association table is incompatible")
 		}
 	}
 	return

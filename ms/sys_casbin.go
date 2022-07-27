@@ -1,6 +1,6 @@
 package ms
 
-// refer to: github.com/casbin/gorm-adapter/v2/adapter.go CasbinRule
+// SysCasbin refer to: github.com/casbin/gorm-adapter/v2/adapter.go CasbinRule
 type SysCasbin struct {
 	Id    uint   `gorm:"primaryKey;autoIncrement"`
 	PType string `gorm:"column:ptype;size:100;index:idx_casbin,unique;comment:enforer type"`
@@ -12,7 +12,6 @@ type SysCasbin struct {
 	V5    string `gorm:"size:100;index:idx_casbin,unique"`
 }
 
-// role and casbin
 type SysRoleCasbin struct {
 	Keyword string `json:"keyword"` // role keyword
 	Method  string `json:"method"`  // api method

@@ -5,19 +5,17 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/piupuer/go-helper/pkg/log"
-	"github.com/pkg/errors"
 	"io"
 	"net/url"
 	"time"
 )
 
-// object storage: minio
 type MinioOss struct {
 	ops    MinioOptions
 	client *minio.Client
 }
 
-func NewMinio(options ...func(*MinioOptions)) (*MinioOss, error) {
+func NewMinio(options ...func(*MinioOptions)) (rp *MinioOss, err error) {
 	// Initialize minio client object.
 	ops := getMinioOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -30,20 +28,19 @@ func NewMinio(options ...func(*MinioOptions)) (*MinioOss, error) {
 	})
 
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return
 	}
-	return &MinioOss{
+	rp = &MinioOss{
 		ops:    *ops,
 		client: minioClient,
-	}, nil
+	}
+	return
 }
 
-// make a bucket without location
 func (mo *MinioOss) MakeBucket(ctx context.Context, bucketName string) {
 	mo.MakeBucketWithLocation(ctx, bucketName, "")
 }
 
-// make a bucket with location
 func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, location string) {
 	err := mo.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
 	if err != nil {
@@ -57,7 +54,6 @@ func (mo *MinioOss) MakeBucketWithLocation(ctx context.Context, bucketName, loca
 	}
 }
 
-// find objects by prefix
 func (mo *MinioOss) Find(ctx context.Context, bucketName, prefix string, recursive bool) <-chan minio.ObjectInfo {
 	return mo.client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
 		Prefix:    prefix,
@@ -65,20 +61,17 @@ func (mo *MinioOss) Find(ctx context.Context, bucketName, prefix string, recursi
 	})
 }
 
-// upload object from local file
 func (mo *MinioOss) PutLocal(ctx context.Context, bucketName, objectName, filePath string) error {
 	_, err := mo.client.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{})
 	return err
 }
 
-// upload object from file stream
-func (mo *MinioOss) Put(ctx context.Context, bucketName, objectName string, file io.Reader, fileSize int64) error {
-	_, err := mo.client.PutObject(ctx, bucketName, objectName, file, fileSize, minio.PutObjectOptions{})
-	return err
+func (mo *MinioOss) Put(ctx context.Context, bucketName, objectName string, file io.Reader, fileSize int64) (err error) {
+	_, err = mo.client.PutObject(ctx, bucketName, objectName, file, fileSize, minio.PutObjectOptions{})
+	return
 }
 
-// batch remove object
-func (mo *MinioOss) BatchRemove(ctx context.Context, bucketName string, objectNames []string) error {
+func (mo *MinioOss) BatchRemove(ctx context.Context, bucketName string, objectNames []string) (err error) {
 	objectsCh := make(chan minio.ObjectInfo)
 
 	go func() {
@@ -90,25 +83,26 @@ func (mo *MinioOss) BatchRemove(ctx context.Context, bucketName string, objectNa
 		}
 	}()
 
-	for rErr := range mo.client.RemoveObjects(ctx, bucketName, objectsCh, minio.RemoveObjectsOptions{}) {
-		if rErr.Err != nil {
-			return rErr.Err
+	for e := range mo.client.RemoveObjects(ctx, bucketName, objectsCh, minio.RemoveObjectsOptions{}) {
+		if e.Err != nil {
+			err = e.Err
+			return
 		}
 	}
-	return nil
+	return
 }
 
-// get object preview url
-func (mo *MinioOss) GetPreviewUrl(ctx context.Context, bucketName, objectName string) string {
+func (mo *MinioOss) GetPreviewUrl(ctx context.Context, bucketName, objectName string) (rp string) {
 	u, err := mo.client.PresignedGetObject(ctx, bucketName, objectName, time.Second*24*60*60, url.Values{})
 	if err != nil {
-		return ""
+		return
 	}
-	return u.String()
+	rp = u.String()
+	return
 }
 
-// check object is exists
-func (mo *MinioOss) Exists(ctx context.Context, bucketName, objectName string) bool {
+func (mo *MinioOss) Exists(ctx context.Context, bucketName, objectName string) (ok bool) {
 	_, err := mo.client.StatObject(ctx, bucketName, objectName, minio.StatObjectOptions{})
-	return err == nil
+	ok = err == nil
+	return
 }

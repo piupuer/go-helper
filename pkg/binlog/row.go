@@ -138,18 +138,20 @@ func RowChange(ctx context.Context, ops Options, e *canal.RowsEvent) {
 }
 
 // get index by id
-func getIndexById(rows []map[string]interface{}, id interface{}, primaryKey string) int {
+func getIndexById(rows []map[string]interface{}, id interface{}, primaryKey string) (index int) {
+	index = -1
 	for i, row := range rows {
 		if row[primaryKey] == id {
-			return i
+			index = i
+			return
 		}
 	}
-	return -1
+	return
 }
 
 // get row fields map from data
-func getRow(ctx context.Context, data []interface{}, table *schema.Table) map[string]interface{} {
-	row := make(map[string]interface{}, 0)
+func getRow(ctx context.Context, data []interface{}, table *schema.Table) (row map[string]interface{}) {
+	row = make(map[string]interface{}, 0)
 	count := len(data)
 	for i, column := range table.Columns {
 		var item interface{}
@@ -171,5 +173,5 @@ func getRow(ctx context.Context, data []interface{}, table *schema.Table) map[st
 	if count != len(table.Columns) {
 		log.WithContext(ctx).Warn("inconsistent data: columns: %v, data: %v", table.Columns, data)
 	}
-	return row
+	return
 }

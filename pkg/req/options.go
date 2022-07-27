@@ -35,10 +35,10 @@ func WithValidateCn(options *ValidateOptions) {
 	chinese := zh.New()
 	uni := ut.New(chinese, chinese)
 	trans, _ := uni.GetTranslator("zh")
-	validate := validator.New()
+	v := validator.New()
 
-	_ = cnTranslations.RegisterDefaultTranslations(validate, trans)
-	options.validator = validate
+	_ = cnTranslations.RegisterDefaultTranslations(v, trans)
+	options.validator = v
 	options.translator = trans
 }
 

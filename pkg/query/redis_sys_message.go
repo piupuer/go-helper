@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// find status!=ms.SysMessageLogStatusDeleted messages
+// FindUnDeleteMessage find status!=ms.SysMessageLogStatusDeleted messages
 func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindUnDeleteMessage"))
 	defer span.End()
@@ -66,15 +66,14 @@ func (rd Redis) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	return list
 }
 
-// un read total count
-func (rd Redis) GetUnReadMessageCount(userId uint) (int64, error) {
+// GetUnReadMessageCount un read total count
+func (rd Redis) GetUnReadMessageCount(userId uint) (total int64) {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "GetUnReadMessageCount"))
 	defer span.End()
-	var total int64
-	err := rd.
+	rd.
 		Table("sys_message_log").
 		Where("to_user_id", "=", userId).
 		Where("status", "=", ms.SysMessageLogStatusUnRead).
-		Count(&total).Error
-	return total, err
+		Count(&total)
+	return
 }

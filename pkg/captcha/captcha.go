@@ -33,9 +33,10 @@ func (ca Captcha) Get() (id, img string) {
 	return
 }
 
-func (ca Captcha) Verify(id, answer string) bool {
+func (ca Captcha) Verify(id, answer string) (pass bool) {
 	if answer == "" {
-		return false
+		return
 	}
-	return ca.c.Verify(id, answer, true)
+	pass = ca.c.Verify(id, answer, true)
+	return
 }

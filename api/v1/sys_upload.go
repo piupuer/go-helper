@@ -7,7 +7,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
-	"github.com/siddontang/go/ioutil2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -138,15 +137,14 @@ func UploadMerge(options ...func(*Options)) gin.HandlerFunc {
 				for _, item := range arr {
 					func() {
 						currentChunkName := r.GetChunkFilename(uint(item))
-						exists := ioutil2.FileExists(currentChunkName)
-						if exists {
-							f, err := os.OpenFile(currentChunkName, os.O_RDONLY, os.ModePerm)
-							resp.CheckErr(err)
+						_, exists := os.Stat(currentChunkName)
+						if exists == nil {
+							f, e := os.OpenFile(currentChunkName, os.O_RDONLY, os.ModePerm)
+							resp.CheckErr(e)
 							defer func() {
 								f.Close()
 							}()
-							b, err := ioutil.ReadAll(f)
-							resp.CheckErr(err)
+							b, _ := ioutil.ReadAll(f)
 							mergeFile.WriteAt(b, int64((item-1)*chunkSize))
 						}
 					}()
@@ -232,8 +230,8 @@ func UploadFile(options ...func(*Options)) gin.HandlerFunc {
 // check file is complete
 func checkChunkComplete(filePart req.FilePartInfo) bool {
 	currentChunkName := filePart.GetChunkFilename(filePart.CurrentCheckChunkNumber)
-	exists := ioutil2.FileExists(currentChunkName)
-	if exists {
+	_, exists := os.Stat(currentChunkName)
+	if exists == nil {
 		filePart.CurrentCheckChunkNumber++
 		if filePart.CurrentCheckChunkNumber > filePart.GetTotalChunk() {
 			return true
@@ -250,8 +248,8 @@ func findUploadedChunkNumber(filePart req.FilePartInfo) (bool, []uint) {
 	uploadedChunkNumbers := make([]uint, 0)
 	for {
 		currentChunkName := filePart.GetChunkFilename(currentChunkNumber)
-		exists := ioutil2.FileExists(currentChunkName)
-		if exists {
+		_, exists := os.Stat(currentChunkName)
+		if exists == nil {
 			uploadedChunkNumbers = append(uploadedChunkNumbers, currentChunkNumber)
 		}
 		currentChunkNumber++

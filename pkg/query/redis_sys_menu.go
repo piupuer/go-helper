@@ -7,17 +7,16 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
-func (rd Redis) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
+func (rd Redis) FindMenu(currentRoleId, currentRoleSort uint) (tree []ms.SysMenu) {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindMenu"))
 	defer span.End()
-	tree := make([]ms.SysMenu, 0)
 	menus := rd.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	tree = rd.GenMenuTree(0, menus)
-	return tree
+	return
 }
 
-// generate menu tree
-func (rd Redis) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu {
+// GenMenuTree generate menu tree
+func (rd Redis) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) (tree []ms.SysMenu) {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "GenMenuTree"))
 	defer span.End()
 	roleMenuIds := make([]uint, 0)
@@ -32,14 +31,13 @@ func (rd Redis) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu 
 			roleMenuIds = append(roleMenuIds, menu.Id)
 		}
 	}
-	return genMenuTree(parentId, roleMenuIds, allMenu)
+	tree = genMenuTree(parentId, roleMenuIds, allMenu)
+	return
 }
 
-func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([]ms.SysMenu, []uint, error) {
+func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) (tree []ms.SysMenu, accessIds []uint) {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindMenuByRoleId"))
 	defer span.End()
-	tree := make([]ms.SysMenu, 0)
-	accessIds := make([]uint, 0)
 	allMenu := rd.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	roleMenus := rd.findMenuByRoleId(roleId, constant.Zero)
 	tree = rd.GenMenuTree(0, allMenu)
@@ -47,11 +45,11 @@ func (rd Redis) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 		accessIds = append(accessIds, menu.Id)
 	}
 	accessIds = FindCheckedMenuId(accessIds, allMenu)
-	return tree, accessIds, nil
+	return
 }
 
 // find all menus by role id(not menu tree)
-func (rd Redis) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
+func (rd Redis) findMenuByRoleId(roleId, roleSort uint) (rp []ms.SysMenu) {
 	// q current role menu relation
 	relations := make([]ms.SysMenuRoleRelation, 0)
 	menuIds := make([]uint, 0)
@@ -62,7 +60,7 @@ func (rd Redis) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
 	for _, relation := range relations {
 		menuIds = append(menuIds, relation.MenuId)
 	}
-	roleMenu := make([]ms.SysMenu, 0)
+	rp = make([]ms.SysMenu, 0)
 	if len(menuIds) > 0 {
 		q := rd.
 			Table("sys_menu").
@@ -72,14 +70,14 @@ func (rd Redis) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
 			q.Where("status", "=", constant.One)
 		}
 		q.Order("sort").
-			Find(&roleMenu)
+			Find(&rp)
 	}
-	return roleMenu
+	return
 }
 
 // find all menus by current role(not menu tree)
-func (rd Redis) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.SysMenu {
-	menus := make([]ms.SysMenu, 0)
+func (rd Redis) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) (menus []ms.SysMenu) {
+	menus = make([]ms.SysMenu, 0)
 	if currentRoleSort != constant.Zero {
 		// find menus by current role id
 		menus = rd.findMenuByRoleId(currentRoleId, currentRoleSort)
@@ -90,5 +88,5 @@ func (rd Redis) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.
 			Order("sort").
 			Find(&menus)
 	}
-	return menus
+	return
 }

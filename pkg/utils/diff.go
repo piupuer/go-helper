@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-// compare oldStruct/newStruct to update
+// CompareDiff compare oldStruct/newStruct to update
 func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[string]interface{}) {
 	// json to map
 	m1 := make(map[string]interface{}, 0)
@@ -97,7 +97,7 @@ func CompareDiff(oldStruct interface{}, newStruct interface{}, update *map[strin
 	*update = m3
 }
 
-// compare oldStruct/newStruct to update, map key to snake
+// CompareDiff2SnakeKey compare oldStruct/newStruct to update, map key to snake
 func CompareDiff2SnakeKey(oldStruct interface{}, newStruct interface{}, update *map[string]interface{}) {
 	m1 := make(map[string]interface{}, 0)
 	m2 := make(map[string]interface{}, 0)

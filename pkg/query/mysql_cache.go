@@ -8,69 +8,68 @@ import (
 )
 
 const (
-	CacheSuffixDictDataList    = "dict_data_list"
-	CacheSuffixDictDataValList = "dict_data_val_list"
-	CacheSuffixDictDataItem    = "dict_data_item"
+	CacheSuffixDictData     = "dict_data_list"
+	CacheSuffixDictDataVal  = "dict_data_val_list"
+	CacheSuffixDictDataItem = "dict_data_item"
 )
 
-func (my MySql) CacheDictDataList(ctx context.Context, name string) ([]ms.SysDictData, bool) {
+func (my MySql) CacheFindDictData(ctx context.Context, name string) (list []ms.SysDictData) {
+	list = make([]ms.SysDictData, 0)
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(ctx, getDictDataListCacheKey(my.ops), name).Result()
+		res, err := my.ops.redis.HGet(ctx, getDictDataCacheKey(my.ops), name).Result()
 		if err == nil && res != "" {
-			list := make([]ms.SysDictData, 0)
 			utils.Json2Struct(res, &list)
-			return list, true
+			return
 		}
 	}
-	return nil, false
+	return
 }
 
-func (my MySql) CacheSetDictDataList(ctx context.Context, name string, data []ms.SysDictData) {
+func (my MySql) CacheSetDictData(ctx context.Context, name string, data []ms.SysDictData) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(ctx, getDictDataListCacheKey(my.ops), name, utils.Struct2Json(data))
+		my.ops.redis.HSet(ctx, getDictDataCacheKey(my.ops), name, utils.Struct2Json(data))
 	}
 }
 
-func (my MySql) CacheFlushDictDataList(ctx context.Context) {
+func (my MySql) CacheFlushDictData(ctx context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(ctx, getDictDataListCacheKey(my.ops))
+		my.ops.redis.Del(ctx, getDictDataCacheKey(my.ops))
 	}
 }
 
-func (my MySql) CacheDictDataValList(ctx context.Context, name string) ([]string, bool) {
+func (my MySql) CacheDictDataVal(ctx context.Context, name string) (list []string) {
+	list = make([]string, 0)
 	if my.ops.redis != nil {
-		res, err := my.ops.redis.HGet(ctx, getDictDataValListCacheKey(my.ops), name).Result()
+		res, err := my.ops.redis.HGet(ctx, getDictDataValCacheKey(my.ops), name).Result()
 		if err == nil && res != "" {
-			list := make([]string, 0)
 			utils.Json2Struct(res, &list)
-			return list, true
+			return
 		}
 	}
-	return nil, false
+	return
 }
 
-func (my MySql) CacheSetDictDataValList(ctx context.Context, name string, data []string) {
+func (my MySql) CacheSetDictDataVal(ctx context.Context, name string, data []string) {
 	if my.ops.redis != nil {
-		my.ops.redis.HSet(ctx, getDictDataValListCacheKey(my.ops), name, utils.Struct2Json(data))
+		my.ops.redis.HSet(ctx, getDictDataValCacheKey(my.ops), name, utils.Struct2Json(data))
 	}
 }
 
-func (my MySql) CacheFlushDictDataValList(ctx context.Context) {
+func (my MySql) CacheFlushDictDataVal(ctx context.Context) {
 	if my.ops.redis != nil {
-		my.ops.redis.Del(ctx, getDictDataValListCacheKey(my.ops))
+		my.ops.redis.Del(ctx, getDictDataValCacheKey(my.ops))
 	}
 }
 
-func (my MySql) CacheDictDataItem(ctx context.Context, name, key string) (*ms.SysDictData, bool) {
+func (my MySql) CacheGetDictData(ctx context.Context, name, key string) (item ms.SysDictData) {
 	if my.ops.redis != nil {
 		res, err := my.ops.redis.HGet(ctx, getDictDataItemCacheKey(my.ops), fmt.Sprintf("%s_%s", name, key)).Result()
 		if err == nil && res != "" {
-			item := ms.SysDictData{}
 			utils.Json2Struct(res, &item)
-			return &item, true
+			return
 		}
 	}
-	return nil, false
+	return
 }
 
 func (my MySql) CacheSetDictDataItem(ctx context.Context, name, key string, data ms.SysDictData) {
@@ -85,12 +84,12 @@ func (my MySql) CacheFlushDictDataItem(ctx context.Context) {
 	}
 }
 
-func getDictDataListCacheKey(ops MysqlOptions) string {
-	return fmt.Sprintf("%s_%s", ops.cachePrefix, CacheSuffixDictDataList)
+func getDictDataCacheKey(ops MysqlOptions) string {
+	return fmt.Sprintf("%s_%s", ops.cachePrefix, CacheSuffixDictData)
 }
 
-func getDictDataValListCacheKey(ops MysqlOptions) string {
-	return fmt.Sprintf("%s_%s", ops.cachePrefix, CacheSuffixDictDataValList)
+func getDictDataValCacheKey(ops MysqlOptions) string {
+	return fmt.Sprintf("%s_%s", ops.cachePrefix, CacheSuffixDictDataVal)
 }
 
 func getDictDataItemCacheKey(ops MysqlOptions) string {

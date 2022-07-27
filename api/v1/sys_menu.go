@@ -37,8 +37,7 @@ func GetMenuTree(options ...func(*Options)) gin.HandlerFunc {
 
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		list, err := q.GetMenuTree(u.RoleId, u.RoleSort)
-		resp.CheckErr(err)
+		list := q.GetMenuTree(u.RoleId, u.RoleSort)
 		var rp []resp.MenuTree
 		utils.Struct2StructByJson(list, &rp)
 		CacheSetMenuTree(c, u.Id, rp, *ops)
@@ -69,16 +68,14 @@ func FindMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		list := make([]ms.SysMenu, 0)
 		ids := make([]uint, 0)
-		var err error
 		switch ops.binlog {
 		case true:
 			rd := query.NewRedis(ops.binlogOps...)
-			list, ids, err = rd.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
+			list, ids = rd.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
 		default:
 			my := query.NewMySql(ops.dbOps...)
-			list, ids, err = my.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
+			list, ids = my.FindMenuByRoleId(u.RoleId, u.RoleSort, id)
 		}
-		resp.CheckErr(err)
 		var rp resp.MenuTreeWithAccess
 		rp.AccessIds = ids
 		utils.Struct2StructByJson(list, &rp.List)
@@ -145,8 +142,7 @@ func CreateMenu(options ...func(*Options)) gin.HandlerFunc {
 		req.Validate(c, r, r.FieldTrans())
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		err := q.CreateMenu(u.RoleId, u.RoleSort, &r)
-		resp.CheckErr(err)
+		q.CreateMenu(u.RoleId, u.RoleSort, &r)
 		resp.Success()
 	}
 }
@@ -211,8 +207,7 @@ func UpdateMenuByRoleId(options ...func(*Options)) gin.HandlerFunc {
 
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		err := q.UpdateMenuByRoleId(u.RoleId, u.RoleSort, u.PathRoleId, r)
-		resp.CheckErr(err)
+		q.UpdateMenuByRoleId(u.RoleId, u.RoleSort, u.PathRoleId, r)
 		CacheFlushMenuTree(c, *ops)
 		resp.Success()
 	}

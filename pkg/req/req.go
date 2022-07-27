@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// bind request param
+// ShouldBind bind request param
 func ShouldBind(c *gin.Context, r interface{}) {
 	err := c.ShouldBind(r)
 	if err != nil {
@@ -18,7 +18,7 @@ func ShouldBind(c *gin.Context, r interface{}) {
 	}
 }
 
-// get uint path id
+// UintId get uint path id
 func UintId(c *gin.Context) uint {
 	i := c.Param("id")
 	id := utils.Str2Uint(i)
@@ -28,37 +28,39 @@ func UintId(c *gin.Context) uint {
 	return id
 }
 
-// get uint path id with err
-func UintIdWithErr(c *gin.Context) (uint, error) {
+// UintIdWithErr get uint path id with err
+func UintIdWithErr(c *gin.Context) (id uint, err error) {
 	i := c.Param("id")
-	id := utils.Str2Uint(i)
+	id = utils.Str2Uint(i)
 	if id == 0 {
-		return id, errors.Errorf("invalid path id")
+		err = errors.Errorf("invalid path id")
+		return
 	}
-	return id, nil
+	return
 }
 
-// get uint path ids
-func UintIds(c *gin.Context) []uint {
+// UintIds get uint path ids
+func UintIds(c *gin.Context) (arr []uint) {
 	i := c.Param("ids")
-	arr := utils.Str2UintArr(i)
+	arr = utils.Str2UintArr(i)
 	if len(arr) == 0 {
 		resp.CheckErr("invalid path ids: %s", i)
 	}
-	return arr
+	return
 }
 
-// get uint path ids
-func UintIdsWithErr(c *gin.Context) ([]uint, error) {
+// UintIdsWithErr get uint path ids
+func UintIdsWithErr(c *gin.Context) (arr []uint, err error) {
 	i := c.Param("ids")
-	arr := utils.Str2UintArr(i)
+	arr = utils.Str2UintArr(i)
 	if len(arr) == 0 {
-		return nil, errors.Errorf("invalid path ids: %s", i)
+		err = errors.Errorf("invalid path ids: %s", i)
+		return
 	}
-	return arr, nil
+	return
 }
 
-// validate request param
+// Validate validate request param
 func Validate(ctx context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -70,7 +72,7 @@ func Validate(ctx context.Context, r interface{}, trans map[string]string, optio
 	}
 }
 
-// validate request param return err
+// ValidateWithErr validate request param return err
 func ValidateWithErr(ctx context.Context, r interface{}, trans map[string]string, options ...func(*ValidateOptions)) error {
 	ops := getValidateOptionsOrSetDefault(nil)
 	for _, f := range options {

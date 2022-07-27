@@ -28,7 +28,7 @@ type SshResult struct {
 	Err     error  `json:"err"`
 }
 
-// check cmd is safe(rm *, rm /*)
+// IsSafetyCmd check cmd is safe(rm *, rm /*)
 func IsSafetyCmd(cmd string) error {
 	c := path.Clean(strings.ToLower(cmd))
 	if strings.Contains(c, "rm") {

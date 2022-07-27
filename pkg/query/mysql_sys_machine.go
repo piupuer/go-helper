@@ -7,7 +7,6 @@ import (
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 	"strings"
 )
 
@@ -37,24 +36,19 @@ func (my MySql) FindMachine(r *req.Machine) []ms.SysMachine {
 	return list
 }
 
-// connect machine
-func (my MySql) ConnectMachine(id uint) error {
+func (my MySql) ConnectMachine(id uint) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "ConnectMachine"))
 	defer span.End()
 	var oldMachine ms.SysMachine
 	q := my.Tx.Model(&oldMachine).Where("id = ?", id).First(&oldMachine)
-	if errors.Is(q.Error, gorm.ErrRecordNotFound) {
-		return errors.WithStack(gorm.ErrRecordNotFound)
-	}
-
-	err := initRemoteMachine(&oldMachine)
+	err = initRemoteMachine(&oldMachine)
 	var newMachine ms.SysMachine
 	unConnectedStatus := ms.SysMachineStatusUnhealthy
 	normalStatus := ms.SysMachineStatusHealthy
 	if err != nil {
 		newMachine.Status = &unConnectedStatus
 		q.Updates(newMachine)
-		return errors.WithStack(err)
+		return
 	}
 	newMachine.Status = &normalStatus
 	newMachine.Version = oldMachine.Version
@@ -64,11 +58,10 @@ func (my MySql) ConnectMachine(id uint) error {
 	newMachine.Memory = oldMachine.Memory
 	newMachine.Disk = oldMachine.Disk
 	q.Updates(newMachine)
-	return nil
+	return
 }
 
-// init machine
-func initRemoteMachine(machine *ms.SysMachine) error {
+func initRemoteMachine(machine *ms.SysMachine) (err error) {
 	config := utils.SshConfig{
 		LoginName: machine.LoginName,
 		LoginPwd:  machine.LoginPwd,
@@ -96,12 +89,14 @@ func initRemoteMachine(machine *ms.SysMachine) error {
 	}
 	res := utils.ExecRemoteShell(config, cmds)
 	if res.Err != nil {
-		return res.Err
+		err = res.Err
+		return
 	}
 
 	info := strings.Split(strings.TrimSuffix(res.Result, "\n"), "\n")
 	if len(info) != len(cmds) {
-		return errors.Errorf("read machine info failed")
+		err = errors.Errorf("read machine info failed")
+		return
 	}
 
 	normalStatus := ms.SysMachineStatusHealthy
@@ -114,5 +109,5 @@ func initRemoteMachine(machine *ms.SysMachine) error {
 	machine.Memory = info[6]
 	machine.Disk = info[7]
 
-	return nil
+	return
 }

@@ -34,5 +34,5 @@ func (c ConfBox) Get(filename string) (bs []byte) {
 			log.WithContext(c.Ctx).WithError(err).Warn("[conf box]read file %s from embed failed", f)
 		}
 	}
-	return bs
+	return
 }

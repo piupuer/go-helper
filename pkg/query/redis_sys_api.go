@@ -3,11 +3,11 @@ package query
 import (
 	"fmt"
 	"github.com/piupuer/go-helper/ms"
+	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/tracing"
 	"github.com/piupuer/go-helper/pkg/utils"
-	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -34,23 +34,23 @@ func (rd Redis) FindApi(r *req.Api) []ms.SysApi {
 	return list
 }
 
-// find all api group by api category
-func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) ([]resp.ApiGroupByCategory, []uint, error) {
+func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyword string) (tree []resp.ApiGroupByCategory, accessIds []uint) {
 	_, span := tracer.Start(rd.Ctx, tracing.Name(tracing.Cache, "FindApiGroupByCategoryByRoleKeyword"))
 	defer span.End()
-	tree := make([]resp.ApiGroupByCategory, 0)
-	accessIds := make([]uint, 0)
+	tree = make([]resp.ApiGroupByCategory, 0)
+	accessIds = make([]uint, 0)
+	if rd.ops.enforcer == nil {
+		log.WithContext(rd.Ctx).Warn("casbin enforcer is empty")
+		return
+	}
 	allApi := make([]ms.SysApi, 0)
 	rd.
 		Table("sys_api").
 		Find(&allApi)
 	// find all casbin by current user's role id
-	currentCasbins, err := FindCasbinByRoleKeyword(rd.ops.enforcer, currentRoleKeyword)
+	currentCasbins := FindCasbinByRoleKeyword(rd.ops.enforcer, currentRoleKeyword)
 	// find all casbin by current role id
-	casbins, err := FindCasbinByRoleKeyword(rd.ops.enforcer, roleKeyword)
-	if err != nil {
-		return tree, accessIds, errors.WithStack(err)
-	}
+	casbins := FindCasbinByRoleKeyword(rd.ops.enforcer, roleKeyword)
 
 	newApi := make([]ms.SysApi, 0)
 	for _, api := range allApi {
@@ -101,5 +101,5 @@ func (rd Redis) FindApiGroupByCategoryByRoleKeyword(currentRoleKeyword, roleKeyw
 			})
 		}
 	}
-	return tree, accessIds, err
+	return
 }

@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-// compress string by zlib
+// CompressStrByZlib compress string by zlib
 func CompressStrByZlib(s string) (string, error) {
 	var b bytes.Buffer
 	gz := zlib.NewWriter(&b)
@@ -33,7 +33,7 @@ func CompressStrByZlib(s string) (string, error) {
 	return res, nil
 }
 
-// decompression string by zlib
+// DeCompressStrByZlib decompression string by zlib
 func DeCompressStrByZlib(s string) string {
 	data, _ := base64.StdEncoding.DecodeString(s)
 	rData := bytes.NewReader(data)
@@ -42,12 +42,12 @@ func DeCompressStrByZlib(s string) string {
 	return string(b)
 }
 
-// compress image
+// CompressImage compress image
 func CompressImage(filename string) error {
 	return CompressImageSaveOriginal(filename, "")
 }
 
-// compress image, save original file to before dif, If the front is empty, it will not be saved
+// CompressImageSaveOriginal compress image, save original file to before dif, If the front is empty, it will not be saved
 func CompressImageSaveOriginal(filename string, before string) error {
 	suffix := strings.ToLower(filepath.Ext(filename))
 	if suffix != ".jpg" && suffix != ".jpeg" && suffix != ".png" {

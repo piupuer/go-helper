@@ -80,11 +80,8 @@ func (my MySql) BatchDeleteRoleCasbin(cs []ms.SysRoleCasbin) (bool, error) {
 	return my.ops.enforcer.RemovePolicies(rules)
 }
 
-func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) ([]ms.SysCasbin, error) {
-	casbins := make([]ms.SysCasbin, 0)
-	if enforcer == nil {
-		return casbins, errors.Errorf("casbin enforcer is empty")
-	}
+func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) (rp []ms.SysCasbin) {
+	rp = make([]ms.SysCasbin, 0)
 	list := make([][]string, 0)
 	if roleKeyword != "" {
 		// filter rules by keyword
@@ -96,7 +93,7 @@ func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) ([]m
 	var added []string
 	for _, v := range list {
 		if !utils.Contains(added, v[1]+v[2]) {
-			casbins = append(casbins, ms.SysCasbin{
+			rp = append(rp, ms.SysCasbin{
 				PType: "p",
 				V1:    v[1],
 				V2:    v[2],
@@ -104,5 +101,5 @@ func FindCasbinByRoleKeyword(enforcer *casbin.Enforcer, roleKeyword string) ([]m
 			added = append(added, v[1]+v[2])
 		}
 	}
-	return casbins, nil
+	return
 }

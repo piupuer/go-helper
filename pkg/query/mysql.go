@@ -53,7 +53,6 @@ func getTx(dbNoTx *gorm.DB, ops MysqlOptions) *gorm.DB {
 	return tx
 }
 
-// force commit
 func (my MySql) ForceCommit() {
 	if my.ops.ctx != nil {
 		if c, ok := my.ops.ctx.(*gin.Context); ok {
@@ -62,23 +61,18 @@ func (my MySql) ForceCommit() {
 	}
 }
 
-// get one data by id
-// model must be pointer
 func (my MySql) GetById(id uint, model interface{}, options ...func(*MysqlReadOptions)) {
 	my.FindByColumns(id, model, options...)
 }
 
-// find data by ids
 func (my MySql) FindByIds(ids []uint, model interface{}, options ...func(*MysqlReadOptions)) {
 	my.FindByColumns(ids, model, options...)
 }
 
-// find data by columns
 func (my MySql) FindByColumns(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) {
 	my.FindByColumnsWithPreload(ids, model, options...)
 }
 
-// find data by columns with preload other tables
 func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, options ...func(*MysqlReadOptions)) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -234,7 +228,6 @@ func (my MySql) FindByColumnsWithPreload(ids interface{}, model interface{}, opt
 	return
 }
 
-// find data by q condition
 func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, options ...func(*MysqlReadOptions)) {
 	ops := getMysqlReadOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -317,7 +310,6 @@ func (my MySql) FindWithPage(q *gorm.DB, page *resp.Page, model interface{}, opt
 	return
 }
 
-// find data by q condition(no cache / no limit primary)
 func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
@@ -345,7 +337,6 @@ func (my MySql) FindWithSimplePage(q *gorm.DB, page *resp.Page, model interface{
 	page.CountCache = &countCache
 }
 
-// scan data  q condition(often used to JOIN)
 func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Slice) {
@@ -367,7 +358,6 @@ func (my MySql) ScanWithPage(q *gorm.DB, page *resp.Page, model interface{}) {
 	return
 }
 
-// create data
 func (my MySql) Create(r interface{}, model interface{}) (err error) {
 	i := model
 	v := reflect.ValueOf(r)
@@ -388,7 +378,6 @@ func (my MySql) Create(r interface{}, model interface{}) (err error) {
 	return
 }
 
-// update data by id
 func (my MySql) UpdateById(id uint, r interface{}, model interface{}) error {
 	rv := reflect.ValueOf(model)
 	if rv.Kind() != reflect.Ptr || (rv.IsNil() || rv.Elem().Kind() != reflect.Struct) {
@@ -405,7 +394,6 @@ func (my MySql) UpdateById(id uint, r interface{}, model interface{}) error {
 	return q.Updates(&m).Error
 }
 
-// batch delete by ids
 func (my MySql) DeleteByIds(ids []uint, model interface{}) (err error) {
 	return my.Tx.Where("id IN (?)", ids).Delete(model).Error
 }

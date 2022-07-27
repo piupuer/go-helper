@@ -8,11 +8,11 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 )
 
-// get menu tree by role id
-func (my MySql) GetMenuTree(roleId, roleSort uint) ([]ms.SysMenu, error) {
+// GetMenuTree get menu tree by role id
+func (my MySql) GetMenuTree(roleId, roleSort uint) (tree []ms.SysMenu) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetMenuTree"))
 	defer span.End()
-	tree := make([]ms.SysMenu, 0)
+	tree = make([]ms.SysMenu, 0)
 	// q all menus
 	allMenu := make([]ms.SysMenu, 0)
 	my.Tx.
@@ -22,20 +22,20 @@ func (my MySql) GetMenuTree(roleId, roleSort uint) ([]ms.SysMenu, error) {
 	_, newMenus := addParentMenu(roleMenu, allMenu)
 
 	tree = my.GenMenuTree(0, newMenus)
-	return tree, nil
+	return
 }
 
-func (my MySql) FindMenu(currentRoleId, currentRoleSort uint) []ms.SysMenu {
+func (my MySql) FindMenu(currentRoleId, currentRoleSort uint) (tree []ms.SysMenu) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindMenu"))
 	defer span.End()
-	tree := make([]ms.SysMenu, 0)
+	tree = make([]ms.SysMenu, 0)
 	menus := my.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	tree = my.GenMenuTree(0, menus)
-	return tree
+	return
 }
 
-// generate menu tree
-func (my MySql) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu {
+// GenMenuTree generate menu tree
+func (my MySql) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) (tree []ms.SysMenu) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GenMenuTree"))
 	defer span.End()
 	roleMenuIds := make([]uint, 0)
@@ -50,11 +50,12 @@ func (my MySql) GenMenuTree(parentId uint, roleMenus []ms.SysMenu) []ms.SysMenu 
 			roleMenuIds = append(roleMenuIds, menu.Id)
 		}
 	}
-	return genMenuTree(parentId, roleMenuIds, allMenu)
+	tree = genMenuTree(parentId, roleMenuIds, allMenu)
+	return
 }
 
-func genMenuTree(parentId uint, roleMenuIds []uint, allMenu []ms.SysMenu) []ms.SysMenu {
-	tree := make([]ms.SysMenu, 0)
+func genMenuTree(parentId uint, roleMenuIds []uint, allMenu []ms.SysMenu) (tree []ms.SysMenu) {
+	tree = make([]ms.SysMenu, 0)
 	for _, menu := range allMenu {
 		if !utils.ContainsUint(roleMenuIds, menu.Id) {
 			continue
@@ -64,14 +65,12 @@ func genMenuTree(parentId uint, roleMenuIds []uint, allMenu []ms.SysMenu) []ms.S
 			tree = append(tree, menu)
 		}
 	}
-	return tree
+	return
 }
 
-func (my MySql) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([]ms.SysMenu, []uint, error) {
+func (my MySql) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) (tree []ms.SysMenu, accessIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindMenuByRoleId"))
 	defer span.End()
-	tree := make([]ms.SysMenu, 0)
-	accessIds := make([]uint, 0)
 	allMenu := my.findMenuByCurrentRole(currentRoleId, currentRoleSort)
 	roleMenus := my.findMenuByRoleId(roleId, constant.Zero)
 	tree = my.GenMenuTree(0, allMenu)
@@ -79,11 +78,11 @@ func (my MySql) FindMenuByRoleId(currentRoleId, currentRoleSort, roleId uint) ([
 		accessIds = append(accessIds, menu.Id)
 	}
 	accessIds = FindCheckedMenuId(accessIds, allMenu)
-	return tree, accessIds, nil
+	return
 }
 
-func FindCheckedMenuId(list []uint, allMenu []ms.SysMenu) []uint {
-	checked := make([]uint, 0)
+func FindCheckedMenuId(list []uint, allMenu []ms.SysMenu) (checked []uint) {
+	checked = make([]uint, 0)
 	for _, c := range list {
 		children := FindChildrenId(c, allMenu)
 		count := 0
@@ -103,48 +102,49 @@ func FindCheckedMenuId(list []uint, allMenu []ms.SysMenu) []uint {
 			checked = append(checked, c)
 		}
 	}
-	return checked
+	return
 }
 
-// find children menu ids
-func FindChildrenId(parentId uint, allMenu []ms.SysMenu) []uint {
-	childrenIds := make([]uint, 0)
+// FindChildrenId find children menu ids
+func FindChildrenId(parentId uint, allMenu []ms.SysMenu) (childrenIds []uint) {
+	childrenIds = make([]uint, 0)
 	for _, menu := range allMenu {
 		if menu.ParentId == parentId {
 			childrenIds = append(childrenIds, menu.Id)
 		}
 	}
-	return childrenIds
+	return
 }
 
-func FindIncrementalMenu(r req.UpdateMenuIncrementalIds, oldMenuIds []uint, allMenu []ms.SysMenu) []uint {
+func FindIncrementalMenu(r req.UpdateMenuIncrementalIds, oldMenuIds []uint, allMenu []ms.SysMenu) (rp []uint) {
 	createIds := FindCheckedMenuId(r.Create, allMenu)
 	deleteIds := FindCheckedMenuId(r.Delete, allMenu)
-	newList := make([]uint, 0)
+	rp = make([]uint, 0)
 	for _, oldItem := range oldMenuIds {
 		// not in delete
 		if !utils.Contains(deleteIds, oldItem) {
-			newList = append(newList, oldItem)
+			rp = append(rp, oldItem)
 		}
 	}
 	// need create
-	return append(newList, createIds...)
+	rp = append(rp, createIds...)
+	return
 }
 
-func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMenu) (err error) {
+func (my MySql) CreateMenu(currentRoleId, currentRoleSort uint, r *req.CreateMenu) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateMenu"))
 	defer span.End()
 	var menu ms.SysMenu
 	utils.Struct2StructByJson(r, &menu)
-	err = my.Tx.Create(&menu).Error
+	my.Tx.Create(&menu)
 	menuReq := req.UpdateMenuIncrementalIds{
 		Create: []uint{menu.Id},
 	}
-	err = my.UpdateMenuByRoleId(currentRoleId, currentRoleSort, currentRoleId, menuReq)
+	my.UpdateMenuByRoleId(currentRoleId, currentRoleSort, currentRoleId, menuReq)
 	return
 }
 
-func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, r req.UpdateMenuIncrementalIds) (err error) {
+func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId uint, r req.UpdateMenuIncrementalIds) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateMenuByRoleId"))
 	defer span.End()
 	allMenu := my.FindMenu(currentRoleId, currentRoleSort)
@@ -176,14 +176,14 @@ func (my MySql) UpdateMenuByRoleId(currentRoleId, currentRoleSort, targetRoleId 
 }
 
 // find all menus by role id(not menu tree)
-func (my MySql) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
+func (my MySql) findMenuByRoleId(roleId, roleSort uint) (rp []ms.SysMenu) {
 	// q current role menu relation
 	menuIds := make([]uint, 0)
 	my.Tx.
 		Model(&ms.SysMenuRoleRelation{}).
 		Where("role_id = ?", roleId).
 		Pluck("menu_id", &menuIds)
-	roleMenu := make([]ms.SysMenu, 0)
+	rp = make([]ms.SysMenu, 0)
 	if len(menuIds) > 0 {
 		q := my.Tx.
 			Model(&ms.SysMenu{}).
@@ -193,14 +193,14 @@ func (my MySql) findMenuByRoleId(roleId, roleSort uint) []ms.SysMenu {
 			q.Where("status = ?", constant.One)
 		}
 		q.Order("sort").
-			Find(&roleMenu)
+			Find(&rp)
 	}
-	return roleMenu
+	return
 }
 
 // find all menus by current role(not menu tree)
-func (my MySql) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.SysMenu {
-	menus := make([]ms.SysMenu, 0)
+func (my MySql) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) (menus []ms.SysMenu) {
+	menus = make([]ms.SysMenu, 0)
 	if currentRoleSort != constant.Zero {
 		// find menus by current role id
 		menus = my.findMenuByRoleId(currentRoleId, currentRoleSort)
@@ -210,10 +210,10 @@ func (my MySql) findMenuByCurrentRole(currentRoleId, currentRoleSort uint) []ms.
 			Order("sort").
 			Find(&menus)
 	}
-	return menus
+	return
 }
 
-func addParentMenu(menus, all []ms.SysMenu) ([]uint, []ms.SysMenu) {
+func addParentMenu(menus, all []ms.SysMenu) (newMenuIds []uint, newMenus []ms.SysMenu) {
 	parentIds := make([]uint, 0)
 	menuIds := make([]uint, 0)
 	for _, menu := range menus {
@@ -231,8 +231,8 @@ func addParentMenu(menus, all []ms.SysMenu) ([]uint, []ms.SysMenu) {
 	if len(parentIds) > 0 {
 		menuIds = append(menuIds, parentIds...)
 	}
-	newMenuIds := make([]uint, 0)
-	newMenus := make([]ms.SysMenu, 0)
+	newMenuIds = make([]uint, 0)
+	newMenus = make([]ms.SysMenu, 0)
 	for _, menu := range all {
 		for _, id := range menuIds {
 			if id == menu.Id && !utils.ContainsUint(newMenuIds, id) {
@@ -241,13 +241,13 @@ func addParentMenu(menus, all []ms.SysMenu) ([]uint, []ms.SysMenu) {
 			}
 		}
 	}
-	return newMenuIds, newMenus
+	return
 }
 
 // find parent menu ids
-func findParentMenuId(menuId uint, all []ms.SysMenu) []uint {
+func findParentMenuId(menuId uint, all []ms.SysMenu) (parentIds []uint) {
 	var currentMenu ms.SysMenu
-	parentIds := make([]uint, 0)
+	parentIds = make([]uint, 0)
 	for _, menu := range all {
 		if menuId == menu.Id {
 			currentMenu = menu
@@ -262,5 +262,5 @@ func findParentMenuId(menuId uint, all []ms.SysMenu) []uint {
 	if len(newParentIds) > 0 {
 		parentIds = append(parentIds, newParentIds...)
 	}
-	return parentIds
+	return
 }

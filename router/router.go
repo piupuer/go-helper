@@ -48,13 +48,11 @@ func NewRouter(options ...func(*Options)) *Router {
 	return r
 }
 
-// get group router
 func (rt Router) Group(path string) gin.IRoutes {
 	r := rt.ops.group.Group(path)
 	return r
 }
 
-// get casbin middleware router
 func (rt Router) Casbin(path string) gin.IRoutes {
 	r := rt.Group(path)
 	if rt.ops.jwt {
@@ -66,7 +64,6 @@ func (rt Router) Casbin(path string) gin.IRoutes {
 	return r
 }
 
-// get idempotence middleware router
 func (rt Router) Idempotence(path string) gin.IRoutes {
 	r := rt.Group(path)
 	if rt.ops.idempotence {
@@ -75,7 +72,6 @@ func (rt Router) Idempotence(path string) gin.IRoutes {
 	return r
 }
 
-// get casbin and idempotence middleware router
 func (rt Router) CasbinAndIdempotence(path string) gin.IRoutes {
 	r := rt.Casbin(path)
 	if rt.ops.jwt {

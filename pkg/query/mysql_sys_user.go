@@ -93,7 +93,7 @@ func (my MySql) UserNeedResetPwd(r req.UserNeedResetPwd) (flag bool) {
 	return
 }
 
-func (my MySql) ResetUserPwd(r req.ResetUserPwd) error {
+func (my MySql) ResetUserPwd(r req.ResetUserPwd) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "ResetUserPwd"))
 	defer span.End()
 	pass, msg := my.CheckWeakPwd(r.NewPassword)
@@ -103,13 +103,14 @@ func (my MySql) ResetUserPwd(r req.ResetUserPwd) error {
 		} else {
 			msg = fmt.Sprintf("%s: %s", resp.WeakPassword, msg)
 		}
-		return errors.Errorf(msg)
+		err = errors.Errorf(msg)
+		return
 	}
-	return my.Tx.
+	my.Tx.
 		Table(my.Tx.NamingStrategy.TableName("sys_user")).
 		Where("username = ?", r.Username).
-		Update("password", utils.GenPwd(r.NewPassword)).
-		Error
+		Update("password", utils.GenPwd(r.NewPassword))
+	return
 }
 
 func (my MySql) CheckWeakPwd(pwd string) (pass bool, msg string) {

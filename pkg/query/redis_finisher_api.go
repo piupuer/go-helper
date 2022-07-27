@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-// gorm.Find
+// Find like gorm.Find
 func (rd Redis) Find(dest interface{}) *Redis {
 	ins := rd.getInstance()
 	if !ins.check() {
@@ -19,7 +19,7 @@ func (rd Redis) Find(dest interface{}) *Redis {
 	return ins
 }
 
-// like gorm.First
+// First like gorm.First
 func (rd Redis) First(dest interface{}) *Redis {
 	ins := rd.getInstance()
 	ins.Statement.limit = 1
@@ -28,7 +28,7 @@ func (rd Redis) First(dest interface{}) *Redis {
 	return ins
 }
 
-// like gorm.Count
+// Count like gorm.Count
 func (rd Redis) Count(count *int64) *Redis {
 	ins := rd.getInstance()
 	ins.Statement.Dest = count

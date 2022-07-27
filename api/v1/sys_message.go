@@ -94,16 +94,14 @@ func GetUnReadMessageCount(options ...func(*Options)) gin.HandlerFunc {
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
 		var total int64
-		var err error
 		switch ops.binlog {
 		case true:
 			rd := query.NewRedis(ops.binlogOps...)
-			total, err = rd.GetUnReadMessageCount(u.Id)
+			total = rd.GetUnReadMessageCount(u.Id)
 		default:
 			my := query.NewMySql(ops.dbOps...)
-			total, err = my.GetUnReadMessageCount(u.Id)
+			total = my.GetUnReadMessageCount(u.Id)
 		}
-		resp.CheckErr(err)
 		resp.SuccessWithData(total)
 	}
 }
@@ -157,8 +155,7 @@ func BatchUpdateMessageRead(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		err := q.BatchUpdateMessageRead(r.Uints())
-		resp.CheckErr(err)
+		q.BatchUpdateMessageRead(r.Uints())
 		resp.Success()
 	}
 }
@@ -182,8 +179,7 @@ func BatchUpdateMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 		req.ShouldBind(c, &r)
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
-		err := q.BatchUpdateMessageDeleted(r.Uints())
-		resp.CheckErr(err)
+		q.BatchUpdateMessageDeleted(r.Uints())
 		resp.Success()
 	}
 }
@@ -208,8 +204,7 @@ func UpdateAllMessageRead(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)
-		err := q.UpdateAllMessageRead(u.Id)
-		resp.CheckErr(err)
+		q.UpdateAllMessageRead(u.Id)
 		resp.Success()
 	}
 }
@@ -234,8 +229,7 @@ func UpdateAllMessageDeleted(options ...func(*Options)) gin.HandlerFunc {
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		u := ops.getCurrentUser(c)
-		err := q.UpdateAllMessageDeleted(u.Id)
-		resp.CheckErr(err)
+		q.UpdateAllMessageDeleted(u.Id)
 		resp.Success()
 	}
 }

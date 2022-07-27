@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// find status!=ms.SysMessageLogStatusDeleted messages
+// FindUnDeleteMessage find status!=ms.SysMessageLogStatusDeleted messages
 func (my MySql) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindUnDeleteMessage"))
 	defer span.End()
@@ -61,61 +61,60 @@ func (my MySql) FindUnDeleteMessage(r *req.Message) []resp.Message {
 	return list
 }
 
-func (my MySql) GetUnReadMessageCount(userId uint) (int64, error) {
+func (my MySql) GetUnReadMessageCount(userId uint) (total int64) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "GetUnReadMessageCount"))
 	defer span.End()
-	var total int64
-	err := my.Tx.
+	my.Tx.
 		Model(&ms.SysMessageLog{}).
 		Where("to_user_id = ?", userId).
 		Where("status = ?", ms.SysMessageLogStatusUnRead).
-		Count(&total).Error
-	return total, err
+		Count(&total)
+	return
 }
 
-func (my MySql) BatchUpdateMessageRead(messageLogIds []uint) error {
+func (my MySql) BatchUpdateMessageRead(messageLogIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchUpdateMessageRead"))
 	defer span.End()
-	return my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusRead)
+	my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusRead)
 }
 
-func (my MySql) BatchUpdateMessageDeleted(messageLogIds []uint) error {
+func (my MySql) BatchUpdateMessageDeleted(messageLogIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchUpdateMessageDeleted"))
 	defer span.End()
-	return my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusDeleted)
+	my.BatchUpdateMessageStatus(messageLogIds, ms.SysMessageLogStatusDeleted)
 }
 
-func (my MySql) UpdateAllMessageRead(userId uint) error {
+func (my MySql) UpdateAllMessageRead(userId uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateAllMessageRead"))
 	defer span.End()
-	return my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusRead)
+	my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusRead)
 }
 
-func (my MySql) UpdateAllMessageDeleted(userId uint) error {
+func (my MySql) UpdateAllMessageDeleted(userId uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateAllMessageDeleted"))
 	defer span.End()
-	return my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusDeleted)
+	my.UpdateAllMessageStatus(userId, ms.SysMessageLogStatusDeleted)
 }
 
-func (my MySql) BatchUpdateMessageStatus(messageLogIds []uint, status uint) error {
-	return my.Tx.
+func (my MySql) BatchUpdateMessageStatus(messageLogIds []uint, status uint) {
+	my.Tx.
 		Model(&ms.SysMessageLog{}).
 		Where("status != ?", ms.SysMessageLogStatusDeleted).
 		Where("id IN (?)", messageLogIds).
-		Update("status", status).Error
+		Update("status", status)
 }
 
-func (my MySql) UpdateAllMessageStatus(userId uint, status uint) error {
+func (my MySql) UpdateAllMessageStatus(userId uint, status uint) {
 	var log ms.SysMessageLog
 	log.ToUserId = userId
-	return my.Tx.
+	my.Tx.
 		Model(&log).
 		Where("status != ?", ms.SysMessageLogStatusDeleted).
 		Where(&log).
-		Update("status", status).Error
+		Update("status", status)
 }
 
-func (my MySql) SyncMessageByUserIds(users []ms.User) error {
+func (my MySql) SyncMessageByUserIds(users []ms.User) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "SyncMessageByUserIds"))
 	defer span.End()
 	for _, user := range users {
@@ -155,10 +154,10 @@ func (my MySql) SyncMessageByUserIds(users []ms.User) error {
 			}
 		}
 	}
-	return nil
+	return
 }
 
-func (my MySql) CreateMessage(r *req.PushMessage) error {
+func (my MySql) CreateMessage(r *req.PushMessage) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateMessage"))
 	defer span.End()
 	if r.Type != nil {
@@ -171,23 +170,29 @@ func (my MySql) CreateMessage(r *req.PushMessage) error {
 		switch uint(*r.Type) {
 		case ms.SysMessageTypeOneToOne:
 			if len(r.ToUserIds) == 0 {
-				return errors.Errorf("to user is empty")
+				err = errors.Errorf("to user is empty")
+				return
 			}
-			return my.BatchCreateOneToOneMessage(message, r.ToUserIds)
+			my.BatchCreateOneToOneMessage(message, r.ToUserIds)
+			return
 		case ms.SysMessageTypeOneToMany:
 			if len(r.ToRoleIds) == 0 {
-				return errors.Errorf("to role is empty")
+				err = errors.Errorf("to role is empty")
+				return
 			}
-			return my.BatchCreateOneToManyMessage(message, r.ToRoleIds)
+			my.BatchCreateOneToManyMessage(message, r.ToRoleIds)
+			return
 		case ms.SysMessageTypeSystem:
-			return my.CreateSystemMessage(message)
+			my.CreateSystemMessage(message)
+			return
 		}
 	}
-	return errors.Errorf("message type is illegal")
+	err = errors.Errorf("message type is illegal")
+	return
 }
 
-// one2one message
-func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) error {
+// BatchCreateOneToOneMessage one2one message
+func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchCreateOneToOneMessage"))
 	defer span.End()
 	message.Type = ms.SysMessageTypeOneToOne
@@ -198,27 +203,20 @@ func (my MySql) BatchCreateOneToOneMessage(message ms.SysMessage, toIds []uint) 
 			Carbon: carbon.Now().AddDays(30),
 		}
 	}
-
-	err := my.Tx.Create(&message).Error
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	my.Tx.Create(&message)
 	// save ToUsers
 	for _, id := range toIds {
 		var log ms.SysMessageLog
 		log.MessageId = message.Id
 		log.ToUserId = id
-		err = my.Tx.Create(&log).Error
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		my.Tx.Create(&log)
 	}
 
-	return err
+	return
 }
 
-// one2many message
-func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []uint) error {
+// BatchCreateOneToManyMessage one2many message
+func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []uint) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "BatchCreateOneToManyMessage"))
 	defer span.End()
 	message.Type = ms.SysMessageTypeOneToMany
@@ -233,17 +231,12 @@ func (my MySql) BatchCreateOneToManyMessage(message ms.SysMessage, toRoleIds []u
 	for _, id := range toRoleIds {
 		message.Id = 0
 		message.RoleId = id
-		err := my.Tx.Create(&message).Error
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		my.Tx.Create(&message)
 	}
-
-	return nil
 }
 
-// one2all message
-func (my MySql) CreateSystemMessage(message ms.SysMessage) error {
+// CreateSystemMessage one2all message
+func (my MySql) CreateSystemMessage(message ms.SysMessage) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateSystemMessage"))
 	defer span.End()
 	message.Type = ms.SysMessageTypeSystem
@@ -254,5 +247,5 @@ func (my MySql) CreateSystemMessage(message ms.SysMessage) error {
 		}
 	}
 
-	return my.Tx.Create(&message).Error
+	my.Tx.Create(&message)
 }

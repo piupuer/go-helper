@@ -17,7 +17,7 @@ import (
 	"sync"
 )
 
-// q redis json value like gorm v2
+// Redis q redis json value like gorm v2
 type Redis struct {
 	ops        RedisOptions
 	Ctx        context.Context
@@ -69,7 +69,7 @@ func ParseRedisURI(uri string) (client redis.UniversalClient, err error) {
 	return
 }
 
-// add error to db
+// AddError add error to db
 func (rd *Redis) AddError(err error) error {
 	if rd.Error == nil {
 		rd.Error = errors.WithStack(err)
@@ -79,7 +79,7 @@ func (rd *Redis) AddError(err error) error {
 	return rd.Error
 }
 
-// create new db session
+// Session create new db session
 func (rd *Redis) Session() *Redis {
 	return &Redis{
 		ops:       rd.ops,

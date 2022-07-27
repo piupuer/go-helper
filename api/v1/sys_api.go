@@ -71,10 +71,10 @@ func FindApiGroupByCategoryByRoleKeyword(options ...func(*Options)) gin.HandlerF
 		switch ops.binlog {
 		case true:
 			rd := query.NewRedis(ops.binlogOps...)
-			list, ids, err = rd.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
+			list, ids = rd.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
 		default:
 			my := query.NewMySql(ops.dbOps...)
-			list, ids, err = my.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
+			list, ids = my.FindApiGroupByCategoryByRoleKeyword(u.RoleKeyword, u.PathRoleKeyword)
 		}
 		resp.CheckErr(err)
 		var rp resp.ApiTreeWithAccess
