@@ -40,7 +40,7 @@ const (
 	// Maximum number of heartbeat retries
 	heartBeatMaxRetryCount = 3
 
-	// message type
+	// Message Type
 	// first number: request/response
 	// second number: message type
 	// third number: same message type's sort
@@ -62,7 +62,7 @@ const (
 
 // var hub MessageHub
 
-// The message hub is used to maintain the entire message connection
+// MessageHub The message hub is used to maintain the entire message connection
 type MessageHub struct {
 	ops  MessageHubOptions
 	lock sync.RWMutex
@@ -76,7 +76,7 @@ type MessageHub struct {
 	refreshUserMessage *ch.Ch
 }
 
-// The message client is used to store connection information
+// MessageClient The message client is used to store connection information
 type MessageClient struct {
 	hub *MessageHub
 	ctx context.Context
@@ -94,13 +94,12 @@ type MessageClient struct {
 	RetryCount     uint
 }
 
-// The message broadcast is used to store users who need to broadcast
+// MessageBroadcast The message broadcast is used to store users who need to broadcast
 type MessageBroadcast struct {
 	resp.MessageWs
 	UserIds []uint `json:"-"`
 }
 
-// start hub
 func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 	ops := getMessageHubOptionsOrSetDefault(nil)
 	for _, f := range options {
@@ -124,7 +123,7 @@ func NewMessageHub(options ...func(*MessageHubOptions)) *MessageHub {
 	return hub
 }
 
-// websocket handler
+// MessageWs websocket handler
 func (h *MessageHub) MessageWs(ctx *gin.Context, conn *websocket.Conn, key string, user ms.User, ip string) {
 	client := &MessageClient{
 		hub:  h,
@@ -224,9 +223,11 @@ func (c *MessageClient) receive() {
 		if err != nil {
 			panic(err)
 		}
-		// decompress data
-		// data := utils.DeCompressStrByZlib(string(msg))
 		data := string(msg)
+		if c.hub.ops.compress {
+			// decompress data
+			data = utils.DeCompressStrByZlib(string(msg))
+		}
 		log.WithContext(c.ctx).Debug("[message][receiver][%s]receive data success: %d, %s", c.Key, c.User.Id, data)
 		var r req.MessageWs
 		utils.Json2Struct(data, &r)
@@ -239,17 +240,17 @@ func (c *MessageClient) receive() {
 				})
 			}
 		case MessageReqPush:
-			var data req.PushMessage
-			utils.Struct2StructByJson(r.Data, &data)
-			err = req.ValidateWithErr(c.ctx, data, data.FieldTrans())
+			var d req.PushMessage
+			utils.Struct2StructByJson(r.Data, &d)
+			err = req.ValidateWithErr(c.ctx, d, d.FieldTrans())
 			detail := resp.GetSuccess()
 			if err == nil {
 				ops := middleware.ParseIdempotenceOptions(c.hub.ops.idempotenceOps...)
-				if c.hub.ops.idempotence && !middleware.CheckIdempotenceToken(c.ctx, data.IdempotenceToken, *ops) {
+				if c.hub.ops.idempotence && !middleware.CheckIdempotenceToken(c.ctx, d.IdempotenceToken, *ops) {
 					err = errors.Errorf(resp.IdempotenceTokenInvalidMsg)
 				} else {
-					data.FromUserId = c.User.Id
-					err = c.hub.ops.dbNoTx.CreateMessage(&data)
+					d.FromUserId = c.User.Id
+					err = c.hub.ops.dbNoTx.CreateMessage(&d)
 				}
 			}
 			if err != nil {
@@ -262,9 +263,9 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqBatchRead:
-			var data req.Ids
-			utils.Struct2StructByJson(r.Data, &data)
-			err = c.hub.ops.dbNoTx.BatchUpdateMessageRead(data.Uints())
+			var d req.Ids
+			utils.Struct2StructByJson(r.Data, &d)
+			err = c.hub.ops.dbNoTx.BatchUpdateMessageRead(d.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err)
@@ -275,9 +276,9 @@ func (c *MessageClient) receive() {
 				Detail: detail,
 			})
 		case MessageReqBatchDeleted:
-			var data req.Ids
-			utils.Struct2StructByJson(r.Data, &data)
-			err = c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(data.Uints())
+			var d req.Ids
+			utils.Struct2StructByJson(r.Data, &d)
+			err = c.hub.ops.dbNoTx.BatchUpdateMessageDeleted(d.Uints())
 			detail := resp.GetSuccess()
 			if err != nil {
 				detail = resp.GetFailWithMsg(err)
@@ -349,11 +350,13 @@ func (c *MessageClient) send() {
 }
 
 func (c MessageClient) writeMessage(messageType int, data string) error {
-	// compress
-	// s, _ := utils.CompressStrByZlib(data)
-	s := &data
-	log.WithContext(c.ctx).Debug("[message][sender][%s] %v", c.Key, *s)
-	return c.Conn.WriteMessage(messageType, []byte(*s))
+	s := data
+	if c.hub.ops.compress {
+		// compress data
+		s, _ = utils.CompressStrByZlib(data)
+	}
+	log.WithContext(c.ctx).Debug("[message][sender][%s] %v", c.Key, s)
+	return c.Conn.WriteMessage(messageType, []byte(s))
 }
 
 // heartbeat handler

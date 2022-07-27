@@ -3,7 +3,6 @@ package ms
 import "github.com/golang-module/carbon/v2"
 
 const (
-	// message type
 	SysMessageTypeOneToOne     uint   = 0
 	SysMessageTypeOneToMany    uint   = 1
 	SysMessageTypeSystem       uint   = 2
@@ -11,7 +10,6 @@ const (
 	SysMessageTypeOneToManyStr string = "one2more"
 	SysMessageTypeSystemStr    string = "system"
 
-	// message status
 	SysMessageLogStatusUnRead     uint   = 0
 	SysMessageLogStatusRead       uint   = 1
 	SysMessageLogStatusDeleted    uint   = 2

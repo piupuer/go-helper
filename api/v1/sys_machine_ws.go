@@ -23,17 +23,13 @@ type ptyRequestMsg struct {
 	Modelist string
 }
 
-// start shell websocket
+// MachineShellWs start shell websocket
 func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r req.MachineShellWs
-		err := c.ShouldBind(&r)
+		req.ShouldBind(c, &r)
 
-		conn, err := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			log.WithContext(c).WithError(err).Error("upgrade websocket failed")
-			return
-		}
+		conn, _ := middleware.WsUpgrader.Upgrade(c.Writer, c.Request, nil)
 		defer conn.Close()
 
 		active := time.Now()
@@ -116,17 +112,17 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 
 			t := time.NewTimer(time.Millisecond * 100)
 			defer t.Stop()
-			r := make(chan rune)
+			cr := make(chan rune)
 
 			go func() {
 				for {
-					x, size, err := br.ReadRune()
-					if err != nil {
-						log.WithContext(c).WithError(err).Warn("read shell failed")
+					x, size, e := br.ReadRune()
+					if e != nil {
+						log.WithContext(c).WithError(e).Warn("read shell failed")
 						break
 					}
 					if size > 0 {
-						r <- x
+						cr <- x
 					}
 				}
 			}()
@@ -143,7 +139,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 						}
 					}
 					t.Reset(time.Millisecond * 100)
-				case d := <-r:
+				case d := <-cr:
 					if d != utf8.RuneError {
 						p := make([]byte, utf8.RuneLen(d))
 						utf8.EncodeRune(p, d)
@@ -182,10 +178,10 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 		oldCmd := ""
 		// read user input
 		for {
-			m, p, err := conn.ReadMessage()
+			m, p, e := conn.ReadMessage()
 			active = time.Now()
-			if err != nil {
-				log.WithContext(c).WithError(err).Warn("connection %s lost", conn.RemoteAddr())
+			if e != nil {
+				log.WithContext(c).WithError(e).Warn("connection %s lost", conn.RemoteAddr())
 				break
 			}
 
@@ -194,10 +190,10 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 				if s == "\r" {
 					cmd := oldCmd
 					oldCmd = ""
-					if err := utils.IsSafetyCmd(cmd); err != nil {
-						err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%v\r\n\r\n", err)))
-						if err != nil {
-							log.WithContext(c).WithError(err).Warn("write msg to %s failed", conn.RemoteAddr())
+					if e1 := utils.IsSafetyCmd(cmd); e1 != nil {
+						e1 = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\r\n%v\r\n\r\n", e1)))
+						if e1 != nil {
+							log.WithContext(c).WithError(e1).Warn("write msg to %s failed", conn.RemoteAddr())
 							break
 						}
 						// write Ctrl C
@@ -209,7 +205,7 @@ func MachineShellWs(options ...func(*Options)) gin.HandlerFunc {
 				} else {
 					oldCmd += s
 				}
-				if _, err := channel.Write(p); nil != err {
+				if _, e2 := channel.Write(p); nil != e2 {
 					break
 				}
 			}

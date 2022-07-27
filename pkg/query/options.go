@@ -189,6 +189,7 @@ func getRedisOptionsOrSetDefault(options *RedisOptions) *RedisOptions {
 type MessageHubOptions struct {
 	dbNoTx         *MySql
 	rd             *Redis
+	compress       bool
 	idempotence    bool
 	idempotenceOps []func(*middleware.IdempotenceOptions)
 	findUserByIds  func(c *gin.Context, userIds []uint) []ms.User
@@ -207,6 +208,12 @@ func WithMessageHubRedis(redis *Redis) func(*MessageHubOptions) {
 		if redis != nil {
 			getMessageHubOptionsOrSetDefault(options).rd = redis
 		}
+	}
+}
+
+func WithMessageHubCompress(flag bool) func(*MessageHubOptions) {
+	return func(options *MessageHubOptions) {
+		getMessageHubOptionsOrSetDefault(options).compress = flag
 	}
 }
 
