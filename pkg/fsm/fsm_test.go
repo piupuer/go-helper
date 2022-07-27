@@ -71,13 +71,13 @@ func TestFsm_SubmitLog(t *testing.T) {
 	uid := "log1"
 	tx := db.Begin()
 	f := New(WithDb(tx))
-	_, err := f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,   // custom category
 		Uuid:            uid, // unique str
 		SubmitterUserId: 123, // submitter Id
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	tx.Commit()
@@ -87,91 +87,90 @@ func TestFsm_ApproveLog(t *testing.T) {
 	uid := "log1"
 	tx := db.Begin()
 	f := New(WithDb(tx))
-	var err error
 	// approved
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 4,
 		Approved:       1,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// refused
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  4,
 		Approved:        2,
 		ApprovalOpinion: "wrong info 1",
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// refused
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:        1,
 		Uuid:            uid,
 		ApprovalUserId:  4,
 		Approved:        2,
 		ApprovalOpinion: "wrong info 2",
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// resubmit
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 123,
 		Approved:       1,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// approved
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:        1,
 		Uuid:            uid,
 		ApprovalUserId:  5,
 		Approved:        1,
 		ApprovalOpinion: "ok1",
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// approved
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  4,
 		Approved:        1,
 		ApprovalOpinion: "ok2",
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// approved
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:        1,
 		Uuid:            uid,
 		ApprovalRoleId:  5,
 		Approved:        1,
 		ApprovalOpinion: "ok3",
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// submitter confirmed
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 123,
 		Approved:       1,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	tx.Commit()
@@ -181,56 +180,55 @@ func TestFsm_ApproveLog1(t *testing.T) {
 	uid := "log2"
 	tx := db.Begin()
 	f := New(WithDb(tx))
-	var err error
-	_, err = f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
 		Uuid:            uid,
 		SubmitterUserId: 234,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	// other people cancel
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 5,
 		Approved:       3,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 	// submitter cancel
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalUserId: 234,
 		Approved:       3,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
-	_, err = f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
 		Uuid:            uid,
 		SubmitterRoleId: 567,
 		SubmitterUserId: 456,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	// submitter role cancel
-	_, err = f.ApproveLog(req.FsmApproveLog{
+	f.ApproveLog(req.FsmApproveLog{
 		Category:       1,
 		Uuid:           uid,
 		ApprovalRoleId: 567,
 		Approved:       3,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	tx.Commit()
@@ -239,30 +237,29 @@ func TestFsm_ApproveLog1(t *testing.T) {
 func TestFsm_CancelLogs(t *testing.T) {
 	tx := db.Begin()
 	f := New(WithDb(tx))
-	var err error
-	_, err = f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
 		Uuid:            "log3",
 		SubmitterUserId: 123,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
-	_, err = f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
 		Uuid:            "log4",
 		SubmitterUserId: 234,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
-	_, err = f.SubmitLog(req.FsmCreateLog{
+	f.SubmitLog(req.FsmCreateLog{
 		Category:        1,
 		Uuid:            "log5",
 		SubmitterUserId: 345,
 	})
-	if err != nil {
-		fmt.Println(err)
+	if f.Error != nil {
+		fmt.Println(f.Error)
 	}
 
 	f.CancelLog(1)
@@ -293,10 +290,10 @@ func TestFsm_FindLogs(t *testing.T) {
 func TestFsm_GetLogTrack(t *testing.T) {
 	tx := db.Begin()
 	f := New(WithDb(tx))
-	logs, _ := f.FindLog(req.FsmLog{
+	list := f.FindLog(req.FsmLog{
 		Category: 1,
 		Uuid:     "log2",
 	})
-	fmt.Println(f.FindLogTrack(logs))
+	fmt.Println(f.FindLogTrack(list))
 	tx.Commit()
 }
