@@ -13,28 +13,28 @@ import (
 )
 
 type Options struct {
-	binlog                     bool
-	binlogOps                  []func(options *query.RedisOptions)
-	dbOps                      []func(options *query.MysqlOptions)
-	exportOps                  []func(options *delay.ExportOptions)
-	redis                      redis.UniversalClient
-	cachePrefix                string
-	operationAllowedToDelete   bool
-	getCurrentUser             func(c *gin.Context) ms.User
-	findRoleKeywordByRoleIds   func(c *gin.Context, roleIds []uint) []string
-	findRoleByIds              func(c *gin.Context, roleIds []uint) []ms.Role
-	findUserByIds              func(c *gin.Context, userIds []uint) []ms.User
-	beforeResetUserPwd         func(c *gin.Context, r *req.ResetUserPwd) error
-	getUserLoginStatus         func(c *gin.Context, r *req.UserStatus) error
-	getFsmSubmitterDetail      func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail
-	updateFsmSubmitterDetail   func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error
-	uploadSaveDir              string
-	uploadSingleMaxSize        int64
-	uploadMergeConcurrentCount int
-	uploadMinio                *oss.MinioOss
-	uploadMinioBucket          string
-	MessageHub                 bool
-	messageHubOps              []func(options *query.MessageHubOptions)
+	binlog                      bool
+	binlogOps                   []func(options *query.RedisOptions)
+	dbOps                       []func(options *query.MysqlOptions)
+	exportOps                   []func(options *delay.ExportOptions)
+	redis                       redis.UniversalClient
+	cachePrefix                 string
+	operationAllowedToDelete    bool
+	getCurrentUser              func(c *gin.Context) ms.User
+	findRoleKeywordByRoleIds    func(c *gin.Context, roleIds []uint) []string
+	findRoleByIds               func(c *gin.Context, roleIds []uint) []ms.Role
+	findUserByIds               func(c *gin.Context, userIds []uint) []ms.User
+	beforeResetUserPwd          func(c *gin.Context, r *req.ResetUserPwd) error
+	getUserLoginStatus          func(c *gin.Context, r *req.UserStatus) error
+	getFsmLogSubmitterDetail    func(c *gin.Context, detail req.FsmLogSubmitterDetail) []resp.FsmLogSubmitterDetail
+	updateFsmLogSubmitterDetail func(c *gin.Context, detail req.UpdateFsmLogSubmitterDetail) error
+	uploadSaveDir               string
+	uploadSingleMaxSize         int64
+	uploadMergeConcurrentCount  int
+	uploadMinio                 *oss.MinioOss
+	uploadMinioBucket           string
+	MessageHub                  bool
+	messageHubOps               []func(options *query.MessageHubOptions)
 }
 
 func WithBinlog(flag bool) func(*Options) {
@@ -129,18 +129,18 @@ func WithGetUserLoginStatus(fun func(c *gin.Context, r *req.UserStatus) error) f
 	}
 }
 
-func WithFsmGetFsmSubmitterDetail(fun func(c *gin.Context, detail req.FsmSubmitterDetail) []resp.FsmSubmitterDetail) func(*Options) {
+func WithFsmGetFsmLogSubmitterDetail(fun func(c *gin.Context, detail req.FsmLogSubmitterDetail) []resp.FsmLogSubmitterDetail) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
-			getOptionsOrSetDefault(options).getFsmSubmitterDetail = fun
+			getOptionsOrSetDefault(options).getFsmLogSubmitterDetail = fun
 		}
 	}
 }
 
-func WithFsmUpdateFsmSubmitterDetail(fun func(c *gin.Context, detail req.UpdateFsmSubmitterDetail) error) func(*Options) {
+func WithFsmUpdateFsmLogSubmitterDetail(fun func(c *gin.Context, detail req.UpdateFsmLogSubmitterDetail) error) func(*Options) {
 	return func(options *Options) {
 		if fun != nil {
-			getOptionsOrSetDefault(options).updateFsmSubmitterDetail = fun
+			getOptionsOrSetDefault(options).updateFsmLogSubmitterDetail = fun
 		}
 	}
 }

@@ -36,7 +36,7 @@ type FsmLogTrack struct {
 	Confirm  uint   `json:"confirm"`
 }
 
-type FsmSubmitterDetail struct {
+type FsmLogSubmitterDetail struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`
 	Val  string `json:"val"`

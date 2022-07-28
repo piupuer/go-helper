@@ -41,7 +41,7 @@ func FindFsm(options ...func(*Options)) gin.HandlerFunc {
 // @Tags *Fsm
 // @Description FindFsmApprovingLog
 // @Param params query req.FsmPendingLog true "params"
-// @Router /fsm/approving/list [GET]
+// @Router /fsm/log/approving/list [GET]
 func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -133,52 +133,52 @@ func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 	}
 }
 
-// GetFsmSubmitterDetail
+// GetFsmLogSubmitterDetail
 // @Security Bearer
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
 // @Tags *Fsm
-// @Description GetFsmSubmitterDetail
-// @Param params query req.FsmSubmitterDetail true "params"
-// @Router /fsm/submitter/detail [GET]
-func GetFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
+// @Description GetFsmLogSubmitterDetail
+// @Param params query req.FsmLogSubmitterDetail true "params"
+// @Router /fsm/log/submitter/detail [GET]
+func GetFsmLogSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
-	if ops.getFsmSubmitterDetail == nil {
-		panic("getFsmSubmitterDetail is empty")
+	if ops.getFsmLogSubmitterDetail == nil {
+		panic("getFsmLogSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
-		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetFsmSubmitterDetail"))
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "GetFsmLogSubmitterDetail"))
 		defer span.End()
-		var r req.FsmSubmitterDetail
+		var r req.FsmLogSubmitterDetail
 		req.ShouldBind(c, &r)
-		resp.SuccessWithData(ops.getFsmSubmitterDetail(c, r))
+		resp.SuccessWithData(ops.getFsmLogSubmitterDetail(c, r))
 	}
 }
 
-// UpdateFsmSubmitterDetail
+// UpdateFsmLogSubmitterDetail
 // @Security Bearer
 // @Accept json
 // @Produce json
 // @Success 201 {object} resp.Resp "success"
 // @Tags *Fsm
-// @Description UpdateFsmSubmitterDetail
-// @Param params body req.UpdateFsmSubmitterDetail true "params"
-// @Router /fsm/submitter/detail [PATCH]
-func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
+// @Description UpdateFsmLogSubmitterDetail
+// @Param params body req.UpdateFsmLogSubmitterDetail true "params"
+// @Router /fsm/log/submitter/detail [PATCH]
+func UpdateFsmLogSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
 		panic("getCurrentUser is empty")
 	}
-	if ops.updateFsmSubmitterDetail == nil {
-		panic("updateFsmSubmitterDetail is empty")
+	if ops.updateFsmLogSubmitterDetail == nil {
+		panic("updateFsmLogSubmitterDetail is empty")
 	}
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
-		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateFsmSubmitterDetail"))
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "UpdateFsmLogSubmitterDetail"))
 		defer span.End()
-		var r req.UpdateFsmSubmitterDetail
+		var r req.UpdateFsmLogSubmitterDetail
 		req.ShouldBind(c, &r)
 		u := ops.getCurrentUser(c)
 		ops.addCtx(c)
@@ -193,7 +193,7 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 			Approver:       true,
 		})
 		resp.CheckErr(err)
-		err = ops.updateFsmSubmitterDetail(c, r)
+		err = ops.updateFsmLogSubmitterDetail(c, r)
 		resp.CheckErr(err)
 		resp.Success()
 	}
@@ -207,7 +207,7 @@ func UpdateFsmSubmitterDetail(options ...func(*Options)) gin.HandlerFunc {
 // @Tags *Fsm
 // @Description FsmApproveLog
 // @Param params query req.FsmApproveLog true "params"
-// @Router /fsm/approve [PATCH]
+// @Router /fsm/log/approve [PATCH]
 func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {
@@ -238,7 +238,7 @@ func FsmApproveLog(options ...func(*Options)) gin.HandlerFunc {
 // @Tags *Fsm
 // @Description FsmCancelLogByUuids
 // @Param params query req.FsmCancelLog true "params"
-// @Router /fsm/cancel [PATCH]
+// @Router /fsm/log/cancel [PATCH]
 func FsmCancelLogByUuids(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
 	if ops.getCurrentUser == nil {

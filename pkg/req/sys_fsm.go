@@ -61,7 +61,7 @@ type FsmCheckEditLogDetailPermission struct {
 	Fields         []string `json:"fields"`
 }
 
-type FsmSubmitterDetail struct {
+type FsmLogSubmitterDetail struct {
 	Category NullUint `json:"category" form:"category"`
 	Uuid     string   `json:"uuid" form:"uuid"`
 }
@@ -71,14 +71,14 @@ type FsmSubmitterDetailField struct {
 	Val string `json:"val"`
 }
 
-type UpdateFsmSubmitterDetail struct {
-	FsmSubmitterDetail
+type UpdateFsmLogSubmitterDetail struct {
+	FsmLogSubmitterDetail
 	Fields []FsmSubmitterDetailField `json:"fields"`
 	Keys   []string                  `json:"-"`
 	Vals   []string                  `json:"-"`
 }
 
-func (d *UpdateFsmSubmitterDetail) Parse() {
+func (d *UpdateFsmLogSubmitterDetail) Parse() {
 	k := make([]string, len(d.Fields))
 	v := make([]string, len(d.Fields))
 	for i, field := range d.Fields {
