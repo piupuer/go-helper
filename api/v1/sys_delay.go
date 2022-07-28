@@ -15,7 +15,7 @@ import (
 // @Success 201 {object} resp.Resp "success"
 // @Tags *Delay
 // @Description FindDelayExport
-// @Param params query req.DelayExport true "params"
+// @Param params query req.DelayExportHistory true "params"
 // @Router /delay/export/list [GET]
 func FindDelayExport(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
