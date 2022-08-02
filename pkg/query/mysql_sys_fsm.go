@@ -11,10 +11,8 @@ import (
 func (my MySql) FindFsm(r *req.FsmMachine) []resp.FsmMachine {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsm"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	return f.FindMachine(r)
 }
 
@@ -22,10 +20,8 @@ func (my MySql) FindFsm(r *req.FsmMachine) []resp.FsmMachine {
 func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) []resp.FsmApprovingLog {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsmApprovingLog"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	return f.FindPendingLogByApprover(r)
 }
 
@@ -33,10 +29,8 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) []resp.FsmApprovingLog
 func (my MySql) FindFsmLogTrack(r req.FsmLog) []resp.FsmLogTrack {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsmLogTrack"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	logs := f.FindLog(r)
 	return f.FindLogTrack(logs)
 }
@@ -45,11 +39,8 @@ func (my MySql) FindFsmLogTrack(r req.FsmLog) []resp.FsmLogTrack {
 func (my MySql) FsmSubmitLog(r req.FsmCreateLog) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmSubmitLog"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-		fsm.WithTransition(my.ops.fsmTransition),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.SubmitLog(r)
 	return f.Error
 }
@@ -58,11 +49,8 @@ func (my MySql) FsmSubmitLog(r req.FsmCreateLog) (err error) {
 func (my MySql) FsmApproveLog(r req.FsmApproveLog) (err error) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmApproveLog"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-		fsm.WithTransition(my.ops.fsmTransition),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.ApproveLog(r)
 	return f.Error
 }
@@ -71,11 +59,8 @@ func (my MySql) FsmApproveLog(r req.FsmApproveLog) (err error) {
 func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmCancelLogByUuids"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-		fsm.WithTransition(my.ops.fsmTransition),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.CancelLogByUuids(r)
 	return f.Error
 }
@@ -84,10 +69,8 @@ func (my MySql) FsmCancelLogByUuids(r req.FsmCancelLog) error {
 func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermission) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FsmCheckEditLogDetailPermission"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.CheckEditLogDetailPermission(r)
 	return f.Error
 }
@@ -96,10 +79,8 @@ func (my MySql) FsmCheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermi
 func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "CreateFsm"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.CreateMachine(r)
 	return f.Error
 }
@@ -108,11 +89,8 @@ func (my MySql) CreateFsm(r req.FsmCreateMachine) error {
 func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "UpdateFsmById"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-		fsm.WithTransition(my.ops.fsmTransition),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.UpdateMachineById(id, r)
 	return f.Error
 }
@@ -121,11 +99,8 @@ func (my MySql) UpdateFsmById(id uint, r req.FsmUpdateMachine) error {
 func (my MySql) DeleteFsmByIds(ids []uint) error {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "DeleteFsmByIds"))
 	defer span.End()
-	f := fsm.New(
-		fsm.WithCtx(my.Ctx),
-		fsm.WithDb(my.Tx),
-		fsm.WithTransition(my.ops.fsmTransition),
-	)
+	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
+	f := fsm.New(my.ops.fsmOps...)
 	f.DeleteMachineByIds(ids)
 	return f.Error
 }

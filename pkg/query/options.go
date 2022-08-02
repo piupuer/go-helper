@@ -7,20 +7,20 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/piupuer/go-helper/ms"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/fsm"
 	"github.com/piupuer/go-helper/pkg/middleware"
-	"github.com/piupuer/go-helper/pkg/resp"
 	"github.com/piupuer/go-helper/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
 type MysqlOptions struct {
-	ctx           context.Context
-	db            *gorm.DB
-	redis         redis.UniversalClient
-	cachePrefix   string
-	enforcer      *casbin.Enforcer
-	fsmTransition func(ctx context.Context, logs ...resp.FsmApprovalLog) error
+	ctx         context.Context
+	db          *gorm.DB
+	redis       redis.UniversalClient
+	cachePrefix string
+	enforcer    *casbin.Enforcer
+	fsmOps      []func(options *fsm.Options)
 }
 
 func WithMysqlDb(db *gorm.DB) func(*MysqlOptions) {
@@ -61,11 +61,9 @@ func WithMysqlCasbinEnforcer(enforcer *casbin.Enforcer) func(*MysqlOptions) {
 	}
 }
 
-func WithMysqlFsmTransition(fun func(ctx context.Context, logs ...resp.FsmApprovalLog) error) func(*MysqlOptions) {
+func WithMysqlFsmOps(ops ...func(options *fsm.Options)) func(*MysqlOptions) {
 	return func(options *MysqlOptions) {
-		if fun != nil {
-			getMysqlOptionsOrSetDefault(options).fsmTransition = fun
-		}
+		getMysqlOptionsOrSetDefault(options).fsmOps = append(getMysqlOptionsOrSetDefault(options).fsmOps, ops...)
 	}
 }
 
