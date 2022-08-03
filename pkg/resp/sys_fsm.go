@@ -27,13 +27,14 @@ type FsmApprovingLog struct {
 
 type FsmLogTrack struct {
 	Time
-	Name     string `json:"name"`
-	Opinion  string `json:"opinion"`
-	Status   uint   `json:"status"`
-	End      uint   `json:"end"`
-	Cancel   uint   `json:"cancel"`
-	Resubmit uint   `json:"resubmit"`
-	Confirm  uint   `json:"confirm"`
+	Name       string `json:"name"`
+	Opinion    string `json:"opinion"`
+	Status     uint   `json:"status"`
+	End        uint   `json:"end"`
+	Cancel     uint   `json:"cancel"`
+	Resubmit   uint   `json:"resubmit"`
+	Confirm    uint   `json:"confirm"`
+	Permission uint   `json:"permission"`
 }
 
 type FsmLogSubmitterDetail struct {

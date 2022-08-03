@@ -120,12 +120,18 @@ func FindFsmApprovingLog(options ...func(*Options)) gin.HandlerFunc {
 // @Router /fsm/log/track [GET]
 func FindFsmLogTrack(options ...func(*Options)) gin.HandlerFunc {
 	ops := ParseOptions(options...)
+	if ops.getCurrentUser == nil {
+		panic("getCurrentUser is empty")
+	}
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
 		_, span := tracer.Start(ctx, tracing.Name(tracing.Rest, "FindFsmLogTrack"))
 		defer span.End()
 		var r req.FsmLog
 		req.ShouldBind(c, &r)
+		u := ops.getCurrentUser(c)
+		r.RoleId = u.RoleId
+		r.UserId = u.Id
 		ops.addCtx(c)
 		q := query.NewMySql(ops.dbOps...)
 		list := q.FindFsmLogTrack(r)

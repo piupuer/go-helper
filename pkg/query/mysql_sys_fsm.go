@@ -1,6 +1,7 @@
 package query
 
 import (
+	"github.com/piupuer/go-helper/pkg/constant"
 	"github.com/piupuer/go-helper/pkg/fsm"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -26,13 +27,26 @@ func (my MySql) FindFsmApprovingLog(r *req.FsmPendingLog) []resp.FsmApprovingLog
 }
 
 // FindFsmLogTrack find approve log
-func (my MySql) FindFsmLogTrack(r req.FsmLog) []resp.FsmLogTrack {
+func (my MySql) FindFsmLogTrack(r req.FsmLog) (tracks []resp.FsmLogTrack) {
 	_, span := tracer.Start(my.Ctx, tracing.Name(tracing.Db, "FindFsmLogTrack"))
 	defer span.End()
 	my.ops.fsmOps = append(my.ops.fsmOps, fsm.WithCtx(my.Ctx), fsm.WithDb(my.Tx))
 	f := fsm.New(my.ops.fsmOps...)
 	logs := f.FindLog(r)
-	return f.FindLogTrack(logs)
+	tracks = f.FindLogTrack(logs)
+	if len(tracks) > 0 {
+		oldLog := f.CheckLogPermission(req.FsmPermissionLog{
+			Category:       r.Category,
+			Uuid:           r.Uuid,
+			ApprovalRoleId: r.RoleId,
+			ApprovalUserId: r.UserId,
+			Approved:       constant.One,
+		})
+		if oldLog.Id > constant.Zero {
+			tracks[len(tracks)-1].Permission = constant.One
+		}
+	}
+	return
 }
 
 // FsmSubmitLog submit log

@@ -523,8 +523,7 @@ func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermissio
 	edit := false
 	editFields := ""
 	if submitter || confirm {
-		var machine Machine
-		machine = fs.GetMachineByCategory(uint(r.Category))
+		machine := fs.GetMachineByCategory(uint(r.Category))
 		if fs.Error != nil {
 			return
 		}
@@ -535,8 +534,22 @@ func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermissio
 			editFields = machine.SubmitterConfirmEditFields
 		}
 	} else {
-		edit = last.NextEvent.Edit == constant.One
-		editFields = last.NextEvent.EditFields
+		userIds := make([]uint, 0)
+		roleIds := make([]uint, 0)
+		for _, item := range last.CanApprovalUsers {
+			if !utils.ContainsUint(userIds, item.Id) {
+				userIds = append(userIds, item.Id)
+			}
+		}
+		for _, item := range last.CanApprovalRoles {
+			if !utils.ContainsUint(roleIds, item.Id) {
+				roleIds = append(roleIds, item.Id)
+			}
+		}
+		if utils.ContainsUint(userIds, r.ApprovalUserId) || utils.ContainsUint(roleIds, r.ApprovalRoleId) {
+			edit = last.NextEvent.Edit == constant.One
+			editFields = last.NextEvent.EditFields
+		}
 	}
 
 	if !edit {

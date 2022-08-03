@@ -107,6 +107,8 @@ type FsmPendingLog struct {
 type FsmLog struct {
 	Category NullUint `json:"category" form:"category"`
 	Uuid     string   `json:"uuid" form:"uuid"`
+	RoleId   uint     `json:"roleId"`
+	UserId   uint     `json:"userId"`
 }
 
 type FsmMachine struct {
