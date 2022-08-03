@@ -10,6 +10,7 @@ import (
 	"github.com/piupuer/go-helper/pkg/utils"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"strings"
 )
@@ -783,6 +784,8 @@ func (fs *Fsm) FindPendingLogByApprover(r *req.FsmPendingLog) (rp []resp.FsmAppr
 // get last pending log, err will be returned when it does not exist
 func (fs *Fsm) getLastPendingLog(r req.FsmLog) (rp Log) {
 	fs.session.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Model(&Log{}).
 		Preload("CanApprovalRoles").
 		Preload("CanApprovalUsers").
 		Preload("Progress").

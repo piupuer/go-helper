@@ -61,9 +61,9 @@ type EventItem struct {
 
 type Log struct {
 	ms.M
-	Category         uint      `gorm:"comment:custom category(>0)" json:"category"`
-	Uuid             string    `gorm:"comment:unique str" json:"uuid"`
-	Approved         uint      `gorm:"type:tinyint(1);default:0;comment:approval status" json:"approved"`
+	Category         uint      `gorm:"index:idx_category_uid_approved;comment:custom category(>0)" json:"category"`
+	Uuid             string    `gorm:"index:idx_category_uid_approved;size:36;comment:unique str" json:"uuid"`
+	Approved         uint      `gorm:"index:idx_category_uid_approved;type:tinyint(1);default:0;comment:approval status" json:"approved"`
 	ProgressId       uint      `gorm:"comment:current progress" json:"progressId"`
 	Progress         EventItem `gorm:"foreignKey:ProgressId" json:"progress"`
 	SubmitterRoleId  uint      `gorm:"comment:custom submitter role id" json:"submitterRoleId"`
