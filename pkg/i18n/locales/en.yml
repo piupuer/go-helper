@@ -1,0 +1,30 @@
+go-helper:
+  fsm:
+    error:
+      db: 'db instance is empty'
+      transition: 'transition handler is empty'
+      levels: 'levels is empty'
+      level-name: 'level name is empty'
+      duplicate-level-name: 'duplicate level name'
+      repeat-submit: 'repeat submit'
+      illegal-param: 'illegal param'
+      no-permission-approve: 'no permission to approve'
+      no-permission-or-ended: 'no permission to approve or approval ended'
+      no-permission-edit: 'no permission to edit detail'
+      only-submitter-can-cancel: 'only the submitter can cancel'
+      started-cannot-cancel: 'the flow is started and cannot cancel'
+      machine-not-found: 'machine not found'
+      duplicate-machine-category: 'duplicate machine category'
+    suffix:
+      waiting: 'waiting'
+      resubmit: 'resubmit'
+      submitted: 'submitted'
+      approved: 'approved'
+      refused: 'refused'
+      confirm: 'confirm'
+      confirmed: 'confirmed'
+    msg:
+      submitter-cancel: 'submitter cancelled'
+      ended: 'process ended'
+      config-changed: 'configuration changes'
+      manual-cancel: 'manual cancelled'

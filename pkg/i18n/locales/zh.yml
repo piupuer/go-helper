@@ -1,0 +1,30 @@
+go-helper:
+  fsm:
+    error:
+      db: 'db对象为空'
+      transition: '状态流转transition为空'
+      levels: '审批等级为空'
+      level-name: '审批等级名称为空'
+      duplicate-level-name: '审批等级名称重复'
+      repeat-submit: '重复提交'
+      illegal-param: '参数不合法'
+      no-permission-approve: '无权限审批'
+      no-permission-or-ended: '无权限审批或流程已结束'
+      no-permission-edit: '无权限编辑'
+      only-submitter-can-cancel: '只有提交人可以取消'
+      started-cannot-cancel: '流程已经开始, 无法取消'
+      machine-not-found: '审批流程未配置'
+      duplicate-machine-category: '审批流程分类重复'
+    suffix:
+      waiting: '待审批'
+      resubmit: '待重新提交'
+      submitted: '已提交'
+      approved: '已通过'
+      refused: '已拒绝'
+      confirm: '待确认'
+      confirmed: '已确认'
+    msg:
+      submitter-cancel: '提交人取消'
+      ended: '流程结束'
+      config-changed: '流程配置发生变化'
+      manual-cancel: '手动取消'
