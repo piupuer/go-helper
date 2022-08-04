@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
+	"sort"
 	"strings"
 )
 
@@ -657,10 +658,12 @@ func (fs *Fsm) FindLogTrack(logs []Log) (rp []resp.FsmLogTrack) {
 	if fs.Error != nil {
 		return
 	}
-	if len(logs) == 0 {
+	l := len(logs)
+	if l == 0 {
 		return
 	}
-	l := len(logs)
+	// sort by id
+	sort.Slice(logs, func(i, j int) bool { return logs[i].Id < logs[j].Id })
 	for i, item := range logs {
 		prevApproved := constant.FsmLogStatusWaiting
 		prevCancel := constant.Zero
