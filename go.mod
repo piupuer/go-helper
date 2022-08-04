@@ -29,7 +29,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rubenv/sql-migrate v1.1.1
 	github.com/shopspring/decimal v1.3.1
-	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
@@ -80,6 +79,7 @@ require (
 	github.com/pingcap/parser v0.0.0-20210415081931-48e7f467fd74 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726 // indirect
 	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
