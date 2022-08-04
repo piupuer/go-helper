@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/looplab/fsm"
 	"github.com/piupuer/go-helper/pkg/constant"
+	"github.com/piupuer/go-helper/pkg/i18n"
 	"github.com/piupuer/go-helper/pkg/log"
 	"github.com/piupuer/go-helper/pkg/req"
 	"github.com/piupuer/go-helper/pkg/resp"
@@ -53,7 +54,7 @@ func New(options ...func(*Options)) (fs *Fsm) {
 	if ops.db != nil {
 		fs.session = fs.initSession()
 	} else {
-		fs.Error = ErrDbNil
+		fs.Error = i18n.E(ErrDbEmpty)
 	}
 	return
 }
@@ -96,7 +97,7 @@ func (fs *Fsm) CreateMachine(r req.FsmCreateMachine) (rp Machine) {
 		Where("category = ?", machine.Category).
 		Count(&count)
 	if count > 0 {
-		fs.AddError(ErrMachineCategoryAlreadyExists)
+		fs.AddError(i18n.E(ErrDuplicateMachineCategory))
 		return
 	}
 	// save json for query
@@ -167,7 +168,7 @@ func (fs *Fsm) SubmitLog(r req.FsmCreateLog) (rp []EventItem) {
 	}
 	machine := fs.GetMachineByCategory(uint(r.Category))
 	if machine.Id == constant.Zero {
-		fs.AddError(ErrMachineNotFound)
+		fs.AddError(i18n.E(ErrMachineNotFound))
 		return
 	}
 	// check whether approval is pending
@@ -176,7 +177,7 @@ func (fs *Fsm) SubmitLog(r req.FsmCreateLog) (rp []EventItem) {
 		Uuid:     r.Uuid,
 	})
 	if last.Id > constant.Zero {
-		fs.AddError(ErrRepeatSubmit)
+		fs.AddError(i18n.E(ErrRepeatSubmit))
 		return
 	}
 	startEvent := fs.getStartEvent(machine.Id)
@@ -245,7 +246,7 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 		m["approval_user_id"] = r.ApprovalUserId
 		m["approval_opinion"] = r.ApprovalOpinion
 		m["next_event_id"] = constant.Zero
-		m["detail"] = constant.FsmMsgSubmitterCancel
+		m["detail"] = i18n.T(constant.FsmMsgSubmitterCancel)
 		rp.Cancel = constant.One
 		fs.session.
 			Model(&Log{}).
@@ -267,11 +268,11 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 		match := false
 		switch approved {
 		case constant.FsmLogStatusApproved:
-			if strings.HasSuffix(transition, constant.FsmSuffixWaiting) || strings.HasSuffix(transition, constant.FsmSuffixResubmit) || strings.HasSuffix(transition, constant.FsmSuffixConfirm) {
+			if strings.HasSuffix(transition, i18n.T(constant.FsmSuffixWaiting)) || strings.HasSuffix(transition, i18n.T(constant.FsmSuffixResubmit)) || strings.HasSuffix(transition, i18n.T(constant.FsmSuffixConfirm)) {
 				match = true
 			}
 		case constant.FsmLogStatusRefused:
-			if strings.HasSuffix(transition, constant.FsmSuffixWaiting) {
+			if strings.HasSuffix(transition, i18n.T(constant.FsmSuffixWaiting)) {
 				match = true
 			}
 		}
@@ -282,7 +283,7 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 	}
 
 	if eventName == "" {
-		fs.AddError(errors.Wrap(ErrParams, "approved"))
+		fs.AddError(errors.Wrap(i18n.E(ErrParams), "approved"))
 		return
 	}
 	nextName := getNextItemName(approved, eventName)
@@ -352,7 +353,7 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 	} else {
 		rp.End = constant.One
 		newLog.Approved = constant.FsmLogStatusApproved
-		newLog.Detail = constant.FsmMsgEnded
+		newLog.Detail = i18n.T(constant.FsmMsgEnded)
 	}
 	fs.session.Create(&newLog)
 	m := make(map[string]interface{}, 0)
@@ -370,7 +371,7 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 		Updates(&m)
 	// status transition
 	if fs.ops.transition == nil {
-		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
+		log.WithContext(fs.ops.ctx).Warn("%s", i18n.T(ErrTransitionEmpty))
 		return
 	}
 	fs.AddError(fs.ops.transition(fs.ops.ctx, rp))
@@ -385,7 +386,7 @@ func (fs *Fsm) CancelLog(category uint) {
 	m := make(map[string]interface{}, 0)
 	m["approved"] = constant.FsmLogStatusCancelled
 	m["next_event_id"] = constant.Zero
-	m["detail"] = constant.FsmMsgConfigChanged
+	m["detail"] = i18n.T(constant.FsmMsgConfigChanged)
 	q := fs.session.
 		Model(&Log{}).
 		Where("category = ?", category).
@@ -402,7 +403,7 @@ func (fs *Fsm) CancelLog(category uint) {
 	}
 	q.Updates(&m)
 	if fs.ops.transition == nil {
-		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
+		log.WithContext(fs.ops.ctx).Warn("%s", i18n.T(ErrTransitionEmpty))
 		return
 	}
 	// status transition
@@ -415,7 +416,7 @@ func (fs *Fsm) CancelLogByUuids(r req.FsmCancelLog) {
 		return
 	}
 	if len(r.Uuids) == 0 {
-		fs.AddError(errors.Wrap(ErrParams, "uuids"))
+		fs.AddError(errors.Wrap(i18n.E(ErrParams), "uuids"))
 		return
 	}
 	m := make(map[string]interface{}, 0)
@@ -423,7 +424,7 @@ func (fs *Fsm) CancelLogByUuids(r req.FsmCancelLog) {
 	m["approval_role_id"] = r.ApprovalRoleId
 	m["approval_user_id"] = r.ApprovalUserId
 	m["next_event_id"] = constant.Zero
-	m["detail"] = constant.FsmMsgManualCancel
+	m["detail"] = i18n.T(constant.FsmMsgManualCancel)
 	q := fs.session.
 		Model(&Log{}).
 		Where("uuid IN (?)", r.Uuids).
@@ -431,7 +432,7 @@ func (fs *Fsm) CancelLogByUuids(r req.FsmCancelLog) {
 	oldLogs := make([]Log, 0)
 	q.Find(&oldLogs)
 	if len(oldLogs) == 0 {
-		fs.AddError(ErrNoPermissionOrEnded)
+		fs.AddError(i18n.E(ErrNoPermissionOrEnded))
 		return
 	}
 	list := make([]resp.FsmApprovalLog, 0)
@@ -445,7 +446,7 @@ func (fs *Fsm) CancelLogByUuids(r req.FsmCancelLog) {
 	q.Updates(&m)
 	// status transition
 	if fs.ops.transition == nil {
-		log.WithContext(fs.ops.ctx).Warn("%s", ErrTransitionNil)
+		log.WithContext(fs.ops.ctx).Warn("%s", i18n.T(ErrTransitionEmpty))
 		return
 	}
 	fs.AddError(fs.ops.transition(fs.ops.ctx, list...))
@@ -467,16 +468,16 @@ func (fs *Fsm) CheckLogPermission(r req.FsmPermissionLog) (rp Log) {
 		Uuid:     r.Uuid,
 	})
 	if last.Id == constant.Zero {
-		fs.AddError(ErrNoPermissionOrEnded)
+		fs.AddError(i18n.E(ErrNoPermissionOrEnded))
 		return
 	}
 	if r.Approved == constant.FsmLogStatusCancelled {
 		if last.SubmitterRoleId != r.ApprovalRoleId && last.SubmitterUserId != r.ApprovalUserId {
-			fs.AddError(ErrOnlySubmitterCancel)
+			fs.AddError(i18n.E(ErrOnlySubmitterCancel))
 			return
 		} else {
 			if last.CurrentEvent.Level > constant.Zero {
-				fs.AddError(ErrStartedCannotCancel)
+				fs.AddError(i18n.E(ErrStartedCannotCancel))
 				return
 			}
 			rp = last
@@ -492,7 +493,7 @@ func (fs *Fsm) CheckLogPermission(r req.FsmPermissionLog) (rp Log) {
 		users = append(users, user.Id)
 	}
 	if !utils.Contains(roles, r.ApprovalRoleId) && !utils.Contains(users, r.ApprovalUserId) {
-		fs.AddError(ErrNoPermissionApprove)
+		fs.AddError(i18n.E(ErrNoPermissionApprove))
 		return
 	}
 	rp = last
@@ -510,7 +511,7 @@ func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermissio
 		Uuid:     r.Uuid,
 	})
 	if fs.Error != nil {
-		fs.AddError(ErrNoEditLogDetailPermission)
+		fs.AddError(i18n.E(ErrNoPermissionEdit))
 		return
 	}
 	submitter := false
@@ -557,7 +558,7 @@ func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermissio
 	}
 
 	if !edit {
-		fs.AddError(ErrNoEditLogDetailPermission)
+		fs.AddError(i18n.E(ErrNoPermissionEdit))
 		return
 	}
 	// split permission fields
@@ -565,7 +566,7 @@ func (fs *Fsm) CheckEditLogDetailPermission(r req.FsmCheckEditLogDetailPermissio
 	if len(fields) > 0 {
 		for _, f := range r.Fields {
 			if !utils.Contains(fields, utils.SnakeCase(f)) {
-				fs.AddError(errors.Wrap(ErrNoEditLogDetailPermission, f))
+				fs.AddError(errors.Wrap(i18n.E(ErrNoPermissionEdit), f))
 				return
 			}
 		}
@@ -854,7 +855,7 @@ func (fs *Fsm) getPrevEvent(machineId uint, level uint) (rp Event) {
 		Order("sort").
 		Find(&events)
 	for _, event := range events {
-		if strings.HasSuffix(event.Name.Name, constant.FsmSuffixWaiting) || strings.HasSuffix(event.Name.Name, constant.FsmSuffixResubmit) {
+		if strings.HasSuffix(event.Name.Name, i18n.T(constant.FsmSuffixWaiting)) || strings.HasSuffix(event.Name.Name, i18n.T(constant.FsmSuffixResubmit)) {
 			rp = event
 			return
 		}
@@ -875,7 +876,7 @@ func (fs *Fsm) getNextEvent(machineId uint, level uint) (rp Event) {
 		Order("sort").
 		Find(&events)
 	for _, event := range events {
-		if strings.HasSuffix(event.Name.Name, constant.FsmSuffixWaiting) || strings.HasSuffix(event.Name.Name, constant.FsmSuffixConfirm) {
+		if strings.HasSuffix(event.Name.Name, i18n.T(constant.FsmSuffixWaiting)) || strings.HasSuffix(event.Name.Name, i18n.T(constant.FsmSuffixConfirm)) {
 			rp = event
 			return
 		}
@@ -956,7 +957,7 @@ func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 		return
 	}
 	if len(r) == 0 {
-		fs.AddError(ErrEventsNil)
+		fs.AddError(i18n.E(ErrLevelsEmpty))
 		return
 	}
 	// clear old machine
@@ -982,11 +983,11 @@ func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 	levels := make(map[string]uint, 0)
 
 	// L0 waiting submit / L1 refused / L0 submitted
-	l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixResubmit)
+	l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixResubmit))
 	l0Srcs := []string{
-		fmt.Sprintf("%s %s", r[0].Name, constant.FsmSuffixRefused),
+		fmt.Sprintf("%s %s", r[0].Name, i18n.T(constant.FsmSuffixRefused)),
 	}
-	l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixSubmitted)
+	l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixSubmitted))
 	names = append(names, l0Name)
 	names = append(names, l0Srcs...)
 	names = append(names, l0Dst)
@@ -1004,16 +1005,16 @@ func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 		// approve
 		// L1 waiting approve / L0 submitted , L2 refused / L1 approved
 		// L2 waiting approve / L1 approved               / L2 approved
-		li1Name := fmt.Sprintf("%s %s", r[i].Name, constant.FsmSuffixWaiting)
+		li1Name := fmt.Sprintf("%s %s", r[i].Name, i18n.T(constant.FsmSuffixWaiting))
 		li1Srcs := make([]string, 0)
 		if i > 0 {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i-1].Name, constant.FsmSuffixApproved))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i-1].Name, i18n.T(constant.FsmSuffixApproved)))
 		} else {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixSubmitted))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixSubmitted)))
 		}
-		li1Dst := fmt.Sprintf("%s %s", r[i].Name, constant.FsmSuffixApproved)
+		li1Dst := fmt.Sprintf("%s %s", r[i].Name, i18n.T(constant.FsmSuffixApproved))
 		if i+1 < l {
-			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i+1].Name, constant.FsmSuffixRefused))
+			li1Srcs = append(li1Srcs, fmt.Sprintf("%s %s", r[i+1].Name, i18n.T(constant.FsmSuffixRefused)))
 		}
 		names = append(names, li1Name)
 		names = append(names, li1Srcs...)
@@ -1029,17 +1030,17 @@ func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 		// refuse
 		// L1 waiting refuse / L0 submitted / L1 refused
 		// L2 waiting refuse / L1 approved  / L2 refused
-		li2Name := fmt.Sprintf("%s %s", r[i].Name, constant.FsmSuffixWaiting)
+		li2Name := fmt.Sprintf("%s %s", r[i].Name, i18n.T(constant.FsmSuffixWaiting))
 		li2Srcs := make([]string, 0)
 		if i == 0 {
-			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixSubmitted))
+			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixSubmitted)))
 		} else {
-			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i-1].Name, constant.FsmSuffixApproved))
+			li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i-1].Name, i18n.T(constant.FsmSuffixApproved)))
 			if i+1 < l {
-				li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i+1].Name, constant.FsmSuffixRefused))
+				li2Srcs = append(li2Srcs, fmt.Sprintf("%s %s", r[i+1].Name, i18n.T(constant.FsmSuffixRefused)))
 			}
 		}
-		li2Dst := fmt.Sprintf("%s %s", r[i].Name, constant.FsmSuffixRefused)
+		li2Dst := fmt.Sprintf("%s %s", r[i].Name, i18n.T(constant.FsmSuffixRefused))
 		names = append(names, li2Name)
 		names = append(names, li2Srcs...)
 		names = append(names, li2Dst)
@@ -1053,11 +1054,11 @@ func (fs *Fsm) batchCreateEvent(machineId uint, r []req.FsmCreateEvent) {
 	}
 	if machine.SubmitterConfirm == constant.One {
 		// L0 waiting confirm / L2 approved / L0 confirmed
-		l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixConfirm)
+		l0Name := fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixConfirm))
 		l0Srcs := []string{
-			fmt.Sprintf("%s %s", r[l-1].Name, constant.FsmSuffixApproved),
+			fmt.Sprintf("%s %s", r[l-1].Name, i18n.T(constant.FsmSuffixApproved)),
 		}
-		l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, constant.FsmSuffixConfirmed)
+		l0Dst := fmt.Sprintf("%s %s", machine.SubmitterName, i18n.T(constant.FsmSuffixConfirmed))
 		names = append(names, l0Name)
 		names = append(names, l0Srcs...)
 		names = append(names, l0Dst)
@@ -1223,18 +1224,18 @@ func (fs *Fsm) AddError(err error) error {
 
 func getNextItemName(approved uint, eventName string) string {
 	name := eventName
-	if strings.HasSuffix(eventName, constant.FsmSuffixWaiting) {
+	if strings.HasSuffix(eventName, i18n.T(constant.FsmSuffixWaiting)) {
 		if approved == constant.FsmLogStatusRefused {
-			name = strings.TrimSuffix(eventName, constant.FsmSuffixWaiting) + constant.FsmSuffixRefused
+			name = strings.TrimSuffix(eventName, i18n.T(constant.FsmSuffixWaiting)) + i18n.T(constant.FsmSuffixRefused)
 		} else {
-			name = strings.TrimSuffix(eventName, constant.FsmSuffixWaiting) + constant.FsmSuffixApproved
+			name = strings.TrimSuffix(eventName, i18n.T(constant.FsmSuffixWaiting)) + i18n.T(constant.FsmSuffixApproved)
 		}
 	}
-	if strings.HasSuffix(eventName, constant.FsmSuffixResubmit) {
-		name = strings.TrimSuffix(eventName, constant.FsmSuffixResubmit) + constant.FsmSuffixSubmitted
+	if strings.HasSuffix(eventName, i18n.T(constant.FsmSuffixResubmit)) {
+		name = strings.TrimSuffix(eventName, i18n.T(constant.FsmSuffixResubmit)) + i18n.T(constant.FsmSuffixSubmitted)
 	}
-	if strings.HasSuffix(eventName, constant.FsmSuffixConfirm) {
-		name = strings.TrimSuffix(eventName, constant.FsmSuffixConfirm) + constant.FsmSuffixConfirmed
+	if strings.HasSuffix(eventName, i18n.T(constant.FsmSuffixConfirm)) {
+		name = strings.TrimSuffix(eventName, i18n.T(constant.FsmSuffixConfirm)) + i18n.T(constant.FsmSuffixConfirmed)
 	}
 	return name
 }
@@ -1248,7 +1249,7 @@ func checkEvent(desc []fsm.EventDesc) (err error) {
 	}
 	names = utils.RemoveRepeat(names)
 	if len(names) == 0 {
-		err = ErrEventNameNil
+		err = i18n.E(ErrLevelNameEmpty)
 		return
 	}
 
@@ -1262,7 +1263,7 @@ func checkEvent(desc []fsm.EventDesc) (err error) {
 		}
 	}
 	if endCount != 1 {
-		err = ErrEventEndPointNotUnique
+		err = i18n.E(ErrDuplicateLevelName)
 		return
 	}
 	return

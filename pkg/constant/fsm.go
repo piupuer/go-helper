@@ -12,18 +12,18 @@ const (
 )
 
 const (
-	FsmMsgSubmitterCancel = "submitter cancelled"
-	FsmMsgEnded           = "process ended"
-	FsmMsgConfigChanged   = "configuration changes"
-	FsmMsgManualCancel    = "manual cancelled"
+	FsmMsgSubmitterCancel = "go-helper.fsm.msg.submitter-cancel"
+	FsmMsgEnded           = "go-helper.fsm.msg.ended"
+	FsmMsgConfigChanged   = "go-helper.fsm.msg.config-changed"
+	FsmMsgManualCancel    = "go-helper.fsm.msg.manual-cancel"
 )
 
 const (
-	FsmSuffixWaiting   = "waiting"
-	FsmSuffixResubmit  = "resubmit"
-	FsmSuffixSubmitted = "submitted"
-	FsmSuffixApproved  = "approved"
-	FsmSuffixRefused   = "refused"
-	FsmSuffixConfirm   = "confirm"
-	FsmSuffixConfirmed = "confirmed"
+	FsmSuffixWaiting   = "go-helper.fsm.suffix.waiting"
+	FsmSuffixResubmit  = "go-helper.fsm.suffix.resubmit"
+	FsmSuffixSubmitted = "go-helper.fsm.suffix.submitted"
+	FsmSuffixApproved  = "go-helper.fsm.suffix.approved"
+	FsmSuffixRefused   = "go-helper.fsm.suffix.refused"
+	FsmSuffixConfirm   = "go-helper.fsm.suffix.confirm"
+	FsmSuffixConfirmed = "go-helper.fsm.suffix.confirmed"
 )
