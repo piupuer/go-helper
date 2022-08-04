@@ -41,6 +41,7 @@ type FsmCreateLog struct {
 	Uuid            string   `json:"uuid" form:"uuid"`
 	SubmitterRoleId uint     `json:"submitterRoleId" form:"submitterRoleId"`
 	SubmitterUserId uint     `json:"submitterUserId" form:"submitterUserId"`
+	Remark          string   `json:"remark" form:"remark"`
 }
 
 type FsmApproveLog struct {

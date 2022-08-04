@@ -198,6 +198,7 @@ func (fs *Fsm) SubmitLog(r req.FsmCreateLog) (rp []EventItem) {
 	l.SubmitterUserId = r.SubmitterUserId
 	l.PrevDetail = startEvent.Dst.Name
 	l.Detail = nextEvent.Name.Name
+	l.Remark = r.Remark
 	l.CurrentEventId = startEvent.Id
 	l.NextEventId = nextEvent.Id
 	fs.session.Create(&l)
@@ -300,6 +301,7 @@ func (fs *Fsm) ApproveLog(r req.FsmApproveLog) (rp resp.FsmApprovalLog) {
 	newLog.SubmitterRoleId = oldLog.SubmitterRoleId
 	newLog.SubmitterUserId = oldLog.SubmitterUserId
 	newLog.PrevDetail = nextName
+	newLog.Remark = oldLog.Remark
 	newLog.CurrentEventId = event.Id
 	if len(f.AvailableTransitions()) != 0 {
 		// bind next approver

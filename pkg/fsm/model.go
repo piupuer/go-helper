@@ -73,6 +73,7 @@ type Log struct {
 	ApprovalOpinion  string    `gorm:"comment:approver approval opinion" json:"approvalOpinion"`
 	PrevDetail       string    `gorm:"comment:last approver detail" json:"prevDetail"`
 	Detail           string    `gorm:"comment:current approver detail" json:"detail"`
+	Remark           string    `gorm:"size:100;comment:remark(approving will use it)" json:"remark"`
 	CurrentEventId   uint      `gorm:"comment:current event id" json:"currentEventId"`
 	CurrentEvent     Event     `gorm:"foreignKey:CurrentEventId;comment:current event" json:"currentEvent"`
 	Resubmit         uint      `gorm:"type:tinyint(1);default:0;comment:waiting submitter resubmit" json:"resubmit"`
