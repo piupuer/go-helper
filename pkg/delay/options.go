@@ -113,14 +113,15 @@ func getExportCtx(ctx context.Context) context.Context {
 }
 
 type QueueOptions struct {
-	name           string
-	redisUri       string
-	redisPeriodKey string
-	retention      int
-	maxRetry       int
-	handler        func(ctx context.Context, t Task) error
-	callback       string
-	clearArchived  int
+	name            string
+	redisUri        string
+	redisPeriodKey  string
+	retention       int
+	maxRetry        int
+	handler         func(ctx context.Context, t Task) error
+	callback        string
+	callbackTimeout int
+	clearArchived   int
 }
 
 func WithQueueName(s string) func(*QueueOptions) {
@@ -149,7 +150,7 @@ func WithQueueRetention(second int) func(*QueueOptions) {
 	}
 }
 
-func WithQueueRedisMaxRetry(count int) func(*QueueOptions) {
+func WithQueueMaxRetry(count int) func(*QueueOptions) {
 	return func(options *QueueOptions) {
 		getQueueOptionsOrSetDefault(options).maxRetry = count
 	}
@@ -169,6 +170,14 @@ func WithQueueCallback(s string) func(*QueueOptions) {
 	}
 }
 
+func WithQueueCallbackTimeout(second int) func(*QueueOptions) {
+	return func(options *QueueOptions) {
+		if second > 0 {
+			getQueueOptionsOrSetDefault(options).callbackTimeout = second
+		}
+	}
+}
+
 func WithQueueClearArchived(second int) func(*QueueOptions) {
 	return func(options *QueueOptions) {
 		if second > 0 {
@@ -180,12 +189,13 @@ func WithQueueClearArchived(second int) func(*QueueOptions) {
 func getQueueOptionsOrSetDefault(options *QueueOptions) *QueueOptions {
 	if options == nil {
 		return &QueueOptions{
-			name:           "delay",
-			redisUri:       "redis://127.0.0.1:6379/0",
-			redisPeriodKey: "delay.queue.period",
-			retention:      60,
-			maxRetry:       3,
-			clearArchived:  300,
+			name:            "delay",
+			redisUri:        "redis://127.0.0.1:6379/0",
+			redisPeriodKey:  "delay.queue.period",
+			retention:       60,
+			maxRetry:        3,
+			callbackTimeout: 0,
+			clearArchived:   300,
 		}
 	}
 	return options
@@ -200,6 +210,8 @@ type QueueTaskOptions struct {
 	at        *time.Time     // only once task
 	now       bool           // only once task
 	retention int            // only once task
+	maxRetry  int
+	timeout   int
 }
 
 func WithQueueTaskUuid(s string) func(*QueueTaskOptions) {
@@ -252,10 +264,25 @@ func WithQueueTaskRetention(second int) func(*QueueTaskOptions) {
 	}
 }
 
+func WithQueueTaskMaxRetry(count int) func(*QueueTaskOptions) {
+	return func(options *QueueTaskOptions) {
+		getQueueTaskOptionsOrSetDefault(options).maxRetry = count
+	}
+}
+
+func WithQueueTaskTimeout(second int) func(*QueueTaskOptions) {
+	return func(options *QueueTaskOptions) {
+		if second > 0 {
+			getQueueTaskOptionsOrSetDefault(options).timeout = second
+		}
+	}
+}
+
 func getQueueTaskOptionsOrSetDefault(options *QueueTaskOptions) *QueueTaskOptions {
 	if options == nil {
 		return &QueueTaskOptions{
-			name: "delay.queue.task",
+			name:    "delay.queue.task",
+			timeout: 0,
 		}
 	}
 	return options

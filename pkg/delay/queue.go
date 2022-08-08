@@ -36,6 +36,8 @@ type periodTask struct {
 	Payload   string `json:"payload"`
 	Next      int64  `json:"next"`      // next schedule unix timestamp
 	Processed int64  `json:"processed"` // run times
+	MaxRetry  int    `json:"maxRetry"`
+	Timeout   int    `json:"timeout"`
 }
 
 type periodTaskHandler struct {
@@ -74,7 +76,7 @@ func (p periodTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) (err 
 
 func (p periodTaskHandler) httpCallback(ctx context.Context, task Task) (err error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: time.Duration(p.qu.ops.callbackTimeout) * time.Second,
 	}
 	body := utils.Struct2Json(task)
 	var r *http.Request
@@ -198,6 +200,10 @@ func (qu Queue) Once(options ...func(*QueueTaskOptions)) (err error) {
 	taskOpts := []asynq.Option{
 		asynq.Queue(qu.ops.name),
 		asynq.MaxRetry(qu.ops.maxRetry),
+		asynq.Timeout(time.Duration(ops.timeout) * time.Second),
+	}
+	if ops.maxRetry > 0 {
+		taskOpts = append(taskOpts, asynq.MaxRetry(ops.maxRetry))
 	}
 	if ops.retention > 0 {
 		taskOpts = append(taskOpts, asynq.Retention(time.Duration(ops.retention)*time.Second))
@@ -231,11 +237,13 @@ func (qu Queue) Cron(options ...func(*QueueTaskOptions)) (err error) {
 		return
 	}
 	t := periodTask{
-		Expr:    ops.expr,
-		Name:    ops.name + ".cron",
-		Uid:     ops.uid,
-		Payload: ops.payload,
-		Next:    next,
+		Expr:     ops.expr,
+		Name:     ops.name + ".cron",
+		Uid:      ops.uid,
+		Payload:  ops.payload,
+		Next:     next,
+		MaxRetry: ops.maxRetry,
+		Timeout:  ops.timeout,
 	}
 	_, err = qu.redis.HSet(context.Background(), qu.ops.redisPeriodKey, ops.uid, utils.Struct2Json(t)).Result()
 	if err != nil {
@@ -300,6 +308,10 @@ func (qu Queue) scan() {
 		taskOpts := []asynq.Option{
 			asynq.Queue(ops.name),
 			asynq.MaxRetry(ops.maxRetry),
+			asynq.Timeout(time.Duration(item.Timeout) * time.Second),
+		}
+		if item.MaxRetry > 0 {
+			taskOpts = append(taskOpts, asynq.MaxRetry(item.MaxRetry))
 		}
 		diff := next - item.Next
 		if diff > 10 {
