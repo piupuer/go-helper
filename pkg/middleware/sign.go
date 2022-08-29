@@ -28,11 +28,18 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
 		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Sign"))
-		defer span.End()
+		var pass bool
+		defer func() {
+			if !pass {
+				span.End()
+			}
+		}()
 		if ops.findSkipPath != nil {
 			list := ops.findSkipPath(c)
 			for _, item := range list {
 				if strings.Contains(c.Request.URL.Path, item) {
+					span.End()
+					pass = true
 					c.Next()
 					return
 				}
@@ -41,6 +48,8 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 					continue
 				}
 				if re.MatchString(c.Request.URL.Path) {
+					span.End()
+					pass = true
 					c.Next()
 					return
 				}
@@ -123,6 +132,8 @@ func Sign(options ...func(*SignOptions)) gin.HandlerFunc {
 			abort(c, "%s: %s", resp.IllegalSignTokenMsg, token)
 			return
 		}
+		span.End()
+		pass = true
 		c.Next()
 	}
 }

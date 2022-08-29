@@ -49,14 +49,14 @@ func OperationLog(options ...func(*OperationLogOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	return func(c *gin.Context) {
-		ctx := tracing.RealCtx(c)
-		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "OperationLog"))
-		defer span.End()
 		startTime := carbon.Now()
 		reqBody := getBody(c)
 		// find request params
 		reqParams := c.Request.URL.Query()
 		defer func() {
+			ctx := tracing.RealCtx(c)
+			_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "OperationLog"))
+			defer span.End()
 			if ops.skipGetOrOptionsMethod {
 				// skip GET/OPTIONS
 				if c.Request.Method == http.MethodGet ||

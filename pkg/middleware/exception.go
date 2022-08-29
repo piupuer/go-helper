@@ -11,10 +11,10 @@ import (
 )
 
 func Exception(c *gin.Context) {
-	ctx := tracing.RealCtx(c)
-	_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Exception"))
-	defer span.End()
 	defer func() {
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Exception"))
+		defer span.End()
 		if err := recover(); err != nil {
 			e := errors.Errorf("%v", err)
 			log.WithContext(c).WithError(e).Error("runtime exception, stack: %s", string(debug.Stack()))

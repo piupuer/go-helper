@@ -16,7 +16,6 @@ func Cors(options ...func(*CorsOptions)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
 		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Cors"))
-		defer span.End()
 		method := c.Request.Method
 		methods := strings.Split(ops.method, ",")
 		if !utils.Contains(methods, method) {
@@ -34,6 +33,7 @@ func Cors(options ...func(*CorsOptions)) gin.HandlerFunc {
 		if method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 		}
+		span.End()
 		c.Next()
 	}
 }

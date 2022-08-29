@@ -27,9 +27,6 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		f(ops)
 	}
 	return func(c *gin.Context) {
-		ctx := tracing.RealCtx(c)
-		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "AccessLog"))
-		defer span.End()
 		startTime := time.Now()
 
 		w := &accessWriter{
@@ -41,6 +38,9 @@ func AccessLog(options ...func(*AccessLogOptions)) gin.HandlerFunc {
 		getBody(c)
 
 		c.Next()
+		ctx := tracing.RealCtx(c)
+		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "AccessLog"))
+		defer span.End()
 
 		endTime := time.Now()
 

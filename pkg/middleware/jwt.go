@@ -27,7 +27,12 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
 		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Jwt"))
-		defer span.End()
+		var pass bool
+		defer func() {
+			if !pass {
+				span.End()
+			}
+		}()
 		claims, err := mw.GetClaimsFromJWT(c)
 		if err != nil {
 			unauthorized(c, http.StatusUnauthorized, err, *ops)
@@ -61,6 +66,8 @@ func Jwt(options ...func(*JwtOptions)) gin.HandlerFunc {
 			return
 		}
 
+		span.End()
+		pass = true
 		c.Next()
 	}
 }

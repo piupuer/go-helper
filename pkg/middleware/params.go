@@ -15,9 +15,9 @@ import (
 func Params(c *gin.Context) {
 	ctx := tracing.RealCtx(c)
 	_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Params"))
-	defer span.End()
 	getBody(c)
 	getQuery(c)
+	span.End()
 	c.Next()
 }
 

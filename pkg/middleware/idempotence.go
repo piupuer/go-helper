@@ -33,7 +33,12 @@ func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := tracing.RealCtx(c)
 		_, span := tracer.Start(ctx, tracing.Name(tracing.Middleware, "Idempotence"))
-		defer span.End()
+		var pass bool
+		defer func() {
+			if !pass {
+				span.End()
+			}
+		}()
 		// read token from header at first
 		token := c.Request.Header.Get(ops.tokenName)
 		if token == "" {
@@ -47,6 +52,8 @@ func Idempotence(options ...func(*IdempotenceOptions)) gin.HandlerFunc {
 		if !CheckIdempotenceToken(c, token, *ops) {
 			ops.failWithMsg(resp.IdempotenceTokenInvalidMsg)
 		}
+		span.End()
+		pass = true
 		c.Next()
 	}
 }
